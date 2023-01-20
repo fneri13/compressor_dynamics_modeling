@@ -11,9 +11,10 @@ The n=0 modes are still missing!!!!!!
 
 import numpy as np
 import scipy.integrate as integrate
+import matplotlib.pyplot as plt
 
 
-#%% FUNCTIONS AND MATRICES FOR AXIAL DUCT
+#%% FUNCTIONS AND MATRICES FOR AXIAL DUCT AND GAP SPACE
 def Tax_n(x,s,theta,n,Vx,Vy):
     """
     Transmission matrix for the axial duct flow dynamics:
@@ -32,6 +33,28 @@ def Tax_n(x,s,theta,n,Vx,Vy):
     Tax[:,1] = np.array([1, -1j, s/n - Vx +1j*Vy])*np.exp(-n*x)*np.exp(1j*n*theta)
     Tax[:,2] = np.array([1, -s*1j/(Vx*n) +Vy/Vx, 0])*np.exp(-s/Vx+1j*n*Vy/Vx)*np.exp(1j*n*theta)   
     return Tax
+
+
+
+def Bgap_n(x1,x2,s,theta,n,Vx,Vy):
+    """
+    Transmission matrix for the axial gap between two blade rows:
+    |dVr|              |An|
+    |dVtheta| = Trad_n*|Bn|
+    |dp|               |Cn|
+    n : circumferential harmonic number
+    s : Laplace variable s=sigma+j*omega
+    theta : azimuthal cordinate
+    x1 : non dimensional cordinate of the first row
+    x2 : non dimensional cordinate of the second row
+    Vx : non-dimensional background axial velocity in the gap space
+    Vy : non-dimensional background azimuthal velocity in the gap space
+    """
+    Bgap = np.zeros((3,3),dtype = complex)
+    m1 = Tax_n(x2, s, theta, n, Vx, Vy)
+    m2 = np.linalg.inv(Tax_n(x1, s, theta, n, Vx, Vy))
+    Bgap = np.matmul(m1,m2)
+    return Bgap
 
 
 
@@ -261,7 +284,7 @@ def Bvlsd_n(s,theta,n,r1,r2,Q,GAMMA):
 
 
 
-#%% Shot gun method for finding the roots of the determinants
+#%% Methods to find the complex roots of a complex function
 def shot_gun_method(complex_function, s, R, N, i, mu=3):
     """
     Shot-gun method taken from Spakozvzski PhD thesis, needed to compute the complex zeros of a complex function.
@@ -278,7 +301,7 @@ def shot_gun_method(complex_function, s, R, N, i, mu=3):
     CG : pole location (or None if no poles are found there)
     """
     i = i+1
-    tol = 1e-3
+    tol = 1e-2
     s0 = s #initial location for pole search
     R0 = R #initial radius for pole search
     N0 = N #initial number of shot points
@@ -308,17 +331,61 @@ def shot_gun_method(complex_function, s, R, N, i, mu=3):
         print('Shot-gun method converged!')
         return CG
     else:
-        print('Shot-gun method not converging.....')
-        if i<100:
+        print('Shot-gun method not converging..... i: ', +str(int(i)))
+        if i<15:
             CG = shot_gun_method(complex_function,s0, R0, N0, i)
             return CG
         else: #if it doesn't find a root after 100 attempts there is no root there. (Or you have been super unlucky)
-            print('No roots in this zone!')
+            print('No roots in this zone, change!')
             CG = None
-            R = None
             return CG
 
 
 
-
+def mapping_poles(s_r_min,s_r_max,s_i_min,s_i_max,Myfunc, ii=0):
+    """
+    Brute force method in order to find all the poles of a certain complex function in a certain domain
+    ARGUMENT:
+        s_r_min : minimum real part of the domain
+        s_r_max : max real part of the domain
+        s_i_min : minimum imaginary part of the domain
+        s_i_max : maximum imaginary part of the domain
+        Myfunc : complex function that we want to find the poles of
+    RETURN:
+        poles : list of complex poles if found
+        plot of the poles
+    """
+    grid_real = 300 #number of grid points in real direction
+    grid_im = 300 #number of points in imaginary direction
+    s_real = np.linspace(s_r_min,s_r_max,grid_real)
+    s_im = np.linspace(s_i_min,s_i_max,grid_im)
+    real_grid, imag_grid = np.meshgrid(s_real,s_im)
+    magnitude = np.zeros((len(s_real),len(s_im)))
+    poles = []
+    for i in range(0,len(s_real)):
+        for j in range(0,len(s_im)):
+            magnitude[i,j] = np.abs(Myfunc(s_real[i]+1j*s_im[j]))
+            if magnitude[i,j]<1e-1: #criterion to decide if it is a pole or not
+                poles.append(s_real[i]+1j*s_im[j])
+    poles_real = np.array([poles]).real.reshape(len(poles))
+    poles_imag = np.array([poles]).imag.reshape(len(poles))
+    plt.figure(figsize=(10,6))
+    plt.scatter(poles_real,poles_imag)
+    plt.xlim([s_r_min,s_r_max])
+    plt.ylim([s_i_min,s_i_max])
+    plt.xlabel(r'$\sigma_{n}$')
+    plt.ylabel(r'$j \omega_{n}$')
+    plt.grid()
+    plt.title('Root locus')
+    
+    levels = np.linspace(0,0.1,21)
+    plt.figure(figsize=(10,6))
+    plt.contourf(real_grid,imag_grid,magnitude, levels=levels)
+    plt.xlabel(r'$\sigma_{n}$')
+    plt.ylabel(r'$j \omega_{n}$')
+    plt.colorbar()
+    plt.title('Determinant Map')
+    
+    
+    return poles
 

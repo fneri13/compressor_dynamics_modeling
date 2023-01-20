@@ -5,12 +5,13 @@ Created on Mon Dec 19 16:17:31 2022
 
 @author: fn
 
-try to replicate section 5.1 of Spakozsvki PhD thesis
+try to replicate section 5.1 of Spakovszky PhD thesis
 """
 
 import matplotlib.pyplot as plt
 import numpy as np
 from functions import *
+from functions import Bgap_n
 
 
 # Preamble: customization of matplotlib
@@ -59,6 +60,8 @@ n = 1
 s = 1+1j
 theta = np.pi/4
 x = 0.3
+x1 = 0
+x2 = 0.3
 Vx1 = 1
 Vx2 = 0.9
 Vr1 = 0.7
@@ -83,69 +86,39 @@ stator = Bsta_n(s, theta, n, Vx, Vy1, Vy2, alfa1, alfa2, lambda_s, dLs_dTana)
 rotor = Brot_n(s, theta, n, Vx1, Vy1, Vy2, alfa1, beta1, beta2, lambda_r, dLr_dTanb) 
 impeller = Bimp_n(s, theta, n, Vx1, Vr2, Vy1, Vy2, alfa1, beta1, beta2, r1, r2, rho1, rho2, A1, A2, s_i, dLi_dTanb)
 diffuser = Bdif_n(s, theta, n, Vr1, Vr2, Vy1, Vy2, alfa1, beta1, alfa2, r1, r2, rho1, rho2, A1, A2, s_dif, dLd_dTana)
-vaneless_diffuser = Bvlsd_n(s,theta,n,r1,r2,Q,GAMMA)    
+vaneless_diffuser = Bvlsd_n(s,theta,n,r1,r2,Q,GAMMA)  
+gap = Bgap_n(x1,x2,s,theta,n,Vx,Vy)
     
     
     
  #%%   
 #test function per implementare shot gun method
+
 def test_fun(s):
-    #test function to implement shot gun method. The roots are at -0.5+/-0.5j*sqrt(3)
-    return np.linalg.det(Trad_n(r, n, s, theta, Q, GAMMA))
-    # return s**3-7*s**2+s+1
+    #stupid function to test
+    return s**2+s+1
+
+def system_fun(s, n=1, theta=0):
+    m1 = np.linalg.inv(Tax_n(0.3, s, theta, n, Vx, Vy))
+    m2 = Bsta_n(s, theta, n, Vx, Vy1, Vy2, alfa1, alfa2, lambda_s, dLs_dTana)
+    m3 = Bgap_n(x1, x2, s, theta, n, Vx, Vy)
+    m4 = Brot_n(s, theta, n, Vx, Vy1, Vy2, alfa1, beta1, beta2, lambda_r, dLr_dTanb)
+    m5 = Tax_n(0.1, s, theta, n, Vx, Vy)
+    m6 = np.matmul(m1,m2)
+    m6 = np.matmul(m6,m3)
+    m6 = np.matmul(m6,m4)
+    m6 = np.matmul(m6,m5)
+    EC = np.array([[1,0,0]])
+    IC = np.array([[0,1,0],
+                   [0,0,1]])
+    Y = np.concatenate((np.matmul(EC,m6),IC))
+    return np.linalg.det(Y)
 
 
+s_r_min = -3
+s_r_max = +1
+s_i_min = -5
+s_i_max = +3
 
-
-def mapping_poles(s_r_min,s_r_max,s_i_min,s_i_max,Myfunc):
-    grid_real = 10
-    grid_im = 10
-    s_real = np.linspace(s_r_min,s_r_max,grid_real)
-    s_im = np.linspace(s_i_min,s_i_max,grid_im)
-    real_grid, imag_grid = np.meshgrid(s_real,s_im)
-    poles = np.zeros((len(s_real),len(s_im)))
-    for i in range(0,len(s_real)):
-        for j in range(0,len(s_im)):
-            if np.abs(Myfunc(s_real[i]+1j*s_im[j]))<0.01:
-                poles[i,j] = 1
-            else:
-                poles[i,j] = 0
-            # poles[i,j] = np.abs(Myfunc(s_real[i]+1j*s_im[j]))
-    
-    plt.figure(figsize=(10,6))
-    plt.contourf(real_grid, imag_grid, poles, cmap='bwr')
-    plt.xlabel(r'$\sigma_{n}$')
-    plt.ylabel(r'$j \omega_{n}$')
-    plt.title('Stability Map')
-    plt.colorbar()
-    # plt.savefig(path+'/stability_map.png')
-    return poles
-
-
-s_r_min = -10
-s_r_max = +10
-s_i_min = -10
-s_i_max = +10
-
-# pole_map = mapping_poles(s_r_min, s_r_max, s_i_min, s_i_max, test_fun)
-pole = shot_gun_method(test_fun,0,5,10, 1)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+pole_list = mapping_poles(s_r_min, s_r_max, s_i_min, s_i_max, system_fun)
 
