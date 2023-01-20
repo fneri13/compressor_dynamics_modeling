@@ -5,8 +5,8 @@ Created on Tue Jan 17 11:21:25 2023
 
 @author: fneri, TU Delft 
 
-Construction of the matrices needed in the Spakozvsky models PhD thesis.
-The n=0 modes are still missing!!!!!!
+Construction of the matrices needed in the Spakovszky models PhD thesis.
+The n=0 modes are still missing!
 """
 
 import numpy as np
