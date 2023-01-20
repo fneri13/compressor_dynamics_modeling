@@ -386,6 +386,5 @@ def mapping_poles(s_r_min,s_r_max,s_i_min,s_i_max,Myfunc, ii=0):
     plt.colorbar()
     plt.title('Determinant Map')
     
-    
     return poles
 
