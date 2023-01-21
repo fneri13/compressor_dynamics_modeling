@@ -296,8 +296,8 @@ def shot_gun_method(complex_function, s, R, N, i, mu=3, tol = 1e-3, attempts_max
     N : number of shots per round
     i : iterator
     mu : relaxation coefficient for the radius. 3 is the value sueggested in the thesis
-    tol : tolerance for the zero
-    attempts_max : number of attempts
+    tol : tolerance for the zero of the function
+    attempts_max : number of attempts before changing zone
     
     RETURN:
     CG : pole location (or None if no poles are found there)
@@ -309,7 +309,7 @@ def shot_gun_method(complex_function, s, R, N, i, mu=3, tol = 1e-3, attempts_max
     CG_err = np.abs(complex_function(s)) #error of the initial central location
     poles = []
     #Run the loop until we have 1 point, the radius is larger than zero, and the error is above a threshold
-    while (N > 1 and R > 0 and CG_err>tol):
+    while (N > 1 and R > 0):
         s_points = np.zeros(N,dtype=complex)
         J_points = np.zeros(N)
         error_points = np.zeros(N)
@@ -323,23 +323,34 @@ def shot_gun_method(complex_function, s, R, N, i, mu=3, tol = 1e-3, attempts_max
         min_pos = np.argmin(error_points) #index of the best point
         min_error = error_points[min_pos] #error of the best point
         CG_err = np.abs(complex_function(CG)) #error of the center of gravity
+        if CG_err < tol:
+            poles.append(CG)
         s = CG #update central location for new loop
         R = R-mu*np.abs(CG-s_points[min_pos]) #update radius for new loop
         N = N-1 #reduce the number of points for the next round
     
+    copies = []
+    for ii in range(1,len(poles)):
+        difference = np.abs(poles[ii]-poles[0])
+        if difference<tol:
+            copies.append(ii)
+    indices=[3,7]
+ 
+    for kk in sorted(copies, reverse=True):
+        del poles[kk]
+
+            
     #decide what to do when the previous while loop breaks out:
-    if CG_err<tol and N>0 and R>0:
+    if poles!=[]:
         print('Shot-gun method converged!')
-        poles.append(CG)
         return poles
     else:
-        print('Shot-gun method not converging..... i= ' +str(int(i)))
+        print('Shot-gun method not converging.. i= ' +str(int(i)))
         if i<attempts_max:
-            CG = shot_gun_method(complex_function,s0, R0, N0, i, attempts_max)
+            poles = shot_gun_method(complex_function,s0, R0, N0, i=i)
             return poles
         else: #if it doesn't find a root after 15 attempts there is no root there. (Or you have been super unlucky)
             print('No roots in this zone, change!')
-            # CG = None
             return poles
 
 

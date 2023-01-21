@@ -11,7 +11,6 @@ try to replicate section 5.1 of Spakovszky PhD thesis
 import matplotlib.pyplot as plt
 import numpy as np
 from functions import *
-from functions import Bgap_n
 from cxroots import Rectangle
 from mpmath import findroot
 from scipy.optimize import root
@@ -100,7 +99,7 @@ gap = Bgap_n(x1,x2,s,theta,n,Vx,Vy)
 
 def test_fun(s):
     #stupid function to test
-    return s**2+s+1
+    return s**7+1
 
 # def test_fun_prime(s):
 #     fun_right = test_fun(s+0.001)
@@ -164,4 +163,52 @@ plt.xlabel(r'$\sigma_{n}$')
 plt.ylabel(r'$j \omega_{n}$')
 plt.grid()
 plt.title('Root locus')
+#%%
+# pole_list=shot_gun_method(test_fun, 0, 5, N=50, i=0, tol=1e-3, attempts_max=30)
+n_grid = 10
+s_real = np.linspace(-10,10,n_grid)
+s_imag = np.linspace(-10,10,n_grid)
+span = (s_real[-1]-s_real[0])/(n_grid-1)
+real_grid, imag_grid = np.meshgrid(s_real,s_imag)
+radius = span/np.sqrt(2)
+pole_list=[]
+for i in range(0,len(s_real)):
+    for j in range(0,len(s_imag)):
+        pole_list.append(shot_gun_method(test_fun, s_real[i]+s_imag[j], radius, N=50, i=0, tol=1e-2, attempts_max=30))
+
+# flattent the list
+poles = [item for sublist in pole_list for item in sublist]
+#cancel the copies
+copies = []
+for ii in range(1,len(poles)):
+    difference = np.abs(poles[ii]-poles[0])
+    if difference<0.001:
+        copies.append(ii)
+for kk in sorted(copies, reverse=True):
+    del poles[kk]
+poles = np.array(poles)
+
+plt.figure(figsize=(10,6))
+plt.scatter(poles.real,poles.imag)
+plt.xlim([s_real[0],s_real[-1]])
+plt.ylim([s_imag[0],s_imag[-1]])
+plt.xlabel(r'$\sigma_{n}$')
+plt.ylabel(r'$j \omega_{n}$')
+plt.grid()
+plt.title('Root locus')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
