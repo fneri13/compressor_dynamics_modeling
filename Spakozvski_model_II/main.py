@@ -12,6 +12,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 from functions import *
 from functions import Bgap_n
+from cxroots import Rectangle
+from mpmath import findroot
+from scipy.optimize import root
+
 
 
 # Preamble: customization of matplotlib
@@ -98,6 +102,19 @@ def test_fun(s):
     #stupid function to test
     return s**2+s+1
 
+# def test_fun_prime(s):
+#     fun_right = test_fun(s+0.001)
+#     fun_left = test_fun(s-0.001)
+#     fun_up = test_fun(s+0.001)
+#     fun_down = test_fun(s-0.001)
+#     fun_prime_real = (fun_right-fun_left)/(0.002)
+#     fun_prime_imag = (fun_up-fun_down)/(0.002)
+#     return fun_prime_real+1j*fun_prime_imag
+
+def derivative(f, x=s, h=0.001):
+    return (f(x + h) - f(x - h)) / (2*h)
+
+
 def system_fun(s, n=1, theta=0):
     m1 = np.linalg.inv(Tax_n(0.3, s, theta, n, Vx, Vy))
     m2 = Bsta_n(s, theta, n, Vx, Vy1, Vy2, alfa1, alfa2, lambda_s, dLs_dTana)
@@ -117,8 +134,34 @@ def system_fun(s, n=1, theta=0):
 
 s_r_min = -3
 s_r_max = +1
-s_i_min = -5
+s_i_min = -3
 s_i_max = +3
-
+s = -1
+radius = 10
+i=1
 pole_list = mapping_poles(s_r_min, s_r_max, s_i_min, s_i_max, system_fun)
+
+
+#%%
+n_grid = 5
+s_real = np.linspace(-10,10,n_grid)
+s_imag = np.linspace(-10,10,n_grid)
+span = (s_real[-1]-s_real[0])/(n_grid-1)
+real_grid, imag_grid = np.meshgrid(s_real,s_imag)
+radius = span/np.sqrt(2)
+
+
+for i in range(0,len(s_real)):
+    for j in range(0,len(s_imag)):
+        pole_list=shot_gun_method(system_fun, s_real[i]+s_imag[j], radius, N=100, i=0, tol=1e-2, attempts_max=30)
+
+pole_list = np.array([i for i in pole_list if i is not None])
+plt.figure(figsize=(10,6))
+plt.plot(pole_list.real,pole_list.imag,'ko') 
+plt.xlim([s_real[0],s_real[-1]])
+plt.ylim([s_imag[0],s_imag[-1]])
+plt.xlabel(r'$\sigma_{n}$')
+plt.ylabel(r'$j \omega_{n}$')
+plt.grid()
+plt.title('Root locus')
 

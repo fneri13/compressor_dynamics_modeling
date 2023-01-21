@@ -285,7 +285,7 @@ def Bvlsd_n(s,theta,n,r1,r2,Q,GAMMA):
 
 
 #%% Methods to find the complex roots of a complex function
-def shot_gun_method(complex_function, s, R, N, i, mu=3):
+def shot_gun_method(complex_function, s, R, N, i, mu=3, tol = 1e-3, attempts_max=50):
     """
     Shot-gun method taken from Spakozvzski PhD thesis, needed to compute the complex zeros of a complex function.
     
@@ -296,17 +296,18 @@ def shot_gun_method(complex_function, s, R, N, i, mu=3):
     N : number of shots per round
     i : iterator
     mu : relaxation coefficient for the radius. 3 is the value sueggested in the thesis
+    tol : tolerance for the zero
+    attempts_max : number of attempts
     
     RETURN:
     CG : pole location (or None if no poles are found there)
     """
     i = i+1
-    tol = 1e-2
     s0 = s #initial location for pole search
     R0 = R #initial radius for pole search
     N0 = N #initial number of shot points
     CG_err = np.abs(complex_function(s)) #error of the initial central location
-    
+    poles = []
     #Run the loop until we have 1 point, the radius is larger than zero, and the error is above a threshold
     while (N > 1 and R > 0 and CG_err>tol):
         s_points = np.zeros(N,dtype=complex)
@@ -324,21 +325,22 @@ def shot_gun_method(complex_function, s, R, N, i, mu=3):
         CG_err = np.abs(complex_function(CG)) #error of the center of gravity
         s = CG #update central location for new loop
         R = R-mu*np.abs(CG-s_points[min_pos]) #update radius for new loop
-        N = N-1 #reduce the number of shots
+        N = N-1 #reduce the number of points for the next round
     
     #decide what to do when the previous while loop breaks out:
-    if CG_err<tol and N>1 and R>0:
+    if CG_err<tol and N>0 and R>0:
         print('Shot-gun method converged!')
-        return CG
+        poles.append(CG)
+        return poles
     else:
-        print('Shot-gun method not converging..... i: ', +str(int(i)))
-        if i<15:
-            CG = shot_gun_method(complex_function,s0, R0, N0, i)
-            return CG
-        else: #if it doesn't find a root after 100 attempts there is no root there. (Or you have been super unlucky)
+        print('Shot-gun method not converging..... i= ' +str(int(i)))
+        if i<attempts_max:
+            CG = shot_gun_method(complex_function,s0, R0, N0, i, attempts_max)
+            return poles
+        else: #if it doesn't find a root after 15 attempts there is no root there. (Or you have been super unlucky)
             print('No roots in this zone, change!')
-            CG = None
-            return CG
+            # CG = None
+            return poles
 
 
 
