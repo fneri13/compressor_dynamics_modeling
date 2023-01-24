@@ -285,73 +285,58 @@ def Bvlsd_n(s,theta,n,r1,r2,Q,GAMMA):
 
 
 #%% Methods to find the complex roots of a complex function
-def shot_gun_method(complex_function, s, R, N, i, mu=3, tol = 1e-3, attempts_max=50):
+def shot_gun_method(complex_function, s, R, N, tol=1e-6, attempts=10):
     """
     Shot-gun method taken from Spakozvzski PhD thesis, needed to compute the complex zeros of a complex function.
     
     ARGUMENTS
     complex_function : is the complex function that we want to find the roots
     s : is the initial guess for the complex root, around which we will shoot many random points
-    R : radius around s, where we will randomly shoot
+    R : radius around s, where we will randomly shoot at the beginning
     N : number of shots per round
-    i : iterator
-    mu : relaxation coefficient for the radius. 3 is the value sueggested in the thesis
-    tol : tolerance for the zero of the function
-    attempts_max : number of attempts before changing zone
+    tol : tolerance for the point to be a pole
+    attempts : number of attempts in the same zone, in order to find different poles that could be there
     
     RETURN:
-    CG : pole location (or None if no poles are found there)
+    poles : list of found poles
     """
-    i = i+1
+    print('-----------------------------------------------------------------------')
+    print('SHOT GUN METHOD CALLED')
+    print('Shot center: ')
+    print(s)
+    print('Shot radius: ')
+    print(R)
     s0 = s #initial location for pole search
     R0 = R #initial radius for pole search
-    N0 = N #initial number of shot points
-    CG_err = np.abs(complex_function(s)) #error of the initial central location
-    poles = []
-    #Run the loop until we have 1 point, the radius is larger than zero, and the error is above a threshold
-    while (N > 1 and R > 0):
-        s_points = np.zeros(N,dtype=complex)
-        J_points = np.zeros(N)
-        error_points = np.zeros(N)
-        for kk in range(0,N):    
-            r = np.random.uniform(0, R) #random distance from the shot point
-            phi = np.random.uniform(0, 2*np.pi) #random phase angle from the shot point
-            s_points[kk] = s+r*np.exp(1j*phi) #random points where determinante will be computed 
-            error_points[kk] = np.abs(complex_function(s_points[kk]))
-            J_points[kk] = (error_points[kk])**(-2) #errors associated to every random point
-        CG = np.sum(s_points*J_points)/np.sum(J_points) #center of gravity of points
-        min_pos = np.argmin(error_points) #index of the best point
-        min_error = error_points[min_pos] #error of the best point
-        CG_err = np.abs(complex_function(CG)) #error of the center of gravity
-        if CG_err < tol:
-            poles.append(CG)
-        s = CG #update central location for new loop
-        R = R-mu*np.abs(CG-s_points[min_pos]) #update radius for new loop
-        N = N-1 #reduce the number of points for the next round
+    N0 = N #initial number of shot points in the zone
+    mu=3 #under-relaxation coefficient for the radius. 3 is the value sueggested in the thesis
+    poles = [] #initialize a list of found poles
     
-    copies = []
-    for ii in range(1,len(poles)):
-        difference = np.abs(poles[ii]-poles[0])
-        if difference<tol:
-            copies.append(ii)
-    indices=[3,7]
- 
-    for kk in sorted(copies, reverse=True):
-        del poles[kk]
-
-            
-    #decide what to do when the previous while loop breaks out:
-    if poles!=[]:
-        print('Shot-gun method converged!')
-        return poles
-    else:
-        print('Shot-gun method not converging.. i= ' +str(int(i)))
-        if i<attempts_max:
-            poles = shot_gun_method(complex_function,s0, R0, N0, i=i)
-            return poles
-        else: #if it doesn't find a root after 15 attempts there is no root there. (Or you have been super unlucky)
-            print('No roots in this zone, change!')
-            return poles
+    #Run the loop until we have 1 point, the radius is larger than zero, and the error is above a threshold
+    for rounds in range(0,attempts):    
+        s = s0 #for every round reset the method to initial values
+        R = R0
+        N = N0
+        while (N > 0):
+            s_points = np.zeros(N,dtype=complex)
+            J_points = np.zeros(N)
+            error_points = np.zeros(N)
+            for kk in range(0,N):    
+                r = np.random.uniform(0, R) #random distance from the shot point
+                phi = np.random.uniform(0, 2*np.pi) #random phase angle from the shot point
+                s_points[kk] = s+r*np.exp(1j*phi) #random points where determinante will be computed 
+                error_points[kk] = np.abs(complex_function(s_points[kk]))
+                J_points[kk] = (error_points[kk])**(-2) #errors associated to every random point
+            CG = np.sum(s_points*J_points)/np.sum(J_points) #center of gravity of points
+            min_pos = np.argmin(error_points) #index of the best point
+            min_error = error_points[min_pos] #error of the best point
+            s = s_points[min_pos] #update central location for new loop
+            R = mu*np.abs(CG-s_points[min_pos]) #update radius for new loop
+            N = N-1 #reduce the number of points for the next round
+        if min_error < tol:
+            poles.append(s)
+    print('-----------------------------------------------------------------------')
+    return poles     
 
 
 
@@ -400,4 +385,6 @@ def mapping_poles(s_r_min,s_r_max,s_i_min,s_i_max,Myfunc, ii=0):
     plt.title('Determinant Map')
     
     return poles
+
+
 

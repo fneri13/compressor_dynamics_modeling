@@ -101,20 +101,8 @@ def test_fun(s):
     #stupid function to test
     return s**7+1
 
-# def test_fun_prime(s):
-#     fun_right = test_fun(s+0.001)
-#     fun_left = test_fun(s-0.001)
-#     fun_up = test_fun(s+0.001)
-#     fun_down = test_fun(s-0.001)
-#     fun_prime_real = (fun_right-fun_left)/(0.002)
-#     fun_prime_imag = (fun_up-fun_down)/(0.002)
-#     return fun_prime_real+1j*fun_prime_imag
-
-def derivative(f, x=s, h=0.001):
-    return (f(x + h) - f(x - h)) / (2*h)
-
-
 def system_fun(s, n=1, theta=0):
+    #function of the system with all the components stacked together
     m1 = np.linalg.inv(Tax_n(0.3, s, theta, n, Vx, Vy))
     m2 = Bsta_n(s, theta, n, Vx, Vy1, Vy2, alfa1, alfa2, lambda_s, dLs_dTana)
     m3 = Bgap_n(x1, x2, s, theta, n, Vx, Vy)
@@ -138,76 +126,135 @@ s_i_max = +3
 s = -1
 radius = 10
 i=1
-pole_list = mapping_poles(s_r_min, s_r_max, s_i_min, s_i_max, system_fun)
+# pole_list = mapping_poles(s_r_min, s_r_max, s_i_min, s_i_max, system_fun)
 
 
 #%%
-n_grid = 5
-s_real = np.linspace(-10,10,n_grid)
-s_imag = np.linspace(-10,10,n_grid)
-span = (s_real[-1]-s_real[0])/(n_grid-1)
-real_grid, imag_grid = np.meshgrid(s_real,s_imag)
-radius = span/np.sqrt(2)
+# n_grid = 5
+# s_real = np.linspace(-10,10,n_grid)
+# s_imag = np.linspace(-10,10,n_grid)
+# span = (s_real[-1]-s_real[0])/(n_grid-1)
+# real_grid, imag_grid = np.meshgrid(s_real,s_imag)
+# radius = span/np.sqrt(2)
 
 
-for i in range(0,len(s_real)):
-    for j in range(0,len(s_imag)):
-        pole_list=shot_gun_method(system_fun, s_real[i]+s_imag[j], radius, N=100, i=0, tol=1e-2, attempts_max=30)
+# for i in range(0,len(s_real)):
+#     for j in range(0,len(s_imag)):
+#         pole_list=shot_gun_method(system_fun, s_real[i]+s_imag[j], radius, N=100, i=0, tol=1e-2, attempts_max=30)
 
-pole_list = np.array([i for i in pole_list if i is not None])
-plt.figure(figsize=(10,6))
-plt.plot(pole_list.real,pole_list.imag,'ko') 
-plt.xlim([s_real[0],s_real[-1]])
-plt.ylim([s_imag[0],s_imag[-1]])
-plt.xlabel(r'$\sigma_{n}$')
-plt.ylabel(r'$j \omega_{n}$')
-plt.grid()
-plt.title('Root locus')
+# pole_list = np.array([i for i in pole_list if i is not None])
+# plt.figure(figsize=(10,6))
+# plt.plot(pole_list.real,pole_list.imag,'ko') 
+# plt.xlim([s_real[0],s_real[-1]])
+# plt.ylim([s_imag[0],s_imag[-1]])
+# plt.xlabel(r'$\sigma_{n}$')
+# plt.ylabel(r'$j \omega_{n}$')
+# plt.grid()
+# plt.title('Root locus')
 #%%
 # pole_list=shot_gun_method(test_fun, 0, 5, N=50, i=0, tol=1e-3, attempts_max=30)
-n_grid = 10
-s_real = np.linspace(-10,10,n_grid)
-s_imag = np.linspace(-10,10,n_grid)
-span = (s_real[-1]-s_real[0])/(n_grid-1)
-real_grid, imag_grid = np.meshgrid(s_real,s_imag)
-radius = span/np.sqrt(2)
-pole_list=[]
-for i in range(0,len(s_real)):
-    for j in range(0,len(s_imag)):
-        pole_list.append(shot_gun_method(test_fun, s_real[i]+s_imag[j], radius, N=50, i=0, tol=1e-2, attempts_max=30))
+# n_grid = 10
+# s_real = np.linspace(-10,10,n_grid)
+# s_imag = np.linspace(-10,10,n_grid)
+# span = (s_real[-1]-s_real[0])/(n_grid-1)
+# real_grid, imag_grid = np.meshgrid(s_real,s_imag)
+# radius = span/np.sqrt(2)
+# pole_list=[]
+# for i in range(0,len(s_real)):
+#     for j in range(0,len(s_imag)):
+#         pole_list.append(shot_gun_method(test_fun, s_real[i]+s_imag[j], radius, N=100, i=0, tol=1e-2, attempts_max=30))
 
-# flattent the list
-poles = [item for sublist in pole_list for item in sublist]
-#cancel the copies
-copies = []
-for ii in range(1,len(poles)):
-    difference = np.abs(poles[ii]-poles[0])
-    if difference<0.001:
-        copies.append(ii)
-for kk in sorted(copies, reverse=True):
-    del poles[kk]
-poles = np.array(poles)
+# # flattent the list
+# poles = [item for sublist in pole_list for item in sublist]
+# #cancel the copies
+# copies = []
+# for ii in range(1,len(poles)):
+#     difference = np.abs(poles[ii]-poles[0])
+#     if difference<0.001:
+#         copies.append(ii)
+# for kk in sorted(copies, reverse=True):
+#     del poles[kk]
+# poles = np.array(poles)
+
+#%%  
+
+def test_fun(s):
+    return s**10+1
+
+# C = Circle(0,9)
+# roots = C.roots(system_fun)   
+# roots.show()
+
+
+initial_point = 0+0j
+radius_search = 1
+tol=1e-1
+
+def shot_gun_method(complex_function, s, R, N, tol=1e-6, attempts=10):
+    """
+    Shot-gun method taken from Spakozvzski PhD thesis, needed to compute the complex zeros of a complex function.
+    
+    ARGUMENTS
+    complex_function : is the complex function that we want to find the roots
+    s : is the initial guess for the complex root, around which we will shoot many random points
+    R : radius around s, where we will randomly shoot at the beginning
+    N : number of shots per round
+    tol : tolerance for the point to be a pole
+    attempts : number of attempts in the same zone, in order to find different poles that could be there
+    
+    RETURN:
+    poles : list of found poles
+    """
+    print('-----------------------------------------------------------------------')
+    print('SHOT GUN METHOD CALLED')
+    print('Shot center: ')
+    print(s)
+    print('Shot radius: ')
+    print(R)
+    s0 = s #initial location for pole search
+    R0 = R #initial radius for pole search
+    N0 = N #initial number of shot points in the zone
+    mu=3 #under-relaxation coefficient for the radius. 3 is the value sueggested in the thesis
+    poles = [] #initialize a list of found poles
+    
+    #Run the loop until we have 1 point, the radius is larger than zero, and the error is above a threshold
+    for rounds in range(0,attempts):    
+        s = s0 #for every round reset the method to initial values
+        R = R0
+        N = N0
+        while (N > 0):
+            s_points = np.zeros(N,dtype=complex)
+            J_points = np.zeros(N)
+            error_points = np.zeros(N)
+            for kk in range(0,N):    
+                r = np.random.uniform(0, R) #random distance from the shot point
+                phi = np.random.uniform(0, 2*np.pi) #random phase angle from the shot point
+                s_points[kk] = s+r*np.exp(1j*phi) #random points where determinante will be computed 
+                error_points[kk] = np.abs(complex_function(s_points[kk]))
+                J_points[kk] = (error_points[kk])**(-2) #errors associated to every random point
+            CG = np.sum(s_points*J_points)/np.sum(J_points) #center of gravity of points
+            min_pos = np.argmin(error_points) #index of the best point
+            min_error = error_points[min_pos] #error of the best point
+            s = s_points[min_pos] #update central location for new loop
+            R = mu*np.abs(CG-s_points[min_pos]) #update radius for new loop
+            N = N-1 #reduce the number of points for the next round
+        if min_error < tol:
+            poles.append(s)
+    print('-----------------------------------------------------------------------')
+    return poles      
+
+
+pole_list = shot_gun_method3(test_fun, initial_point, radius_search, N=100, attempts=100)
+poles = np.array(pole_list)
 
 plt.figure(figsize=(10,6))
 plt.scatter(poles.real,poles.imag)
-plt.xlim([s_real[0],s_real[-1]])
-plt.ylim([s_imag[0],s_imag[-1]])
+plt.xlim([-5,5])
+plt.ylim([-5,5])
 plt.xlabel(r'$\sigma_{n}$')
 plt.ylabel(r'$j \omega_{n}$')
-plt.grid()
+# plt.grid()
 plt.title('Root locus')
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
