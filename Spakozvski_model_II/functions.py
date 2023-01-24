@@ -285,7 +285,7 @@ def Bvlsd_n(s,theta,n,r1,r2,Q,GAMMA):
 
 
 #%% Methods to find the complex roots of a complex function
-def shot_gun_method(complex_function, s, R, N, tol=1e-6, attempts=10):
+def shot_gun_method(complex_function, s, R, N=30, tol=1e-5, attempts=30):
     """
     Shot-gun method taken from Spakozvzski PhD thesis, needed to compute the complex zeros of a complex function.
     
