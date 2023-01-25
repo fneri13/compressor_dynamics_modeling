@@ -285,7 +285,7 @@ def Bvlsd_n(s,theta,n,r1,r2,Q,GAMMA):
 
 
 #%% Methods to find the complex roots of a complex function
-def shot_gun_method(complex_function, s, R, N=30, tol=1e-5, attempts=30):
+def shot_gun_method(complex_function, s, R, N=30, tol=1e-6, attempts=30):
     """
     Shot-gun method taken from Spakozvzski PhD thesis, needed to compute the complex zeros of a complex function.
     
@@ -333,8 +333,18 @@ def shot_gun_method(complex_function, s, R, N=30, tol=1e-5, attempts=30):
             s = s_points[min_pos] #update central location for new loop
             R = mu*np.abs(CG-s_points[min_pos]) #update radius for new loop
             N = N-1 #reduce the number of points for the next round
+        
+        #decide if to append the new pole to the list of poles
         if min_error < tol:
-            poles.append(s)
+            copy = False #assuming initially that this pole is not a copy, see if it is
+            for k in poles:
+                distance = np.abs(s-k)
+                if distance < tol:
+                    copy = copy or True
+                else:
+                    copy = copy or False
+            if copy==False:
+                poles.append(s)
     print('-----------------------------------------------------------------------')
     return poles     
 
@@ -351,7 +361,6 @@ def mapping_poles(s_r_min,s_r_max,s_i_min,s_i_max,Myfunc, ii=0):
         Myfunc : complex function that we want to find the poles of
     RETURN:
         poles : list of complex poles if found
-        plot of the poles
     """
     grid_real = 300 #number of grid points in real direction
     grid_im = 300 #number of points in imaginary direction
