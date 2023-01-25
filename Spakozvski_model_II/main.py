@@ -105,6 +105,7 @@ n_grid = 3
 s_real = np.linspace(s_r_min, s_r_max, n_grid)
 s_imag = np.linspace(s_i_min, s_i_max, n_grid)
 radius = ((s_real[1]-s_real[0])**2+(s_imag[1]-s_imag[0])**2)/4
+radius = ((s_real[1]-s_real[0]))/2
 
 def test_fun(s):
     return s**7+1
@@ -122,7 +123,7 @@ def system_fun(s, n=1, theta=0):
     m6 = np.matmul(m6,m5)
     EC = np.array([[1,0,0]])
     IC = np.array([[0,1,0],
-                   [0,0,1]])
+                    [0,0,1]])
     Y = np.concatenate((np.matmul(EC,m6),IC))
     return np.linalg.det(Y)
 
@@ -160,7 +161,7 @@ c_s = 0.121 #blade chord
 gamma_s = 61.8*np.pi/180 #stagger angle rotor blades
 lambda_s = 0.256 #inertia parameter rotor
 
-plt.figure(figsize=(10,6))
+# plt.figure(figsize=(10,6))
 
 poles_list_analytic = []
 for n in range(1,7):
@@ -180,31 +181,45 @@ for n in range(1,7):
         A[2,2]= 1
         return np.linalg.det(A)
     
-    pole_list = []
-    for ii in range(len(s_real)):
-        for jj in range(len(s_imag)):
-            solution = shot_gun_method(system_fun2, s_real[ii]+1j*s_imag[jj], radius)
-            pole_list.append(solution)
-    poles_list = [item for sublist in pole_list for item in sublist]
-    poles = np.array(poles_list)
-    plt.scatter(poles.real,-poles.imag, label='n: ' +str(n))
+#     pole_list = []
+#     for ii in range(len(s_real)):
+#         for jj in range(len(s_imag)):
+#             solution = shot_gun_method(system_fun2, s_real[ii]+1j*s_imag[jj], radius)
+#             pole_list.append(solution)
+#     poles_list = [item for sublist in pole_list for item in sublist]
+#     poles = np.array(poles_list)
+#     plt.scatter(poles.real,-poles.imag, label='n: ' +str(n))
     
-    #not physical analytic solution
-    poles_list_analytic.append(complex(n*Vx))
-    #physical analytic solution
-    poles_list_analytic.append(complex((dLs_dTana*np.tan(alfa1)/Vx-Vx)/(lambda_s+2/n),
-                                       (dLs_dTana/Vx)/(lambda_s+2/n)))
+#     #not physical analytic solution
+#     poles_list_analytic.append(complex(n*Vx))
+#     #physical analytic solution
+#     poles_list_analytic.append(complex((dLs_dTana*np.tan(alfa1)/Vx-Vx)/(lambda_s+2/n),
+#                                         (dLs_dTana/Vx)/(lambda_s+2/n)))
 
-poles_analytic = np.array(poles_list_analytic)
-plt.plot(poles_analytic.real,poles_analytic.imag,'kx', linewidth=10)
-plt.legend()
-plt.xlim([s_r_min,s_r_max])
-plt.ylim([s_i_min,s_i_max])
-plt.xlabel(r'$\sigma_{n}$')
-plt.ylabel(r'$j \omega_{n}$')
-plt.title('Root locus')
+# poles_analytic = np.array(poles_list_analytic)
+# plt.plot(poles_analytic.real,poles_analytic.imag,'kx', linewidth=10)
+# plt.legend()
+# plt.xlim([s_r_min-radius,s_r_max+radius])
+# plt.ylim([s_i_min-radius,s_i_max+radius])
+# plt.xlabel(r'$\sigma_{n}$')
+# plt.ylabel(r'$j \omega_{n}$')
+# plt.title('Root locus')
 
 
 
 end = time.time()
 print('Elapsed time: ',end - start)
+
+
+#%%
+domain = [-3,3,-3,3]
+poles = shot_gun_method2(system_fun2, [-3,3,-3,3], [5,5])
+poles_analytic = np.array(poles_list_analytic)
+plt.figure()
+plt.plot(poles.real,-poles.imag,'kx')
+# plt.legend()
+plt.xlim([domain[0],domain[1]])
+plt.ylim([domain[2],domain[3]])
+plt.xlabel(r'$\sigma_{n}$')
+plt.ylabel(r'$j \omega_{n}$')
+plt.title('Root locus')

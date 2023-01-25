@@ -346,7 +346,87 @@ def shot_gun_method(complex_function, s, R, N=30, tol=1e-6, attempts=30):
             if copy==False:
                 poles.append(s)
     print('-----------------------------------------------------------------------')
-    return poles     
+    return poles  
+
+    
+def shot_gun_method2(complex_function, domain, n_grid, N=50, tol=1e-6, attempts=50):
+    """
+    Shot-gun method taken from Spakozvzski PhD thesis, needed to compute the complex zeros of a complex function.
+    
+    ARGUMENTS
+    complex_function : is the complex function that we want to find the roots
+    domain : domain where we look for poles
+    n_grid : number of intervals in x and y in the complex domain 
+    N : number of shots per round
+    tol : tolerance for the point to be a pole
+    attempts : number of attempts in the same zone, in order to find different poles that could be there
+    
+    RETURN:
+    poles : array of poles
+    """
+    print('-----------------------------------------------------------------------')
+    print('SHOT GUN METHOD CALLED')
+    print('-----------------------------------------------------------------------')
+    
+    
+    left_lim = domain[0] #left border of the domain
+    right_lim = domain[1] #right border of the domain
+    down_lim = domain[2] #lower border
+    upper_lim = domain[3] #upper border
+    lx = (right_lim-left_lim)/(n_grid[0]-1) #interval step in x direction
+    ly = (upper_lim-down_lim)/(n_grid[1]-1) #interval step in y direction
+    N0 = N #backup values
+    lx0 = lx #backup value
+    ly0 = ly #backup value
+    s_real = np.linspace(left_lim+lx/2, right_lim-lx/2, n_grid[0]-1) #real value of points
+    s_imag = np.linspace(down_lim+ly/2, upper_lim-ly/2, n_grid[1]-1) #imaginary value of points
+    mu=3 #under-relaxation coefficient. It is equal to 3 in the thesis
+    
+    pole_list = [] #initialize pole list
+    for ii in range(len(s_real)):
+        for jj in range(len(s_imag)):
+            print('-------------------------------------------')
+            print('Zone centered in s = (' + str(s_real[ii]) + ','+str(s_imag[jj])+'j)')
+            for rounds in range(0,attempts):    
+                #for every round in the same zone initialize the parameters
+                s = s_real[ii]+1j*s_imag[jj]
+                N = N0
+                lx = lx0
+                ly = ly0
+                while (N > 0):
+                    s_points = np.zeros(N,dtype=complex)
+                    J_points = np.zeros(N)
+                    error_points = np.zeros(N)
+                    for kk in range(0,N):    
+                        dx = np.random.uniform(-lx/2, lx/2) #random deltaX from the shot point
+                        dy = np.random.uniform(-ly/2, ly/2) #random deltaY from the shot point
+                        s_points[kk] = s+dx+1j*dy #random points where determinante will be computed 
+                        error_points[kk] = np.abs(complex_function(s_points[kk]))
+                        J_points[kk] = (error_points[kk])**(-2) #errors associated to every random point
+                    CG = np.sum(s_points*J_points)/np.sum(J_points) #center of gravity of points
+                    min_pos = np.argmin(error_points) #index of the best point
+                    min_error = error_points[min_pos] #error of the best point
+                    s = s_points[min_pos] #update central location for new loop
+                    lx = mu*np.abs((CG-s_points[min_pos]).real)
+                    ly = mu*np.abs((CG-s_points[min_pos]).imag)
+                    R = mu*np.abs(CG-s_points[min_pos]) #update radius for new loop
+                    N = N-1 #reduce the number of points for the next round  
+                
+                if min_error < tol:
+                    copy = False #assuming initially that this pole is not a copy, see if it is
+                    for k in pole_list:
+                        distance = np.abs(s-k)
+                        if distance < tol:
+                            copy = copy or True
+                        else:
+                            copy = copy or False
+                    if copy==False:
+                        pole_list.append(s)
+                        print('append pole..')
+
+    poles = np.array(pole_list)    
+    print('-------------------------------------------')
+    return poles
 
 
 
