@@ -213,13 +213,12 @@ print('Elapsed time: ',end - start)
 
 #%%
 domain = [-3,3,-3,3]
-poles = shot_gun_method2(system_fun2, [-3,3,-3,3], [5,5])
-poles_analytic = np.array(poles_list_analytic)
+poles = shot_gun_method2(system_fun2, [-3,3,-3,3], [3,3])
 plt.figure()
-plt.plot(poles.real,-poles.imag,'kx')
-# plt.legend()
+plt.plot(poles.real,-poles.imag,'o')
 plt.xlim([domain[0],domain[1]])
 plt.ylim([domain[2],domain[3]])
 plt.xlabel(r'$\sigma_{n}$')
 plt.ylabel(r'$j \omega_{n}$')
 plt.title('Root locus')
+
