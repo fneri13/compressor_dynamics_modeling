@@ -349,7 +349,7 @@ def shot_gun_method(complex_function, s, R, N=30, tol=1e-6, attempts=30):
     return poles  
 
     
-def shot_gun_method2(complex_function, domain, n_grid, N=50, tol=1e-6, attempts=50):
+def shot_gun_method2(complex_function, domain, n_grid, n, N=20, tol=1e-3, attempts=20):
     """
     Shot-gun method taken from Spakozvzski PhD thesis, needed to compute the complex zeros of a complex function.
     
@@ -401,7 +401,7 @@ def shot_gun_method2(complex_function, domain, n_grid, N=50, tol=1e-6, attempts=
                         dx = np.random.uniform(-lx/2, lx/2) #random deltaX from the shot point
                         dy = np.random.uniform(-ly/2, ly/2) #random deltaY from the shot point
                         s_points[kk] = s+dx+1j*dy #random points where determinante will be computed 
-                        error_points[kk] = np.abs(complex_function(s_points[kk]))
+                        error_points[kk] = np.abs(complex_function(s_points[kk],n))
                         J_points[kk] = (error_points[kk])**(-2) #errors associated to every random point
                     CG = np.sum(s_points*J_points)/np.sum(J_points) #center of gravity of points
                     min_pos = np.argmin(error_points) #index of the best point
