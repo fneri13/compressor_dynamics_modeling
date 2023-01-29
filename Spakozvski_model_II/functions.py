@@ -349,9 +349,11 @@ def shot_gun_method(complex_function, s, R, N=30, tol=1e-6, attempts=30):
     return poles  
 
     
-def shot_gun_method2(complex_function, domain, n_grid, n, N=20, tol=1e-3, attempts=20):
+def shot_gun_method2(complex_function, domain, n_grid, n, N=30, tol=1e-6, attempts=30):
     """
     Shot-gun method taken from Spakozvzski PhD thesis, needed to compute the complex zeros of a complex function.
+    The difference with method 1 is that here we provide the domain of intereste, and the grid  on which we want
+    to look for the poles
     
     ARGUMENTS
     complex_function : is the complex function that we want to find the roots

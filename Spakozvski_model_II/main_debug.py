@@ -11,6 +11,7 @@ try to replicate section 5.1 of Spakovszky PhD thesis
 import matplotlib.pyplot as plt
 import numpy as np
 from functions import *
+import os
 
 
 
@@ -20,7 +21,13 @@ plt.rc('text', usetex=False)
 plt.rc('xtick',labelsize=10)
 plt.rc('ytick',labelsize=10)
 plt.rcParams['font.size'] = 14
-format_fig = (12,8)
+format_fig = (9,5)
+
+#create directory for pictures
+path = "pics"
+isExist = os.path.exists(path)
+if not isExist:
+   os.makedirs(path)
 
 #%% exercise rotor stator pre-stall modes
 
@@ -89,195 +96,95 @@ diffuser = Bdif_n(s, theta, n, Vr1, Vr2, Vy1, Vy2, alfa1, beta1, alfa2, r1, r2, 
 vaneless_diffuser = Bvlsd_n(s,theta,n,r1,r2,Q,GAMMA)  
 gap = Bgap_n(x1,x2,s,theta,n,Vx,Vy)
     
-#%%Find the poles of a real problems   
-# import time
-# start = time.time()
+#%%Poles of a test function  
 
-# #limits of domain
-# s_r_min = -3
-# s_r_max = +3
-# s_i_min = -3
-# s_i_max = +3
-# n_grid = 3
-# s_real = np.linspace(s_r_min, s_r_max, n_grid)
-# s_imag = np.linspace(s_i_min, s_i_max, n_grid)
-# radius = ((s_real[1]-s_real[0])**2+(s_imag[1]-s_imag[0])**2)/4
-# radius = ((s_real[1]-s_real[0]))/2
-
-# def test_fun(s):
-#     return s**7+1
-
-# def system_fun(s, n, theta=0):
-#     #function of the system with all the components stacked together
-#     m1 = np.linalg.inv(Tax_n(0.3, s, theta, n, Vx, Vy))
-#     m2 = Bsta_n(s, theta, n, Vx, Vy1, Vy2, alfa1, alfa2, lambda_s, dLs_dTana)
-#     m3 = Bgap_n(x1, x2, s, theta, n, Vx, Vy)
-#     m4 = Brot_n(s, theta, n, Vx, Vy1, Vy2, alfa1, beta1, beta2, lambda_r, dLr_dTanb)
-#     m5 = Tax_n(0.1, s, theta, n, Vx, Vy)
-#     m6 = np.matmul(m1,m2)
-#     m6 = np.matmul(m6,m3)
-#     m6 = np.matmul(m6,m4)
-#     m6 = np.matmul(m6,m5)
-#     EC = np.array([[1,0,0]])
-#     IC = np.array([[0,1,0],
-#                     [0,0,1]])
-#     Y = np.concatenate((np.matmul(EC,m6),IC))
-#     return np.linalg.det(Y)
-
-# #parameters for the exercise
-# #sttators
-# Q = 0.215 #source term of the swirling flow
-# GAMMA = 0.7032 #rotational term of the swirling flow
-# N = 20 #number of blades
-# Vx = 0.34 #non dimensional background axial flow velocity at inlet
-# Vy1 = 0 #non dimensional background azimuthal flow velocity at outlet
-# DeltaX = 0 #gap between rotor and stator
-# x1 = 0
-# x2 = x1 + DeltaX
-
-# #rotor parameters (pag. 147)
-# beta1 = -71.1*np.pi/180 #relative inlet swirl
-# alfa1 = 0*np.pi/180 #absolute inlet swirl
-# beta2 = -35*np.pi/180 #relative outlet swirl
-# alfa2 = 65.7*np.pi/180 #absolute outlet swirl
-# Vy2 = Vx*np.tan(alfa2)
-# Vy3=0
-# dLr_dPhi = -0.6938 #steady state rotor loss derivative at background condition
-# dLr_dTanb = dLr_dPhi/((np.tan(alfa1)-np.tan(beta1))**2) #steady state rotor loss derivative at background condition
-# c_r = 0.135 #blade chord
-# gamma_r = -50.2*np.pi/180 #stagger angle rotor blades
-# lambda_r = 0.212 #inertia parameter rotor
-
-# #stator parameters (pag. 147)
-# beta3 = -35*np.pi/180 #relative inlet swirl
-# alfa3 = 65.7*np.pi/180 #absolute inlet swirl
-# beta4 = -71.1*np.pi/180 #relative outlet swirl
-# alfa4 = 0.0*np.pi/180 #absolute outlet swirl
-# dLs_dTana = 0.0411 #steady state stator loss at inlet condition of the stator
-# c_s = 0.121 #blade chord
-# gamma_s = 61.8*np.pi/180 #stagger angle rotor blades
-# lambda_s = 0.256 #inertia parameter rotor
-
-# # plt.figure(figsize=(10,6))
-
-# poles_list_analytic = []
-# for n in range(1,7):
-#     print(n)
-#     A = np.zeros((3,3),dtype = complex)
-#     def system_fun2(s, n, theta=0):
-#         #function of the system rotor stator interaction 5.4.3
-#         #Geometrical and compressor parameters (pag. 147)
-#         A[0,0] = 1
-#         A[0,1] = -1
-#         A[0,2] = -1
-#         A[1,0] = 0
-#         A[1,1] = -1j
-#         A[1,2] = -1j*s/(n*Vx)
-#         A[2,0] = dLs_dTana*(1j-np.tan(alfa1))/Vx**2 + s*(lambda_s*n +1)/(n*Vx)
-#         A[2,1] = s/(n*Vx)
-#         A[2,2]= 1
-#         return np.linalg.det(A)
-    
-#     pole_list = []
-#     for ii in range(len(s_real)):
-#         for jj in range(len(s_imag)):
-#             solution = shot_gun_method(system_fun2, s_real[ii]+1j*s_imag[jj], radius)
-#             pole_list.append(solution)
-#     poles_list = [item for sublist in pole_list for item in sublist]
-#     poles = np.array(poles_list)
-#     plt.scatter(poles.real,-poles.imag, label='n: ' +str(n))
-    
-#     #not physical analytic solution
-#     poles_list_analytic.append(complex(n*Vx))
-#     #physical analytic solution
-#     poles_list_analytic.append(complex((dLs_dTana*np.tan(alfa1)/Vx-Vx)/(lambda_s+2/n),
-#                                         (dLs_dTana/Vx)/(lambda_s+2/n)))
-
-# poles_analytic = np.array(poles_list_analytic)
-# plt.plot(poles_analytic.real,poles_analytic.imag,'kx', linewidth=10)
-# plt.legend()
-# plt.xlim([s_r_min-radius,s_r_max+radius])
-# plt.ylim([s_i_min-radius,s_i_max+radius])
-# plt.xlabel(r'$\sigma_{n}$')
-# plt.ylabel(r'$j \omega_{n}$')
-# plt.title('Root locus')
+def test_function(s,n):
+    #test function to debug the shot gun method
+    return s**7+1
 
 
+domain = [-2,2,-2,2]
+grid = [5,5]
+poles_analytic = []
+plt.figure(figsize=format_fig)
+poles = shot_gun_method2(test_function, domain, grid, 1)
+plt.plot(poles.real,-poles.imag,'o', label='shot-gun')
+for k in range(0,7):
+    poles_analytic.append(np.exp(1j*(np.pi+2*k*np.pi/7)))
+poles_analytic = np.array(poles_analytic, dtype=complex)
+plt.plot(poles_analytic.real,poles_analytic.imag,'kx', label = 'Analytic')
+plt.legend()
+plt.xlabel(r'$\sigma_{n}$')
+plt.ylabel(r'$j \omega_{n}$')
+plt.title(r'$s^7 = -1$')
+plt.savefig(path+'/poles_test.png')
 
-# end = time.time()
-# print('Elapsed time: ',end - start)
 
 
 #%% pre-stall waves in an isolated stator
-# def stator_row(s, n, theta=0):
-#     #function of the system rotor stator interaction 5.4.3
-#     #Geometrical and compressor parameters (pag. 147)
-#     A[0,0] = 1
-#     A[0,1] = -1
-#     A[0,2] = -1
-#     A[1,0] = 0
-#     A[1,1] = -1j
-#     A[1,2] = -1j*s/(n*Vx)
-#     A[2,0] = dLs_dTana*(1j-np.tan(alfa1))/Vx**2 + s*(lambda_s*n +1)/(n*Vx)
-#     A[2,1] = s/(n*Vx)
-#     A[2,2]= 1
-#     return np.linalg.det(A)
+def stator_row(s, n, theta=0):
+    #function of the stator 5.4.3
+    A = np.zeros((3,3),dtype=complex)
+    A[0,0] = 1
+    A[0,1] = -1
+    A[0,2] = -1
+    A[1,0] = 0
+    A[1,1] = -1j
+    A[1,2] = -1j*s/(n*Vx)
+    A[2,0] = dLs_dTana*(1j-np.tan(alfa1))/Vx**2 + s*(lambda_s*n +1)/(n*Vx)
+    A[2,1] = s/(n*Vx)
+    A[2,2]= 1
+    return np.linalg.det(A)
 
-# domain = [-2,2,-2,2]
-# n=np.arange(1,7)
-# plt.figure()
-# for nn in n:
-#     poles = shot_gun_method2(stator_row, [-5,2,-1,4], [3,3], nn)
-#     plt.plot(poles.real,-poles.imag,'o', label='n '+str(nn))
-#     #not physical analytic solution
-#     poles_list_analytic_stat = []
-#     poles_list_analytic_stat.append(complex(nn*Vx))
-#     #physical analytic solution
-#     poles_list_analytic_stat.append(complex((dLs_dTana*np.tan(alfa1)/Vx-Vx)/(lambda_s+2/nn),
-#                                         (dLs_dTana/Vx)/(lambda_s+2/nn)))
-#     poles_list_analytic_stat = np.array(poles_list_analytic_stat, dtype=complex)
-#     plt.plot(poles_list_analytic_stat.real,poles_list_analytic_stat.imag,'kx')
-# plt.xlim([domain[0],domain[1]])
-# plt.ylim([domain[2],domain[3]])
-# plt.legend()
-# plt.xlabel(r'$\sigma_{n}$')
-# plt.ylabel(r'$j \omega_{n}$')
-# plt.title('Root locus')
-
+domain = [-2,2,-2,2]
+grid = [3,3]
+n=np.arange(1,7)
+poles_list_analytic_stat = []
+plt.figure(figsize=format_fig)
+for nn in n:
+    poles = shot_gun_method2(stator_row, domain, grid, nn)
+    plt.plot(poles.real,-poles.imag,'o', label='n='+str(nn))
+    poles_list_analytic_stat.append(complex(nn*Vx)) #not physical poles
+    poles_list_analytic_stat.append(complex((dLs_dTana*np.tan(alfa1)/Vx-Vx)/(lambda_s+2/nn),
+                                        (dLs_dTana/Vx)/(lambda_s+2/nn)))
+poles_list_analytic_stat = np.array(poles_list_analytic_stat, dtype=complex)
+plt.plot(poles_list_analytic_stat.real,poles_list_analytic_stat.imag,'kx', label = 'Analytic')
+plt.legend()
+plt.xlabel(r'$\sigma_{n}$')
+plt.ylabel(r'$j \omega_{n}$')
+plt.title('Poles of an isolated stator')
+plt.savefig(path+'/poles_stator.png')
 
 
 #%% pre-stall waves in an isolated rotor 5.4.2
-# def Isolated_rotor_row_det(s, n, theta=0):
-#     #function of the system rotor stator interaction 5.4.3
-#     #Geometrical and compressor parameters (pag. 147)
-#     A[0,0] = 1
-#     A[0,1] = 0
-#     A[0,2] = -1
-#     A[1,0] = 0
-#     A[1,1] = 1
-#     A[1,2] = -1j/Vx + 1j*s/(n*Vx)
-#     A[2,0] = dLr_dTanb*(1j-np.tan(beta1))/Vx**2 + s*(lambda_r*n +1)/(n*Vx) + (1j*n*lambda_r-np.tan(beta2))/Vx
-#     A[2,1] = 1j-np.tan(alfa2)
-#     A[2,2]= 1+np.tan(alfa2)*(np.tan(alfa2)-1j*s/(n*Vx))
-#     return np.linalg.det(A)
+def rotor_row(s, n, theta=0):
+    #function of the system rotor stator interaction 5.4.3
+    A = np.zeros((3,3),dtype=complex)
+    A[0,0] = 1
+    A[0,1] = 0
+    A[0,2] = -1
+    A[1,0] = 0
+    A[1,1] = 1
+    A[1,2] = -1/Vx + 1j*s/(n*Vx)
+    A[2,0] = dLr_dTanb*(1j-np.tan(beta1))/Vx**2 + s*(lambda_r*n +1)/(n*Vx) + (1j*n*lambda_r-np.tan(beta2))/Vx
+    A[2,1] = 1j-np.tan(alfa2)
+    A[2,2]= 1+np.tan(alfa2)*(np.tan(alfa2)-1j*s/(n*Vx))
+    return np.linalg.det(A)
 
-# domain = [-2,2,-2,2]
-# n=np.arange(1,7)
-# plt.figure()
-# for nn in n:
-#     poles = shot_gun_method2(rotor_row, [-5,2,-1,4], [3,3], nn)
-#     plt.plot(poles.real,-poles.imag,'o', label='n '+str(nn))
-#     #not physical analytic solution
-#     poles_list_analytic_rot = []
-#     # poles_list_analytic_rot.append(nn*Vx*(1j*np.tan(alfa2))/1j)
-#     #physical analytic solution
-#     poles_list_analytic_rot.append(complex(((np.tan(beta2)+dLr_dTanb*np.tan(beta1)/Vx-Vx*(1+np.tan(alfa2)**2)+np.tan(alfa2))/(lambda_r+2/nn)),
-#                                         (dLr_dTanb/Vx + nn*lambda_r+1)/(lambda_r+2/nn)))
-#     poles_list_analytic_rot = np.array(poles_list_analytic_rot, dtype=complex)
-#     plt.plot(poles_list_analytic_rot.real,poles_list_analytic_rot.imag,'kx')
-# # plt.xlim([domain[0],domain[1]])
-# # plt.ylim([domain[2],domain[3]])
-# plt.legend()
-# plt.xlabel(r'$\sigma_{n}$')
-# plt.ylabel(r'$j \omega_{n}$')
-# plt.title('Root locus')
+domain = [-2,2,-2,2]
+grid=[2,2]
+n=np.arange(1,7)
+poles_analytic_rot = []
+plt.figure(figsize=format_fig)
+for nn in n:
+    poles = shot_gun_method2(rotor_row, domain, grid, nn)
+    plt.plot(poles.real,-poles.imag,'o', label='n '+str(nn))
+    poles_analytic_rot.append(complex(((np.tan(beta2)+dLr_dTanb*np.tan(beta1)/Vx-Vx*(1+np.tan(alfa2)**2)+np.tan(alfa2))/(lambda_r+2/nn)),
+                                        (dLr_dTanb/Vx + nn*lambda_r+1)/(lambda_r+2/nn)))
+poles_analytic_rot = np.array(poles_analytic_rot, dtype=complex)
+plt.plot(poles_analytic_rot.real,poles_analytic_rot.imag,'kx', label = 'Analytic')
+plt.legend()
+plt.xlabel(r'$\sigma_{n}$')
+plt.ylabel(r'$j \omega_{n}$')
+plt.title('Poles of an isolated rotor')
+plt.savefig(path+'/poles_rotor.png')
