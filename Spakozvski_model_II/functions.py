@@ -31,7 +31,7 @@ def Tax_n(x,s,theta,n,Vx,Vy):
     Tax = np.zeros((3,3),dtype = complex)
     Tax[:,0] = np.array([1, 1j, -s/n - Vx -1j*Vy])*np.exp(n*x)*np.exp(1j*n*theta)
     Tax[:,1] = np.array([1, -1j, s/n - Vx +1j*Vy])*np.exp(-n*x)*np.exp(1j*n*theta)
-    Tax[:,2] = np.array([1, -s*1j/(Vx*n) +Vy/Vx, 0])*np.exp(-s/Vx+1j*n*Vy/Vx)*np.exp(1j*n*theta)   
+    Tax[:,2] = np.array([1, -s*1j/(Vx*n) +Vy/Vx, 0])*np.exp(-(s/Vx+1j*n*Vy/Vx)*x)*np.exp(1j*n*theta)   
     return Tax
 
 
@@ -70,10 +70,10 @@ def Rn(r,n,s,Q,GAMMA):
     """
     #quad wants a real argument, split the integrand betwee real and complex part
     result_real = integrate.quad(lambda x: (np.exp(-(1j*n*GAMMA*np.log(x)/Q) + 
-                            s*(x**2)/(2*Q))*(r**n*x**(-n+1)-r**(-n)*x**(n+1))).real,
+                            s*(x**2)/(2*Q))*((r**n)*(x**(-n+1))-(r**(-n))*x**(n+1))).real,
                             0, r)
     result_imag = integrate.quad(lambda x: (np.exp(-(1j*n*GAMMA*np.log(x)/Q) + 
-                            s*(x**2)/(2*Q))*(r**n*x**(-n+1)-r**(-n)*x**(n+1))).imag,
+                            s*(x**2)/(2*Q))*((r**n)*(x**(-n+1))-(r**(-n))*x**(n+1))).imag,
                             0, r)
     return complex(result_real[0],result_imag[0])
 
@@ -349,7 +349,7 @@ def shot_gun_method(complex_function, s, R, N=30, tol=1e-6, attempts=30):
     return poles  
 
     
-def shot_gun_method2(complex_function, domain, n_grid, n, N=30, tol=1e-6, attempts=30):
+def shot_gun_method2(complex_function, domain, n_grid, n, N=50, tol=1e-6, attempts=30):
     """
     Shot-gun method taken from Spakozvzski PhD thesis, needed to compute the complex zeros of a complex function.
     The difference with method 1 is that here we provide the domain of intereste, and the grid  on which we want

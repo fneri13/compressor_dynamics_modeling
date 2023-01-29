@@ -11,6 +11,7 @@ Exercise 5.4.3 of Spakovszky thesis
 import matplotlib.pyplot as plt
 import numpy as np
 from functions import *
+import os
 
 
 
@@ -20,7 +21,13 @@ plt.rc('text', usetex=False)
 plt.rc('xtick',labelsize=10)
 plt.rc('ytick',labelsize=10)
 plt.rcParams['font.size'] = 14
-format_fig = (12,8)
+format_fig = (9,5)
+
+#create directory for pictures
+path = "pics"
+isExist = os.path.exists(path)
+if not isExist:
+   os.makedirs(path)
 
 #%%INPUT DATA
 Vx1 = 0.34 #non dimensional background axial flow velocity at inlet
@@ -56,7 +63,7 @@ x4 = x3 + c_s*np.cos(gamma_s)
 
 #velocities across the stages
 Vx2 = Vx1
-Vy2 = Vx1*np.tan(alfa2)
+Vy2 = Vx2*np.tan(alfa2)
 Vx3 = Vx1
 Vy3 = Vy2
 Vx4 = Vx1
@@ -79,18 +86,25 @@ def rotor_stator(s, n, theta=0):
     return np.linalg.det(Y)
 
 domain = [-2.5,0.5,-0.5,4.5]
+grid = [5,5]
 n=np.arange(1,7)
-plt.figure()
+plt.figure(figsize=format_fig)
 for nn in n:
-    poles = shot_gun_method2(rotor_stator,domain, [2,2], nn)
+    poles = shot_gun_method2(rotor_stator,domain, grid, nn, attempts = 3)
     plt.plot(poles.real,-poles.imag,'o', label='n '+str(nn))
-    
+real_axis_x = np.linspace(domain[0],domain[1],100)
+real_axis_y = np.zeros(len(real_axis_x))   
+imag_axis_y = np.linspace(domain[2],domain[3],100)
+imag_axis_x = np.zeros(len(imag_axis_y))
+plt.plot(real_axis_x,real_axis_y,'--k', linewidth=0.5)
+plt.plot(imag_axis_x,imag_axis_y,'--k', linewidth = 0.5)
 plt.xlim([domain[0],domain[1]])
 plt.ylim([domain[2],domain[3]])
 plt.legend()
 plt.xlabel(r'$\sigma_{n}$')
 plt.ylabel(r'$j \omega_{n}$')
 plt.title('Root locus')
+plt.savefig(path+'/poles_rotor_stator.png')
 
 
 

@@ -172,7 +172,7 @@ def rotor_row(s, n, theta=0):
     return np.linalg.det(A)
 
 domain = [-2,2,-2,2]
-grid=[2,2]
+grid=[7,7]
 n=np.arange(1,7)
 poles_analytic_rot = []
 plt.figure(figsize=format_fig)
