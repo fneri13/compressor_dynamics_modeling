@@ -18,7 +18,7 @@ plt.rc('text', usetex=False)
 plt.rc('xtick',labelsize=10)
 plt.rc('ytick',labelsize=10)
 plt.rcParams['font.size'] = 14
-format_fig = (12,8)
+format_fig = (6,8)
 
 #%%DATA INPUT OF THE EXERCISE
 R2 = 1 #initial radius
@@ -39,14 +39,16 @@ Wt_2 = np.exp(1j*n*theta0)*(GAMMA-1)/Q
 s = -1j*n #the mode is the 20th harmonics
 
 #radial position where we want the data
-radii = np.array([1.0,1.05,1.1,1.15,1.2,])
+# radii = np.array([1.0,1.05,1.1,1.15,1.2])
+radii = np.array([1.0, 1.05, 1.1])
+
 
 #boundary conditions are prescribed inlet velocities, and outlet pressure at R3 = 0
 firstC = np.array([[1,0,0]])
 secondC = np.array([[0,1,0]])
 thirdC = np.array([[0,0,1]])
-T2 = Trad_n(R2, n, s, theta0, Q, GAMMA)
-T3 = Trad_n(R3, n, s, theta0, Q, GAMMA)
+T2 = Trad_n(R2, R2, n, s, theta0, Q, GAMMA)
+T3 = Trad_n(R3, R2, n, s, theta0, Q, GAMMA)
 Y = np.zeros((3,3), dtype=complex)
 Y[0,:] = np.matmul(firstC,T2)
 Y[1,:] = np.matmul(secondC,T2)
@@ -59,31 +61,24 @@ BC_vec[2] = 0
 #find the potential and vortical moes in the system that satisfy the BC
 DEN_mode = np.matmul(np.linalg.inv(Y),BC_vec)
 
-plt.figure()
-plt.xlabel(r'$\theta$')
-plt.ylabel(r'$w_r$')
+fig, axes = plt.subplots(3,1, figsize=format_fig)
+axes[0].set_ylabel(r'$\delta w_{r} / \delta w_{r_0}$')
+axes[1].set_ylabel(r'$\delta w_{\theta} / \delta w_{{\theta}_0}$')
+axes[2].set_ylabel(r'$\delta p / \delta w_{r_{0}}$')
+axes[2].set_xlabel(r'$\theta $')
+
 for k in range(0,len(radii)):
     radius = radii[k]
     #compute now the flow solutions
     vec = np.zeros((3,len(theta)),dtype=complex)
     i = 0
     for t in theta:
-        vec[:,i] = np.matmul(Trad_n(radius, n, s, theta[i], Q, GAMMA),DEN_mode).reshape(3)
-        i = i+1
-        
-    plt.plot(theta_deg,vec[2,:],label='r='+str(radius))
-
-    
-    # plt.figure()
-    # plt.plot(theta_deg,vec[1,:])
-    # plt.xlabel(r'$\theta$')
-    # plt.ylabel(r'$w_{\theta}$')
-    
-    # plt.figure()
-    # plt.plot(theta_deg,vec[2,:])
-    # plt.xlabel(r'$\theta$')
-    # plt.ylabel(r'$p$')
-plt.legend()
+        vec[:,i] = np.matmul(Trad_n(radius,R2 , n, s, t, Q, GAMMA),DEN_mode).reshape(3)
+        i = i+1       
+    axes[0].plot(theta_deg, vec[0,:], label='r='+str(radius))
+    axes[1].plot(theta_deg, vec[1,:])
+    axes[2].plot(theta_deg, vec[2,:])
+fig.legend()
 
 
 

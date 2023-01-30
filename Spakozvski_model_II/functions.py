@@ -59,7 +59,7 @@ def Bgap_n(x1,x2,s,theta,n,Vx,Vy):
 
 
 #%% FUNCTIONS AND MATRICES FOR SWIRLING FLOWS
-def Rn(r,n,s,Q,GAMMA):
+def Rn(r,r0,n,s,Q,GAMMA):
     """
     Integrals needed to construct the matrix for the whirling flow
     r : non dimensional radius
@@ -76,14 +76,14 @@ def Rn(r,n,s,Q,GAMMA):
     def imag_integral(x):
         return integrand_function(x).imag
     
-    result_real = integrate.quad(real_integral, 0, r)
-    result_imag = integrate.quad(imag_integral, 0, r)
+    result_real = integrate.quad(real_integral, r0, r)
+    result_imag = integrate.quad(imag_integral, r0, r)
     
     return complex(result_real[0]+1j*result_imag[0])
 
 
 
-def Rn_prime_r(r,n,s,Q,GAMMA):
+def Rn_prime_r(r,r0,n,s,Q,GAMMA):
     """
     First derivative OF Rn with respect to r, central difference scheme
     r : non dimensional radius
@@ -94,14 +94,14 @@ def Rn_prime_r(r,n,s,Q,GAMMA):
     """
     r_left = r*0.999
     r_right = r*1.001
-    Rn_right = Rn(r_right,n,s,Q,GAMMA)
-    Rn_left = Rn(r_left,n,s,Q,GAMMA)
+    Rn_right = Rn(r_right,r0,n,s,Q,GAMMA)
+    Rn_left = Rn(r_left,r0,n,s,Q,GAMMA)
     derivative = (Rn_right-Rn_left)/(2*(r_right-r_left))
     return derivative
 
 
 
-def Rn_second_r(r,n,s,Q,GAMMA):
+def Rn_second_r(r,r0,n,s,Q,GAMMA):
     """
     Second derivative of Rn with respect to r, central difference scheme
     r : non dimensional radius
@@ -112,15 +112,15 @@ def Rn_second_r(r,n,s,Q,GAMMA):
     """
     r_left = r*0.999
     r_right = r*1.001
-    Rn_right = Rn(r_right,n,s,Q,GAMMA)
-    Rn_central = Rn(r,n,s,Q,GAMMA)
-    Rn_left = Rn(r_left,n,s,Q,GAMMA)
+    Rn_right = Rn(r_right,r0,n,s,Q,GAMMA)
+    Rn_central = Rn(r,r0,n,s,Q,GAMMA)
+    Rn_left = Rn(r_left,r0,n,s,Q,GAMMA)
     derivative = (Rn_right+Rn_left-2*Rn_central)/((r_right-r_left)**2)
     return derivative
 
 
 
-def Trad_n(r,n,s,theta,Q,GAMMA):
+def Trad_n(r,r0,n,s,theta,Q,GAMMA):
     """
     Transmission matrix for the swirling flow dynamics:
     |dVr|          |An|
@@ -140,9 +140,9 @@ def Trad_n(r,n,s,theta,Q,GAMMA):
     Trad[:,1] = np.array([1j*n*r**(-n-1),
                           n*r**(-n-1),
                           -1j*Q*(1+n)*r**(-n-2)-(GAMMA/r+s*r/(1j*n)+1j*Q/(r*n))*n*r**(-n-1)])*np.exp(1j*n*theta)
-    Trad[:,2] = np.array([1j*n*Rn(r,n,s,Q,GAMMA)/r,
-                          -Rn_prime_r(r,n,s,Q,GAMMA),
-                          -(1j*Q/n)*Rn_second_r(r, n, s,Q,GAMMA)+(GAMMA/r+s*r/(1j*n)-1j*Q/(r*n))*Rn_prime_r(r, n, s,Q,GAMMA)])*np.exp(1j*n*theta)  
+    Trad[:,2] = np.array([1j*n*Rn(r,r0,n,s,Q,GAMMA)/r,
+                          -Rn_prime_r(r,r0,n,s,Q,GAMMA),
+                          -(1j*Q/n)*Rn_second_r(r,r0, n, s,Q,GAMMA)+(GAMMA/r+s*r/(1j*n)-1j*Q/(r*n))*Rn_prime_r(r,r0, n, s,Q,GAMMA)])*np.exp(1j*n*theta)  
     return Trad
 
 
