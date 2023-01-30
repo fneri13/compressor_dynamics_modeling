@@ -104,7 +104,7 @@ def test_function(s,n):
 
 
 domain = [-2,2,-2,2]
-grid = [5,5]
+grid = [3,3]
 poles_analytic = []
 plt.figure(figsize=format_fig)
 poles = shot_gun_method2(test_function, domain, grid, 1)
@@ -137,7 +137,7 @@ def stator_row(s, n, theta=0):
     return np.linalg.det(A)
 
 domain = [-2,2,-2,2]
-grid = [3,3]
+grid = [2,2]
 n=np.arange(1,7)
 poles_list_analytic_stat = []
 plt.figure(figsize=format_fig)
@@ -172,7 +172,7 @@ def rotor_row(s, n, theta=0):
     return np.linalg.det(A)
 
 domain = [-2,2,-2,2]
-grid=[7,7]
+grid=[2,2]
 n=np.arange(1,7)
 poles_analytic_rot = []
 plt.figure(figsize=format_fig)

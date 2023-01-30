@@ -69,13 +69,17 @@ def Rn(r,n,s,Q,GAMMA):
     GAMMA : rotational term of the swirling flow
     """
     #quad wants a real argument, split the integrand betwee real and complex part
-    result_real = integrate.quad(lambda x: (np.exp(-(1j*n*GAMMA*np.log(x)/Q) + 
-                            s*(x**2)/(2*Q))*((r**n)*(x**(-n+1))-(r**(-n))*x**(n+1))).real,
-                            0, r)
-    result_imag = integrate.quad(lambda x: (np.exp(-(1j*n*GAMMA*np.log(x)/Q) + 
-                            s*(x**2)/(2*Q))*((r**n)*(x**(-n+1))-(r**(-n))*x**(n+1))).imag,
-                            0, r)
-    return complex(result_real[0],result_imag[0])
+    def integrand_function(x):
+        return (np.exp(-(1j*n*GAMMA*np.log(x)/Q) + s*(x**2)/(2*Q))*((r**n)*(x**(-n+1))-(r**(-n))*x**(n+1)))
+    def real_integral(x):
+        return integrand_function(x).real
+    def imag_integral(x):
+        return integrand_function(x).imag
+    
+    result_real = integrate.quad(real_integral, 0, r)
+    result_imag = integrate.quad(imag_integral, 0, r)
+    
+    return complex(result_real[0]+1j*result_imag[0])
 
 
 

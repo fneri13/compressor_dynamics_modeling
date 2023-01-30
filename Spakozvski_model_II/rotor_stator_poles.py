@@ -90,7 +90,7 @@ grid = [5,5]
 n=np.arange(1,7)
 plt.figure(figsize=format_fig)
 for nn in n:
-    poles = shot_gun_method2(rotor_stator,domain, grid, nn, attempts = 3)
+    poles = shot_gun_method2(rotor_stator,domain, grid, nn, attempts = 1)
     plt.plot(poles.real,-poles.imag,'o', label='n '+str(nn))
 real_axis_x = np.linspace(domain[0],domain[1],100)
 real_axis_y = np.zeros(len(real_axis_x))   
