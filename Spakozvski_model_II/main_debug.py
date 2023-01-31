@@ -87,13 +87,13 @@ dLi_dTanb = -0.9
 dLd_dTana = -0.5
 
 #build all the functions written in the functions file, to see it if they work
-swirler = Trad_n(r, n, s, theta, Q, GAMMA)  
+swirler = Trad_n(r, r, n, s, theta, Q, GAMMA)  
 axial = Tax_n(x, s, theta, n, Vx1, Vy2)  
 stator = Bsta_n(s, theta, n, Vx, Vy1, Vy2, alfa1, alfa2, lambda_s, dLs_dTana)
 rotor = Brot_n(s, theta, n, Vx1, Vy1, Vy2, alfa1, beta1, beta2, lambda_r, dLr_dTanb) 
 impeller = Bimp_n(s, theta, n, Vx1, Vr2, Vy1, Vy2, alfa1, beta1, beta2, r1, r2, rho1, rho2, A1, A2, s_i, dLi_dTanb)
 diffuser = Bdif_n(s, theta, n, Vr1, Vr2, Vy1, Vy2, alfa1, beta1, alfa2, r1, r2, rho1, rho2, A1, A2, s_dif, dLd_dTana)
-vaneless_diffuser = Bvlsd_n(s,theta,n,r1,r2,Q,GAMMA)  
+vaneless_diffuser = Bvlsd_n(s,theta,n,r1,r2,r1,Q,GAMMA)  
 gap = Bgap_n(x1,x2,s,theta,n,Vx,Vy)
     
 #%%Poles of a test function  

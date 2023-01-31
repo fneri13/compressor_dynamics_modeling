@@ -92,8 +92,8 @@ def Rn_prime_r(r,r0,n,s,Q,GAMMA):
     Q : source term of the swirling flow
     GAMMA : rotational term of the swirling flow
     """
-    r_left = r*0.999
-    r_right = r*1.001
+    r_left = r*0.999999
+    r_right = r*1.000001
     Rn_right = Rn(r_right,r0,n,s,Q,GAMMA)
     Rn_left = Rn(r_left,r0,n,s,Q,GAMMA)
     derivative = (Rn_right-Rn_left)/(2*(r_right-r_left))
@@ -110,8 +110,8 @@ def Rn_second_r(r,r0,n,s,Q,GAMMA):
     Q : source term of the swirling flow
     GAMMA : rotational term of the swirling flow
     """
-    r_left = r*0.999
-    r_right = r*1.001
+    r_left = r*0.999999
+    r_right = r*1.000001
     Rn_right = Rn(r_right,r0,n,s,Q,GAMMA)
     Rn_central = Rn(r,r0,n,s,Q,GAMMA)
     Rn_left = Rn(r_left,r0,n,s,Q,GAMMA)
@@ -267,7 +267,7 @@ def Bdif_n(s,theta,n,Vr1,Vr2,Vy1,Vy2,alfa1,beta1,alfa2,r1,r2,rho1,rho2,A1,A2,s_d
 
 
 
-def Bvlsd_n(s,theta,n,r1,r2,Q,GAMMA):
+def Bvlsd_n(s,theta,n,r1,r2,r_ref,Q,GAMMA):
     """
     Transmission matrix for vaneless diffuser:
     |dVr2|           |dVr1| 
@@ -278,11 +278,12 @@ def Bvlsd_n(s,theta,n,r1,r2,Q,GAMMA):
     n : circumferential harmonic number
     r1 : inlet non dimensional radius
     r2 : outlet non dimensional radius
+    r0 : reference radius for Trad computation
     Q : non dimensional source term
     GAMMA : non dimensional rotational term of the potential flow
     """
-    M_2 = Trad_n(r2, n, s, theta, Q, GAMMA)
-    M_1 = np.linalg.inv(Trad_n(r1, n, s, theta, Q, GAMMA))
+    M_2 = Trad_n(r2, r_ref, n, s, theta, Q, GAMMA)
+    M_1 = np.linalg.inv(Trad_n(r1, r_ref, n, s, theta, Q, GAMMA))
     Bvlsd = np.matmul(M_2,M_1)*np.exp(1j*n*theta)
     return Bvlsd
 
@@ -353,7 +354,7 @@ def shot_gun_method(complex_function, s, R, N=30, tol=1e-6, attempts=30):
     return poles  
 
     
-def shot_gun_method2(complex_function, domain, n_grid, n, N=30, tol=1e-6, attempts=30):
+def shot_gun_method2(complex_function, domain, n_grid, n, N=50, tol=1e-6, attempts=50):
     """
     Shot-gun method taken from Spakozvzski PhD thesis, needed to compute the complex zeros of a complex function.
     The difference with method 1 is that here we provide the domain of intereste, and the grid  on which we want
@@ -408,7 +409,11 @@ def shot_gun_method2(complex_function, domain, n_grid, n, N=30, tol=1e-6, attemp
                         dy = np.random.uniform(-ly/2, ly/2) #random deltaY from the shot point
                         s_points[kk] = s+dx+1j*dy #random points where determinante will be computed 
                         error_points[kk] = np.abs(complex_function(s_points[kk],n))
-                        J_points[kk] = (error_points[kk])**(-2) #errors associated to every random point
+                        if error_points[kk]<1e-6:
+                            pole_list.append(s_points[kk])
+                            J_points[kk] = 1000
+                        else:
+                            J_points[kk] = (error_points[kk])**(-2) #errors associated to every random point
                     CG = np.sum(s_points*J_points)/np.sum(J_points) #center of gravity of points
                     min_pos = np.argmin(error_points) #index of the best point
                     min_error = error_points[min_pos] #error of the best point

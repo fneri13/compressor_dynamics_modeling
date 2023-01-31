@@ -31,10 +31,15 @@ isExist = os.path.exists(path)
 if not isExist:
    os.makedirs(path)
 
-#%%INPUT DATA
+#%%INPUT DATA for the implementation of the generic actuator disk of Greitzer, zero gap
 Vx1 = 0.34 #non dimensional background axial flow velocity at inlet
 Vy1 = 0 #non dimensional background azimuthal flow velocity at outlet
-DeltaX = 0.0 #gap between rotor and stator
+Deltax = 0
+
+LAMBDA = 1.08 #rotor inertia parameter
+MU = 1.7888 #all rows inertia parameter
+
+#from the inertia parameters we need to go back to axial spacing in order to recostruct the matrix
 
 #rotor parameters (pag. 147)
 beta1 = -71.1*np.pi/180 #relative inlet swirl
@@ -45,7 +50,7 @@ dLr_dPhi = -0.6938 #steady state rotor loss derivative at background condition
 dLr_dTanb = dLr_dPhi/((np.tan(alfa1)-np.tan(beta1))**2) #steady state rotor loss derivative at background condition
 c_r = 0.135 #blade chord
 gamma_r = -50.2*np.pi/180 #stagger angle rotor blades
-lambda_r = 0.212 #inertia parameter rotor
+lambda_r = 1.08 #inertia parameter rotor
 
 #stator parameters (pag. 147)
 beta3 = -35*np.pi/180 #relative inlet swirl
@@ -56,12 +61,12 @@ dLs_dTana = 0.0411 #steady state stator loss at inlet condition of the stator
 dLs_dphi = -dLs_dTana*((np.tan(alfa3)-np.tan(beta3))**2)
 c_s = 0.121 #blade chord
 gamma_s = 61.8*np.pi/180 #stagger angle rotor blades
-lambda_s = 0.256 #inertia parameter rotor
+lambda_s = MU - LAMBDA #inertia parameter stator
 
 #axial cordinates
 x1 = 0
 x2 = c_r*np.cos(gamma_r)
-x3 = DeltaX
+x3 = x2
 x4 = x3 + c_s*np.cos(gamma_s)
 
 #velocities across the stages
@@ -90,19 +95,23 @@ def rotor_stator(s, n, theta=0):
 def rotor_stator_benchmark(s, n, theta=0):
     LAMBDA = 1.08
     MU = 1.7888
-    tau_s = 1
-    tau_r = 1
-    return (MU+2/n)*s+dLr_dPhi*(-1+1/(1+tau_r*(s+1j*n)))+dLs_dphi*(-1+1/(1+tau_s*s))+LAMBDA*1j*n
+    tau_u = 1
+    tau_s = tau_u*c_s/(np.cos(gamma_s)*Vx1)
+    tau_r = tau_u*c_r/(np.cos(gamma_r)*Vx1)
+    # dLr_dphi = -1
+    # dLs_dphi = 0.5
+    return (MU+2/n)*s-dLr_dPhi*(1-1/(1+tau_r*(s+1j*n)))-dLs_dphi*(1-1/(1+tau_s*s))+LAMBDA*1j*n
 
 domain = [-2.0,0.5,0.0,3.0]
-grid = [10,10]
+# domain = [-10,10,-10,10]
+grid = [5,5]
 n=np.arange(1,4)
 plt.figure(figsize=format_fig)
 for nn in n:
-    # poles = shot_gun_method2(rotor_stator,domain, grid, nn, attempts = 5)
-    poles_bmk = shot_gun_method2(rotor_stator_benchmark,domain, grid, nn, attempts = 50)
-    # plt.plot(poles.real,-poles.imag,'x', label='n '+str(nn))
-    plt.plot(poles_bmk.real,-poles_bmk.imag,'o', label='n '+str(nn))
+    # poles = shot_gun_method2(rotor_stator,domain, grid, nn, attempts = 10)
+    poles_bmk = shot_gun_method2(rotor_stator_benchmark,domain, grid, nn, attempts = 10)
+    # plt.plot(poles.real,-poles.imag,'x', label='SG n '+str(nn))
+    plt.plot(poles_bmk.real,-poles_bmk.imag,'o', label='AN n '+str(nn))
 real_axis_x = np.linspace(domain[0],domain[1],100)
 real_axis_y = np.zeros(len(real_axis_x))   
 imag_axis_y = np.linspace(domain[2],domain[3],100)
