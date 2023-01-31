@@ -104,7 +104,7 @@ def test_function(s,n):
 
 
 domain = [-2,2,-2,2]
-grid = [3,3]
+grid = [2,2]
 poles_analytic = []
 plt.figure(figsize=format_fig)
 poles = shot_gun_method2(test_function, domain, grid, 1)

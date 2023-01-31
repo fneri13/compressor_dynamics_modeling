@@ -32,6 +32,7 @@ theta = np.linspace(0,theta_max,azimuthal_sampling_points) #theta domain
 theta_deg = theta *180/np.pi #theta domain in degrees
 n = 20 #interested in the 20th harmonic, since we are looking at perturbation coming from the 20th harmonics
 theta0 = theta[0]
+omega = -n
 
 #INITIAL CONDITIONS
 Wr_2 = np.exp(1j*n*theta0)
@@ -43,8 +44,8 @@ radii = np.array([1.0,1.05,1.1,1.15,1.2])
 
 r0 = R2 #this is the big problem. no reason for it. there is no way to understand what is its meaning
 #boundary conditions are prescribed inlet velocities, and outlet pressure at R3 = 0
-T2 = Trad_n(R2, r0, n, -1j*n, theta0, Q, GAMMA)
-T3 = Trad_n(R3, r0, n, -1j*n, theta0, Q, GAMMA)
+T2 = Trad_n(R2, r0, n, 1j*omega, theta0, Q, GAMMA)
+T3 = Trad_n(R3, r0, n, 1j*omega, theta0, Q, GAMMA)
 Y = np.zeros((3,3), dtype=complex)
 Y[0,:] = T2[0,:]
 Y[1,:] = T2[1,:]
@@ -56,24 +57,24 @@ BC_vec[2] = 0
 #find the potential and vortical modes in the system that satisfy the BC
 DEN_mode = np.matmul(np.linalg.inv(Y),BC_vec)
 
-# fig, axes = plt.subplots(3,1, figsize=format_fig)
-# axes[0].set_ylabel(r'$\delta w_{r}$')
-# axes[1].set_ylabel(r'$\delta w_{\theta}$')
-# axes[2].set_ylabel(r'$\delta p $')
-# axes[2].set_xlabel(r'$\theta $')
+fig, axes = plt.subplots(3,1, figsize=format_fig)
+axes[0].set_ylabel(r'$\delta w_{r}$')
+axes[1].set_ylabel(r'$\delta w_{\theta}$')
+axes[2].set_ylabel(r'$\delta p $')
+axes[2].set_xlabel(r'$\theta $')
 
-# for k in range(0,len(radii)):
-#     radius = radii[k]
-#     #compute now the flow solutions
-#     vec = np.zeros((3,len(theta)),dtype=complex)
-#     i = 0
-#     for t in theta:
-#         vec[:,i] = np.matmul(Trad_n(radius, r0 , n, -1j*n, t, Q, GAMMA),DEN_mode).reshape(3)
-#         i = i+1       
-#     axes[0].plot(theta_deg, vec[0,:], label='r='+str(radius))
-#     axes[1].plot(theta_deg, vec[1,:])
-#     axes[2].plot(theta_deg, vec[2,:])
-# fig.legend()
+for k in range(0,len(radii)):
+    radius = radii[k]
+    #compute now the flow solutions
+    vec = np.zeros((3,len(theta)),dtype=complex)
+    i = 0
+    for t in theta:
+        vec[:,i] = np.matmul(Trad_n(radius, r0 , n, -1j*n, t, Q, GAMMA),DEN_mode).reshape(3)
+        i = i+1       
+    axes[0].plot(theta_deg, vec[0,:], label='r='+str(radius))
+    axes[1].plot(theta_deg, vec[1,:])
+    axes[2].plot(theta_deg, vec[2,:])
+fig.legend()
 
 #%% VARIATIONS WITH RADIUS
 radii = np.linspace(R2,R3,100)
@@ -84,7 +85,7 @@ axes[2].set_ylabel(r'$\delta p $')
 axes[2].set_xlabel(r'$r $')
 vec = np.zeros((3,len(radii)),dtype=complex)
 for k in range(0,len(radii)):
-    vec[:,k] = np.matmul(Trad_n(radii[k], r0 , n, -1j*n, theta0, Q, GAMMA),DEN_mode).reshape(3)
+    vec[:,k] = np.matmul(Trad_n(radii[k], r0 , n, 1j*omega, theta0, Q, GAMMA),DEN_mode).reshape(3)
 axes[0].plot(radii, vec[0,:],'-o')
 axes[1].plot(radii, vec[1,:],'-o')
 axes[2].plot(radii, vec[2,:],'-o')

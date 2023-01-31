@@ -6,7 +6,7 @@ Created on Tue Jan 17 11:21:25 2023
 @author: fneri, TU Delft 
 
 Construction of the matrices needed in the Spakovszky models PhD thesis.
-The n=0 modes are still missing!
+The n=0 mode is still missing!
 """
 
 import numpy as np
@@ -28,6 +28,8 @@ def Tax_n(x,s,theta,n,Vx,Vy):
     Vx : non-dimensional background axial velocity
     Vy : non-dimensional background zimuthal velocity
     """
+    if n==0:
+        raise Exception("Sorry, the n=0 mode is still not implemented. Use n!=0")
     Tax = np.zeros((3,3),dtype = complex)
     Tax[:,0] = np.array([1, 1j, -s/n - Vx -1j*Vy])*np.exp(n*x)*np.exp(1j*n*theta)
     Tax[:,1] = np.array([1, -1j, s/n - Vx +1j*Vy])*np.exp(-n*x)*np.exp(1j*n*theta)
@@ -50,6 +52,8 @@ def Bgap_n(x1,x2,s,theta,n,Vx,Vy):
     Vx : non-dimensional background axial velocity in the gap space
     Vy : non-dimensional background azimuthal velocity in the gap space
     """
+    if n==0:
+        raise Exception("Sorry, the n=0 mode is still not implemented. Use n!=0")
     Bgap = np.zeros((3,3),dtype = complex)
     m1 = Tax_n(x2, s, theta, n, Vx, Vy)
     m2 = np.linalg.inv(Tax_n(x1, s, theta, n, Vx, Vy))
@@ -68,6 +72,9 @@ def Rn(r,r0,n,s,Q,GAMMA):
     Q : source term of the swirling flow
     GAMMA : rotational term of the swirling flow
     """
+    if n==0:
+        raise Exception("Sorry, the n=0 mode is still not implemented. Use n!=0")
+    
     #quad wants a real argument, split the integrand betwee real and complex part
     def integrand_function(x):
         return (np.exp(-(1j*n*GAMMA*np.log(x)/Q) + s*(x**2)/(2*Q))*((r**n)*(x**(-n+1))-(r**(-n))*x**(n+1)))
@@ -110,6 +117,7 @@ def Rn_second_r(r,r0,n,s,Q,GAMMA):
     Q : source term of the swirling flow
     GAMMA : rotational term of the swirling flow
     """
+    
     r_left = r*0.999999
     r_right = r*1.000001
     Rn_right = Rn(r_right,r0,n,s,Q,GAMMA)
@@ -133,6 +141,8 @@ def Trad_n(r,r0,n,s,theta,Q,GAMMA):
     Q : source term of the swirling flow
     GAMMA : rotational term of the swirling flow
     """
+    if n==0:
+        raise Exception("Sorry, the n=0 mode is still not implemented. Use n!=0")
     Trad = np.zeros((3,3),dtype = complex)
     Trad[:,0] = np.array([1j*n*r**(n-1),
                           -n*r**(n-1),
@@ -166,6 +176,8 @@ def Bsta_n(s,theta,n,Vx,Vy1,Vy2, alfa1, alfa2, lambda_s , dLs_dTana, tau_s=0):
     tau_s : unsteadystator loss lag parameter
     dLs_dTana1 : loss derivative
     """
+    if n==0:
+        raise Exception("Sorry, the n=0 mode is still not implemented. Use n!=0")
     Bsta = np.zeros((3,3),dtype = complex)
     Bsta[:,0] = np.array([1, np.tan(alfa2), -lambda_s*s+dLs_dTana*np.tan(alfa1)/
                           (Vx*(1+tau_s*s))-Vy2*np.tan(alfa2)])*np.exp(1j*n*theta)
@@ -194,6 +206,8 @@ def Brot_n(s,theta,n,Vx,Vy1,Vy2,alfa1,beta1,beta2,lambda_r,dLr_dTanb,tau_r=0):
     tau_r : unsteady rotor loss lag parameter
     dLr_dTanb : loss derivative with respect to inlet beta at background operating point
     """
+    if n==0:
+        raise Exception("Sorry, the n=0 mode is still not implemented. Use n!=0")
     Brot = np.zeros((3,3),dtype = complex)
     Brot[:,0] = np.array([1, np.tan(beta2), np.tan(beta2)-np.tan(alfa1)-lambda_r*(s+1j*n)+dLr_dTanb*
                           np.tan(beta1)/(Vx*(1+tau_r*(s+1j*n)))-Vy2*np.tan(beta2)])*np.exp(1j*n*theta)
@@ -224,6 +238,8 @@ def Bimp_n(s,theta,n,Vx1,Vr2,Vy1,Vy2,alfa1,beta1,beta2,r1,r2,rho1,rho2,A1,A2,s_i
     dLi_dTanb : loss derivative with respect to inlet beta at background operating point
     tau_i : unsteady impeller loss lag parameter
     """
+    if n==0:
+        raise Exception("Sorry, the n=0 mode is still not implemented. Use n!=0")
     AR = rho2*A2/(rho1*A1) #aspect ratio
     lambda_i = s_i*AR*np.log(AR)/(AR-1) #inertia parameter
     Bimp = np.zeros((3,3),dtype = complex)
@@ -256,6 +272,8 @@ def Bdif_n(s,theta,n,Vr1,Vr2,Vy1,Vy2,alfa1,beta1,alfa2,r1,r2,rho1,rho2,A1,A2,s_d
     dLd_dTana : loss derivative with respect to inlet alfa at background operating point
     tau_d : unsteady impeller loss lag parameter
     """
+    if n==0:
+        raise Exception("Sorry, the n=0 mode is still not implemented. Use n!=0")
     AR = rho2*A2/(rho1*A1) #aspect ratio
     lambda_dif = s_dif*AR*np.log(AR)/(AR-1) #inertia parameter
     Bdif = np.zeros((3,3),dtype = complex)
@@ -282,6 +300,8 @@ def Bvlsd_n(s,theta,n,r1,r2,r_ref,Q,GAMMA):
     Q : non dimensional source term
     GAMMA : non dimensional rotational term of the potential flow
     """
+    if n==0:
+        raise Exception("Sorry, the n=0 mode is still not implemented. Use n!=0")
     M_2 = Trad_n(r2, r_ref, n, s, theta, Q, GAMMA)
     M_1 = np.linalg.inv(Trad_n(r1, r_ref, n, s, theta, Q, GAMMA))
     Bvlsd = np.matmul(M_2,M_1)*np.exp(1j*n*theta)
@@ -371,11 +391,11 @@ def shot_gun_method2(complex_function, domain, n_grid, n, N=50, tol=1e-6, attemp
     RETURN:
     poles : array of poles
     """
+    if n==0:
+        raise Exception("Sorry, the n=0 mode is still not implemented. Use n!=0")
     print('-----------------------------------------------------------------------')
     print('SHOT GUN METHOD CALLED')
     print('-----------------------------------------------------------------------')
-    
-    
     left_lim = domain[0] #left border of the domain
     right_lim = domain[1] #right border of the domain
     down_lim = domain[2] #lower border
