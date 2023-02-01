@@ -63,31 +63,6 @@ def Bgap_n(x1,x2,s,theta,n,Vx,Vy):
 
 
 #%% FUNCTIONS AND MATRICES FOR SWIRLING FLOWS
-def Rn(r,r0,n,s,Q,GAMMA):
-    """
-    Integrals needed to construct the matrix for the whirling flow
-    r : non dimensional radius
-    n : circumferential harmonic number
-    s : Laplace variable s=sigma+j*omega
-    Q : source term of the swirling flow
-    GAMMA : rotational term of the swirling flow
-    """
-    if n==0:
-        raise Exception("Sorry, the n=0 mode is still not implemented. Use n!=0")
-    
-    #quad wants a real argument, split the integrand betwee real and complex part
-    def integrand_function(x):
-        return (np.exp(-(1j*n*GAMMA*np.log(x)/Q) + s*(x**2)/(2*Q))*((r**n)*(x**(-n+1))-(r**(-n))*x**(n+1)))
-    def real_integral(x):
-        return integrand_function(x).real
-    def imag_integral(x):
-        return integrand_function(x).imag
-    
-    result_real = integrate.quad(real_integral, r0, r)
-    result_imag = integrate.quad(imag_integral, r0, r)
-    
-    return complex(result_real[0]+1j*result_imag[0])
-
 def Rad_fun(r,r0,n,s,Q,GAMMA):
     """
     Radial functions needed to construct the matrix for the whirling flow
