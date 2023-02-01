@@ -39,7 +39,7 @@ Wr_2 = np.exp(1j*n*theta0)
 Wt_2 = np.exp(1j*n*theta0)*(GAMMA-1)/Q
 
 #radial position where we want the data
-radii = np.array([1.0,1.05,1.1,1.15,1.2])
+radii = np.array([R2, 1.05, 1.1, 1.15])
 # radii = np.array([1,1.05,1.1])
 
 r0 = R2 #this is the big problem. no reason for it. there is no way to understand what is its meaning
@@ -77,7 +77,7 @@ for k in range(0,len(radii)):
 fig.legend()
 
 #%% VARIATIONS WITH RADIUS
-radii = np.linspace(R2,R3,100)
+radii = np.linspace(R2,1.25,100)
 fig, axes = plt.subplots(3,1, figsize=format_fig)
 axes[0].set_ylabel(r'$\delta w_{r}$')
 axes[1].set_ylabel(r'$\delta w_{\theta}$')
@@ -86,13 +86,21 @@ axes[2].set_xlabel(r'$r $')
 vec = np.zeros((3,len(radii)),dtype=complex)
 for k in range(0,len(radii)):
     vec[:,k] = np.matmul(Trad_n(radii[k], r0 , n, 1j*omega, theta0, Q, GAMMA),DEN_mode).reshape(3)
-axes[0].plot(radii, vec[0,:],'-o')
-axes[1].plot(radii, vec[1,:],'-o')
-axes[2].plot(radii, vec[2,:],'-o')
+axes[0].plot(radii, vec[0,:].real,'-o')
+axes[1].plot(radii, vec[1,:].real,'-o')
+axes[2].plot(radii, vec[2,:].real,'-o')
 
+Wr_mag = np.abs(vec[0,:])
+Wt_mag = np.abs(vec[1,:])/np.max(vec[1,:])
 
-
-
+W_phase = np.angle(vec[0,:]-vec[1,:])
+fig, axes = plt.subplots(2,1, figsize=format_fig)
+axes[0].set_ylabel(r'$|\delta w_{r}|$')
+axes[1].set_ylabel(r'$\varphi(\delta w_{\theta})$')
+axes[1].set_xlabel(r'$r $')
+axes[0].plot(radii, Wr_mag)
+axes[0].plot(radii, Wt_mag)
+axes[1].plot(radii, W_phase,'-o')
 
 
 

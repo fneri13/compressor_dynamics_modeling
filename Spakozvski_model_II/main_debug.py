@@ -97,8 +97,10 @@ vaneless_diffuser = Bvlsd_n(s,theta,n,r1,r2,r1,Q,GAMMA)
 gap = Bgap_n(x1,x2,s,theta,n,Vx,Vy)
 
 #check radial functions
-res = Rn(1.5,1,1,1,1,1)
-    
+# res, res_prime, res_second = Rad_fun(1.5,1.5,1,1+1j,1,1)
+# res2 = Rn(1.5,1,1,1+1j,1,1)
+# res_prime2 = Rn_prime_r(1.5,1,1,1+1j,1,1)
+# res_second2 = Rn_second_r(1.5,1,1,1+1j,1,1)
 #%%Poles of a test function  
 
 def test_function(s,n):

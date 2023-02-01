@@ -88,44 +88,43 @@ def Rn(r,r0,n,s,Q,GAMMA):
     
     return complex(result_real[0]+1j*result_imag[0])
 
-
-
-def Rn_prime_r(r,r0,n,s,Q,GAMMA):
+def Rad_fun(r,r0,n,s,Q,GAMMA):
     """
-    First derivative OF Rn with respect to r, central difference scheme
-    r : non dimensional radius
-    n : circumferential harmonic number
-    s : Laplace variable s=sigma+j*omega
-    Q : source term of the swirling flow
-    GAMMA : rotational term of the swirling flow
-    """
-    r_left = r*0.999999
-    r_right = r*1.000001
-    Rn_right = Rn(r_right,r0,n,s,Q,GAMMA)
-    Rn_left = Rn(r_left,r0,n,s,Q,GAMMA)
-    derivative = (Rn_right-Rn_left)/(2*(r_right-r_left))
-    return derivative
+    Radial functions needed to construct the matrix for the whirling flow
+    ARGUMENTS;
+        r : non dimensional radius
+        n : circumferential harmonic number
+        s : Laplace variable s=sigma+j*omega
+        Q : source term of the swirling flow
+        GAMMA : rotational term of the swirling flow
 
-
-
-def Rn_second_r(r,r0,n,s,Q,GAMMA):
+    RETURNS:
+        y[0] = Rn
+        y[1] = Rn prime derivative
+        y[2] = Rn second derivative
     """
-    Second derivative of Rn with respect to r, central difference scheme
-    r : non dimensional radius
-    n : circumferential harmonic number
-    s : Laplace variable s=sigma+j*omega
-    Q : source term of the swirling flow
-    GAMMA : rotational term of the swirling flow
-    """
+    if n==0:
+        raise Exception("Sorry, the n=0 mode is still not implemented. Use n!=0")
+    N = 1000
+    x = np.linspace(r0,r,N+1)
     
-    r_left = r*0.999999
-    r_right = r*1.000001
-    Rn_right = Rn(r_right,r0,n,s,Q,GAMMA)
-    Rn_central = Rn(r,r0,n,s,Q,GAMMA)
-    Rn_left = Rn(r_left,r0,n,s,Q,GAMMA)
-    derivative = (Rn_right+Rn_left-2*Rn_central)/((r_right-r_left)**2)
-    return derivative
-
+    def fp(x):
+        return np.exp(-(1j*n*GAMMA*np.log(x)/Q) + s*(x**2)/(2*Q))*x**(+n+1)
+    def fn(x):
+        return np.exp(-(1j*n*GAMMA*np.log(x)/Q) + s*(x**2)/(2*Q))*x**(-n+1)
+    
+    fn = fn(x) #positive integrand
+    fp = fp(x) #negative integrand
+    Fp = np.sum(fp[0:len(x)-1]+fp[1:len(x)]/2*(x[1:len(x)]-x[0:len(x)-1])) #positive intgrand integrated
+    Fn = np.sum(fn[0:len(x)-1]+fn[1:len(x)]/2*(x[1:len(x)]-x[0:len(x)-1])) #positive intgrand integrated
+    dfp = (-1j*n*GAMMA/Q/r-r/Q*s)*fp[N] + (+n+1)*r**(+n)*np.exp(-1j*n*GAMMA/Q*np.log(r)-s/2/Q*r**2) #positive integrand derivative
+    dfn = (-1j*n*GAMMA/Q/r-r/Q*s)*fn[N] + (-n+1)*r**(-n)*np.exp(-1j*n*GAMMA/Q*np.log(r)-s/2/Q*r**2) #negative integrand derivative
+    
+    Rn = r**n*Fn - r**(-n)*Fp
+    Rn_prime = n*r**(n-1)*Fn + r**n*fn[N] + n*r**(-n-1)*Fp - r**(-n)*fp[N]
+    Rn_second = (n**2-n)*r**(n-2)*Fn + 2*n*r**(n-1)*fn[N]+r**(n)*dfn -(n**2+n)*r**(-n-2)*Fp + 2*n*r**(-n-1)*fp[N]-r**(-n)*dfp
+                
+    return Rn, Rn_prime, Rn_second
 
 
 def Trad_n(r,r0,n,s,theta,Q,GAMMA):
@@ -150,9 +149,9 @@ def Trad_n(r,r0,n,s,theta,Q,GAMMA):
     Trad[:,1] = np.array([1j*n*r**(-n-1),
                           n*r**(-n-1),
                           -1j*Q*(1+n)*r**(-n-2)-(GAMMA/r+s*r/(1j*n)+1j*Q/(r*n))*n*r**(-n-1)])*np.exp(1j*n*theta)
-    Trad[:,2] = np.array([1j*n*Rn(r,r0,n,s,Q,GAMMA)/r,
-                          -Rn_prime_r(r,r0,n,s,Q,GAMMA),
-                          -(1j*Q/n)*Rn_second_r(r,r0, n, s,Q,GAMMA)+(GAMMA/r+s*r/(1j*n)-1j*Q/(r*n))*Rn_prime_r(r,r0, n, s,Q,GAMMA)])*np.exp(1j*n*theta)  
+    Trad[:,2] = np.array([1j*n*Rad_fun(r,r0,n,s,Q,GAMMA)[0]/r,
+                          -Rad_fun(r,r0,n,s,Q,GAMMA)[1],
+                          -(1j*Q/n)*Rad_fun(r,r0,n,s,Q,GAMMA)[2]+(GAMMA/r+s*r/(1j*n)-1j*Q/(r*n))*Rad_fun(r,r0,n,s,Q,GAMMA)[1]])*np.exp(1j*n*theta)  
     return Trad
 
 
