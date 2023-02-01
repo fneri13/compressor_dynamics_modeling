@@ -95,6 +95,9 @@ impeller = Bimp_n(s, theta, n, Vx1, Vr2, Vy1, Vy2, alfa1, beta1, beta2, r1, r2, 
 diffuser = Bdif_n(s, theta, n, Vr1, Vr2, Vy1, Vy2, alfa1, beta1, alfa2, r1, r2, rho1, rho2, A1, A2, s_dif, dLd_dTana)
 vaneless_diffuser = Bvlsd_n(s,theta,n,r1,r2,r1,Q,GAMMA)  
 gap = Bgap_n(x1,x2,s,theta,n,Vx,Vy)
+
+#check radial functions
+res = Rn(1.5,1,1,1,1,1)
     
 #%%Poles of a test function  
 
