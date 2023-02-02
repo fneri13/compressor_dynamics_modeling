@@ -78,18 +78,18 @@ for k in range(0,len(radii)):
 fig.legend()
 
 #%% VARIATIONS WITH RADIUS
-radii = np.linspace(R2,1.25,100)
-fig, axes = plt.subplots(3,1, figsize=format_fig)
-axes[0].set_ylabel(r'$\delta w_{r}$')
-axes[1].set_ylabel(r'$\delta w_{\theta}$')
-axes[2].set_ylabel(r'$\delta p $')
-axes[2].set_xlabel(r'$r $')
+radii = np.linspace(R2,1.25,300)
+# fig, axes = plt.subplots(3,1, figsize=format_fig)
+# axes[0].set_ylabel(r'$\delta w_{r}$')
+# axes[1].set_ylabel(r'$\delta w_{\theta}$')
+# axes[2].set_ylabel(r'$\delta p $')
+# axes[2].set_xlabel(r'$r $')
 vec = np.zeros((3,len(radii)),dtype=complex)
 for k in range(0,len(radii)):
     vec[:,k] = np.matmul(Trad_n(radii[k], r0 , n, 1j*omega, Q, GAMMA),DEN_mode).reshape(3)
-axes[0].plot(radii, vec[0,:].real)
-axes[1].plot(radii, vec[1,:].real)
-axes[2].plot(radii, vec[2,:].real)
+# axes[0].plot(radii, vec[0,:].real)
+# axes[1].plot(radii, vec[1,:].real)
+# axes[2].plot(radii, vec[2,:].real)
 
 Wr_mag = np.abs(vec[0,:])/np.max(vec[0,:])
 Wt_mag = np.abs(vec[1,:])/np.max(vec[1,:])

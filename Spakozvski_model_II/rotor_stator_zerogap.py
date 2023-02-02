@@ -36,8 +36,8 @@ Vx1 = 0.34 #non dimensional background axial flow velocity at inlet
 Vy1 = 0 #non dimensional background azimuthal flow velocity at outlet
 Deltax = 0
 
-LAMBDA = 1.08 #rotor inertia parameter
-MU = 1.7888 #all rows inertia parameter
+LAMBDA = 1 #rotor inertia parameter
+MU = 2 #all rows inertia parameter
 
 #from the inertia parameters we need to go back to axial spacing in order to recostruct the matrix
 
@@ -108,8 +108,8 @@ grid = [1,1]
 n=np.arange(1,7)
 plt.figure(figsize=format_fig)
 for nn in n:
-    poles = Shot_Gun(rotor_stator, domain, grid, n=nn, attempts=50)
-    poles_bmk = Shot_Gun(rotor_stator_benchmark,domain, grid, n=nn, attempts=50)
+    poles = Shot_Gun(rotor_stator, domain, grid, n=nn, attempts=25, tol=1e-6)
+    poles_bmk = Shot_Gun(rotor_stator_benchmark,domain, grid, n=nn, attempts=75, tol=1e-6)
     plt.plot(poles.real,-poles.imag,'o', label='n:'+str(nn))
     plt.plot(poles_bmk.real,-poles_bmk.imag,'kx')
 real_axis_x = np.linspace(domain[0],domain[1],100)
