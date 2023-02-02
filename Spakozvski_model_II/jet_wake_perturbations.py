@@ -69,7 +69,8 @@ for k in range(0,len(radii)):
     vec = np.zeros((3,len(theta)),dtype=complex)
     i = 0
     for t in theta:
-        vec[:,i] = np.matmul(Trad_n(radius, r0 , n, -1j*n, Q, GAMMA, theta=t),DEN_mode).reshape(3)
+        #shift of period/4 in order to match the plots presented in the thesis
+        vec[:,i] = np.matmul(Trad_n(radius, r0 , n, -1j*n, Q, GAMMA, theta=t+1/4*theta_max),DEN_mode).reshape(3)
         i = i+1       
     axes[0].plot(theta_deg, vec[0,:], label='r='+str(radius))
     axes[1].plot(theta_deg, vec[1,:])
@@ -86,9 +87,9 @@ axes[2].set_xlabel(r'$r $')
 vec = np.zeros((3,len(radii)),dtype=complex)
 for k in range(0,len(radii)):
     vec[:,k] = np.matmul(Trad_n(radii[k], r0 , n, 1j*omega, Q, GAMMA),DEN_mode).reshape(3)
-axes[0].plot(radii, vec[0,:].real,'-o')
-axes[1].plot(radii, vec[1,:].real,'-o')
-axes[2].plot(radii, vec[2,:].real,'-o')
+axes[0].plot(radii, vec[0,:].real)
+axes[1].plot(radii, vec[1,:].real)
+axes[2].plot(radii, vec[2,:].real)
 
 Wr_mag = np.abs(vec[0,:])/np.max(vec[0,:])
 Wt_mag = np.abs(vec[1,:])/np.max(vec[1,:])
