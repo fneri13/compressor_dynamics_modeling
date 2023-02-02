@@ -3,7 +3,7 @@
 """
 Created on Tue Jan 17 11:21:25 2023
 
-@author: fneri, TU Delft 
+@author: F. Neri, TU Delft 
 
 Construction of the matrices needed in the Spakovszky models PhD thesis.
 The n=0 mode is still missing!
@@ -15,48 +15,60 @@ import matplotlib.pyplot as plt
 
 
 #%% FUNCTIONS AND MATRICES FOR AXIAL DUCT AND GAP SPACE
-def Tax_n(x,s,theta,n,Vx,Vy):
+def Tax_n(x,s,n,Vx,Vy,theta=0):
     """
     Transmission matrix for the axial duct flow dynamics:
     |dVr|              |An|
     |dVtheta| = Trad_n*|Bn|
     |dp|               |Cn|
-    x : non dimensional x-cordinate
-    n : circumferential harmonic number
-    s : Laplace variable s=sigma+j*omega
-    theta : azimuthal cordinate
-    Vx : non-dimensional background axial velocity
-    Vy : non-dimensional background zimuthal velocity
+    
+    ARGUMENTS:
+        x : non dimensional x-cordinate
+        s : Laplace variable s=sigma-j*omega
+        n : circumferential harmonic number
+        Vx : non-dimensional background axial velocity
+        Vy : non-dimensional background zimuthal velocity        
+        theta : azimuthal cordinate (zero default)
+    
+    RETURN:
+        Tax_n
     """
     if n==0:
         raise Exception("Sorry, the n=0 mode is still not implemented. Use n!=0")
     Tax = np.zeros((3,3),dtype = complex)
     Tax[:,0] = np.array([1, 1j, -s/n - Vx -1j*Vy])*np.exp(n*x)*np.exp(1j*n*theta)
     Tax[:,1] = np.array([1, -1j, s/n - Vx +1j*Vy])*np.exp(-n*x)*np.exp(1j*n*theta)
-    Tax[:,2] = np.array([1, -s*1j/(Vx*n) +Vy/Vx, 0])*np.exp(-(s/Vx+1j*n*Vy/Vx)*x)*np.exp(1j*n*theta)   
+    Tax[0,2] = np.exp(-(s/Vx + 1j*n*Vy/Vx)*x)*np.exp(1j*n*theta)
+    Tax[1,2] = (-s*1j/Vx/n+Vy/Vx)*np.exp(-(s/Vx + 1j*n*Vy/Vx)*x)*np.exp(1j*n*theta)
+    Tax[2,2] = 0
     return Tax
 
 
 
-def Bgap_n(x1,x2,s,theta,n,Vx,Vy):
+def Bgap_n(x1,x2,s,n,Vx,Vy,theta=0):
     """
-    Transmission matrix for the axial gap between two blade rows:
+    Transmission matrix for an axial gap between two blade rows:
     |dVr|              |An|
     |dVtheta| = Trad_n*|Bn|
     |dp|               |Cn|
-    n : circumferential harmonic number
-    s : Laplace variable s=sigma+j*omega
-    theta : azimuthal cordinate
-    x1 : non dimensional cordinate of the first row
-    x2 : non dimensional cordinate of the second row
-    Vx : non-dimensional background axial velocity in the gap space
-    Vy : non-dimensional background azimuthal velocity in the gap space
+    
+    ARGUMENTS:
+        x1 : non dimensional cordinate of the first row trailing edge
+        x2 : non dimensional cordinate of the second row leading edge
+        s : Laplace variable s=sigma-j*omega
+        n : circumferential harmonic number
+        Vx : non-dimensional background axial velocity in the gap space
+        Vy : non-dimensional background azimuthal velocity in the gap space        
+        theta : azimuthal cordinate (zero default)
+    
+    RETURN:
+        Bgap_n
     """
     if n==0:
         raise Exception("Sorry, the n=0 mode is still not implemented. Use n!=0")
     Bgap = np.zeros((3,3),dtype = complex)
-    m1 = Tax_n(x2, s, theta, n, Vx, Vy)
-    m2 = np.linalg.inv(Tax_n(x1, s, theta, n, Vx, Vy))
+    m1 = Tax_n(x2, s, n, Vx, Vy, theta=theta)
+    m2 = np.linalg.inv(Tax_n(x1, s, n, Vx, Vy, theta=theta))
     Bgap = np.matmul(m1,m2)
     return Bgap
 
@@ -65,9 +77,10 @@ def Bgap_n(x1,x2,s,theta,n,Vx,Vy):
 #%% FUNCTIONS AND MATRICES FOR SWIRLING FLOWS
 def Rad_fun(r,r0,n,s,Q,GAMMA):
     """
-    Radial functions needed to construct the matrix for the whirling flow
+    Radial functions needed to construct the matrix for the swirling flow
     ARGUMENTS;
         r : non dimensional radius
+        r0 : non dimensional radius location where initial conditions are specified
         n : circumferential harmonic number
         s : Laplace variable s=sigma+j*omega
         Q : source term of the swirling flow
@@ -75,8 +88,8 @@ def Rad_fun(r,r0,n,s,Q,GAMMA):
 
     RETURNS:
         y[0] = Rn
-        y[1] = Rn prime derivative
-        y[2] = Rn second derivative
+        y[1] = dRn_dr
+        y[2] = d2Rn_dr2
     """
     if n==0:
         raise Exception("Sorry, the n=0 mode is still not implemented. Use n!=0")
@@ -84,14 +97,14 @@ def Rad_fun(r,r0,n,s,Q,GAMMA):
     x = np.linspace(r0,r,N+1)
     
     def fp(x):
-        return np.exp(-(1j*n*GAMMA*np.log(x)/Q) + s*(x**2)/(2*Q))*x**(+n+1)
+        return np.exp(-1j*n*GAMMA/Q*np.log(x) - s/2/Q*x**2)*x**(+n+1)
     def fn(x):
-        return np.exp(-(1j*n*GAMMA*np.log(x)/Q) + s*(x**2)/(2*Q))*x**(-n+1)
+        return np.exp(-1j*n*GAMMA/Q*np.log(x) - s/2/Q*x**2)*x**(-n+1)
     
     fn = fn(x) #positive integrand
     fp = fp(x) #negative integrand
-    Fp = np.sum(fp[0:len(x)-1]+fp[1:len(x)]/2*(x[1:len(x)]-x[0:len(x)-1])) #positive intgrand integrated
-    Fn = np.sum(fn[0:len(x)-1]+fn[1:len(x)]/2*(x[1:len(x)]-x[0:len(x)-1])) #positive intgrand integrated
+    Fp = np.sum(fp[0:len(x)-1]+fp[1:len(x)])/2*np.sum((x[1:len(x)]-x[0:len(x)-1])) #positive intgrand integrated
+    Fn = np.sum(fn[0:len(x)-1]+fn[1:len(x)])/2*np.sum((x[1:len(x)]-x[0:len(x)-1])) #positive intgrand integrated
     dfp = (-1j*n*GAMMA/Q/r-r/Q*s)*fp[N] + (+n+1)*r**(+n)*np.exp(-1j*n*GAMMA/Q*np.log(r)-s/2/Q*r**2) #positive integrand derivative
     dfn = (-1j*n*GAMMA/Q/r-r/Q*s)*fn[N] + (-n+1)*r**(-n)*np.exp(-1j*n*GAMMA/Q*np.log(r)-s/2/Q*r**2) #negative integrand derivative
     
@@ -100,58 +113,78 @@ def Rad_fun(r,r0,n,s,Q,GAMMA):
     Rn_second = (n**2-n)*r**(n-2)*Fn + 2*n*r**(n-1)*fn[N]+r**(n)*dfn -(n**2+n)*r**(-n-2)*Fp + 2*n*r**(-n-1)*fp[N]-r**(-n)*dfp
                 
     return Rn, Rn_prime, Rn_second
+    
 
 
-def Trad_n(r,r0,n,s,theta,Q,GAMMA):
+def Trad_n(r,r0,n,s,Q,GAMMA,theta=0):
     """
     Transmission matrix for the swirling flow dynamics:
     |dVr|          |An|
     |dVy| = Trad_n*|Bn|
     |dp|           |Cn|
-    r : non dimensional radius
-    n : circumferential harmonic number
-    s : Laplace variable s=sigma+j*omega
-    theta : azimuthal cordinate
-    Q : source term of the swirling flow
-    GAMMA : rotational term of the swirling flow
+    
+    ARGUMENTS:
+        r : non dimensional radius
+        r0 : radius at which initial conditions are specified for the swirling flow
+        n : circumferential harmonic number
+        s : Laplace variable s=sigma+j*omega
+        Q : source term of the swirling flow
+        GAMMA : rotational term of the swirling flow
+        theta : azimuthal cordinate
+    
+    RETURN:
+        Trad_n
     """
     if n==0:
         raise Exception("Sorry, the n=0 mode is still not implemented. Use n!=0")
     Trad = np.zeros((3,3),dtype = complex)
-    Trad[:,0] = np.array([1j*n*r**(n-1),
-                          -n*r**(n-1),
-                          1j*Q*(1-n)*r**(n-2)+(GAMMA/r+s*r/(1j*n)-1j*Q/(r*n))*n*r**(n-1)])*np.exp(1j*n*theta)
-    Trad[:,1] = np.array([1j*n*r**(-n-1),
-                          n*r**(-n-1),
-                          -1j*Q*(1+n)*r**(-n-2)-(GAMMA/r+s*r/(1j*n)+1j*Q/(r*n))*n*r**(-n-1)])*np.exp(1j*n*theta)
-    Trad[:,2] = np.array([1j*n*Rad_fun(r,r0,n,s,Q,GAMMA)[0]/r,
-                          -Rad_fun(r,r0,n,s,Q,GAMMA)[1],
-                          -(1j*Q/n)*Rad_fun(r,r0,n,s,Q,GAMMA)[2]+(GAMMA/r+s*r/(1j*n)-1j*Q/(r*n))*Rad_fun(r,r0,n,s,Q,GAMMA)[1]])*np.exp(1j*n*theta)  
-    return Trad
+    # Trad[:,0] = np.array([1j*n*r**(n-1),
+    #                       -n*r**(n-1),
+    #                       1j*Q*(1-n)*r**(n-2)+(GAMMA/r+s*r/(1j*n)-1j*Q/(r*n))*n*r**(n-1)])*np.exp(1j*n*theta)
+    # Trad[:,1] = np.array([1j*n*r**(-n-1),
+    #                       n*r**(-n-1),
+    #                       -1j*Q*(1+n)*r**(-n-2)-(GAMMA/r+s*r/(1j*n)+1j*Q/(r*n))*n*r**(-n-1)])*np.exp(1j*n*theta)
+    # Trad[:,2] = np.array([1j*n*Rad_fun(r,r0,n,s,Q,GAMMA)[0]/r,
+    #                       -Rad_fun(r,r0,n,s,Q,GAMMA)[1],
+    #                       -(1j*Q/n)*Rad_fun(r,r0,n,s,Q,GAMMA)[2]+(GAMMA/r+s*r/(1j*n)-1j*Q/(r*n))*Rad_fun(r,r0,n,s,Q,GAMMA)[1]])*np.exp(1j*n*theta)  
+    Trad[0,0] = 1j*n*r**(n-1)
+    Trad[0,1] = 1j*n*r**(-n-1)
+    Trad[0,2] = 1j*n*Rad_fun(r, r0, n, s, Q, GAMMA)[0]/r
+    Trad[1,0] = -n*r**(n-1)
+    Trad[1,1] = n*r**(-n-1)
+    Trad[1,2] = -Rad_fun(r, r0, n, s, Q, GAMMA)[1]
+    Trad[2,0] = 1j*Q*(1-n)*r**(n-2)+(GAMMA/r+s*r/1j/n-1j*Q/r/n)*n*r**(n-1)
+    Trad[2,1] = -1j*Q*(1+n)*r**(-n-2)-(GAMMA/r+s*r/1j/n+1j*Q/r/n)*n*r**(-n-1)
+    Trad[2,2] = (GAMMA/r+s*r/1j/n-1j*Q/r/n)*Rad_fun(r, r0, n, s, Q, GAMMA)[1]-1j*Q/n*Rad_fun(r, r0, n, s, Q, GAMMA)[2]
+    return Trad*np.exp(1j*n*theta)
 
 
 
 #%% FUNCTIONS AND MATRICES FOR AXIAL ROTOR AND STATOR ROWS
-def Bsta_n(s,theta,n,Vx,Vy1,Vy2, alfa1, alfa2, lambda_s , dLs_dTana, tau_s=0):
+def Bsta_n(s,n,Vx,Vy1,Vy2,alfa1,alfa2,lambda_s,dLs_dTana,theta=0,tau_s=0):
     """
     Transmission matrix for the axial stator row dynamics:
     |dVx2|          |dVx1| 
     |dVy2| = Bsta_n*|dVy1|
     |dp2|           |dp1|
-    n : circumferential harmonic number
-    s : Laplace variable s=sigma+j*omega
-    theta : azimuthal cordinate
-    Vx : non-dimensional background inlet axial velocity
-    Vy1 : non-dimensional background inlet azimuthal velocity
-    Vy2 : non-dimensional background outlet azimuthal velocity
-    alfa1 : inlet absolute swirl angle
-    alfa2 : outlet absolute swirl angle
-    lambda_s : row inertia parameter
-    tau_s : unsteadystator loss lag parameter
-    dLs_dTana1 : loss derivative
+    
+    ARGUMENTS:
+        s : Laplace variable s=sigma-j*omega
+        n : circumferential harmonic number
+        Vx : non-dimensional background inlet axial velocity
+        Vy1 : non-dimensional background inlet azimuthal velocity
+        Vy2 : non-dimensional background outlet azimuthal velocity
+        alfa1 : inlet absolute swirl angle
+        alfa2 : outlet absolute swirl angle
+        lambda_s : row inertia parameter
+        dLs_dTana : loss derivative
+        theta : azimuthal cordinate (zero default)     
+        tau_s : unsteady stator loss lag parameter (zero default)
+        
+    RETURN:
+        Bsta_n    
     """
-    if n==0:
-        raise Exception("Sorry, the n=0 mode is still not implemented. Use n!=0")
+    
     Bsta = np.zeros((3,3),dtype = complex)
     Bsta[:,0] = np.array([1, np.tan(alfa2), -lambda_s*s+dLs_dTana*np.tan(alfa1)/
                           (Vx*(1+tau_s*s))-Vy2*np.tan(alfa2)])*np.exp(1j*n*theta)
@@ -161,27 +194,31 @@ def Bsta_n(s,theta,n,Vx,Vy1,Vy2, alfa1, alfa2, lambda_s , dLs_dTana, tau_s=0):
 
 
 
-def Brot_n(s,theta,n,Vx,Vy1,Vy2,alfa1,beta1,beta2,lambda_r,dLr_dTanb,tau_r=0):
+def Brot_n(s,n,Vx,Vy1,Vy2,alfa1,beta1,beta2,lambda_r,dLr_dTanb,theta=0,tau_r=0):
     """
     Transmission matrix for the axial rotor row dynamics:
     |dVx2|          |dVx1| 
     |dVy2| = Brot_n*|dVy1|
     |dp2|           |dp1|
-    s : Laplace variable s=sigma+j*omega
-    theta : azimuthal cordinate
-    n : circumferential harmonic number
-    Vx : non-dimensional background axial velocity
-    Vy1 : non-dimensional background inlet azimuthal velocity
-    Vy2 : non-dimensional background outlet azimuthal velocity
-    alfa1 : inlet absolute swirl angle
-    beta1 : inlet relative swirl angle
-    beta2 : outlet relative swirl angle
-    lambda_r : row inertia parameter
-    tau_r : unsteady rotor loss lag parameter
-    dLr_dTanb : loss derivative with respect to inlet beta at background operating point
+    
+    ARGUMENTS:
+        s : Laplace variable s=sigma-j*omega
+        n : circumferential harmonic number
+        Vx : non-dimensional background axial velocity
+        Vy1 : non-dimensional background inlet azimuthal velocity
+        Vy2 : non-dimensional background outlet azimuthal velocity
+        alfa1 : inlet absolute swirl angle
+        beta1 : inlet relative swirl angle
+        beta2 : outlet relative swirl angle
+        lambda_r : row inertia parameter
+        dLr_dTanb : loss derivative with respect to inlet beta at background operating point
+        theta : azimuthal cordinate (zero default)
+        tau_r : unsteady rotor loss lag parameter (zero default)
+        
+    RETURN:
+        Brot_n
     """
-    if n==0:
-        raise Exception("Sorry, the n=0 mode is still not implemented. Use n!=0")
+
     Brot = np.zeros((3,3),dtype = complex)
     Brot[:,0] = np.array([1, np.tan(beta2), np.tan(beta2)-np.tan(alfa1)-lambda_r*(s+1j*n)+dLr_dTanb*
                           np.tan(beta1)/(Vx*(1+tau_r*(s+1j*n)))-Vy2*np.tan(beta2)])*np.exp(1j*n*theta)
@@ -192,28 +229,32 @@ def Brot_n(s,theta,n,Vx,Vy1,Vy2,alfa1,beta1,beta2,lambda_r,dLr_dTanb,tau_r=0):
 
 
 #%% FUNCTIONS AND MATRICES FOR RADIAL IMPELLER AND DIFFUSER
-def Bimp_n(s,theta,n,Vx1,Vr2,Vy1,Vy2,alfa1,beta1,beta2,r1,r2,rho1,rho2,A1,A2,s_i,dLi_dTanb,tau_i=0):
+def Bimp_n(s,n,Vx1,Vr2,Vy1,Vy2,alfa1,beta1,beta2,r1,r2,rho1,rho2,A1,A2,s_i,dLi_dTanb,theta=0,tau_i=0):
     """
     Transmission matrix for radial impeller:
     |dVr2|          |dVx1| 
     |dVy2| = Bimp_n*|dVy1|
     |dp2|           |dp1|
-    s : Laplace variable s=sigma+j*omega
-    theta : azimuthal cordinate
-    n : circumferential harmonic number
-    Vx1 : non-dimensional background inlet axial velocity
-    Vr2 : non-dimensional background outlet radial velocity
-    Vy1 : non-dimensional background inlet azimuthal velocity
-    Vy2 : non-dimensional background outlet azimuthal velocity
-    alfa1 : inlet absolute swirl angle
-    beta1 : inlet relative swirl angle
-    beta2 : outlet relative swirl angle
-    r1,r2,rho1,rho2,A1,A2,s_i: radii and densities in order to compute AR aspect ratio and inertia parameter
-    dLi_dTanb : loss derivative with respect to inlet beta at background operating point
-    tau_i : unsteady impeller loss lag parameter
+    
+    ARGUMENTS:
+        s : Laplace variable s=sigma-j*omega
+        n : circumferential harmonic number
+        Vx1 : non-dimensional background inlet axial velocity
+        Vr2 : non-dimensional background outlet radial velocity
+        Vy1 : non-dimensional background inlet azimuthal velocity
+        Vy2 : non-dimensional background outlet azimuthal velocity
+        alfa1 : inlet absolute swirl angle
+        beta1 : inlet relative swirl angle
+        beta2 : outlet relative swirl angle
+        r1,r2,rho1,rho2,A1,A2,s_i: radii and densities in order to compute AR aspect ratio and inertia parameter
+        dLi_dTanb : loss derivative with respect to inlet beta at background operating point
+        theta : azimuthal cordinate (zero default)
+        tau_i : unsteady impeller loss lag parameter (zero default)
+
+    RETURN:
+        Bimp_n
     """
-    if n==0:
-        raise Exception("Sorry, the n=0 mode is still not implemented. Use n!=0")
+    
     AR = rho2*A2/(rho1*A1) #aspect ratio
     lambda_i = s_i*AR*np.log(AR)/(AR-1) #inertia parameter
     Bimp = np.zeros((3,3),dtype = complex)
@@ -226,25 +267,30 @@ def Bimp_n(s,theta,n,Vx1,Vr2,Vy1,Vy2,alfa1,beta1,beta2,r1,r2,rho1,rho2,A1,A2,s_i
 
 
 
-def Bdif_n(s,theta,n,Vr1,Vr2,Vy1,Vy2,alfa1,beta1,alfa2,r1,r2,rho1,rho2,A1,A2,s_dif,dLd_dTana,tau_d=0):
+def Bdif_n(s,n,Vr1,Vr2,Vy1,Vy2,alfa1,beta1,alfa2,r1,r2,rho1,rho2,A1,A2,s_dif,dLd_dTana,theta=0,tau_d=0):
     """
     Transmission matrix for bladed radial diffuser:
     |dVr2|          |dVr1| 
     |dVy2| = Bdif_n*|dVy1|
     |dp2|           |dp1|
-    s : Laplace variable s=sigma+j*omega
-    theta : azimuthal cordinate
-    n : circumferential harmonic number
-    Vr1 : non-dimensional background inlet radial velocity
-    Vr2 : non-dimensional background outlet radial velocity
-    Vy1 : non-dimensional background inlet azimuthal velocity
-    Vy2 : non-dimensional background outlet azimuthal velocity
-    alfa1 : inlet absolute swirl angle
-    beta1 : inlet relative swirl angle
-    alfa2 : outlet absolute swirl angle
-    r1,r2,rho1,rho2,A1,A2,s_dif: radii and densities in order to compute AR aspect ratio and inertia parameter
-    dLd_dTana : loss derivative with respect to inlet alfa at background operating point
-    tau_d : unsteady impeller loss lag parameter
+    
+    ARGUMENTS:
+        s : Laplace variable s=sigma-j*omega
+        n : circumferential harmonic number
+        Vr1 : non-dimensional background inlet radial velocity
+        Vr2 : non-dimensional background outlet radial velocity
+        Vy1 : non-dimensional background inlet azimuthal velocity
+        Vy2 : non-dimensional background outlet azimuthal velocity
+        alfa1 : inlet absolute swirl angle
+        beta1 : inlet relative swirl angle
+        alfa2 : outlet absolute swirl angle
+        r1,r2,rho1,rho2,A1,A2,s_dif: radii and densities in order to compute AR aspect ratio and inertia parameter
+        dLd_dTana : loss derivative with respect to inlet alfa at background operating point
+        theta : azimuthal cordinate (zero default)
+        tau_d : unsteady impeller loss lag parameter (zero default)
+    
+    RETURN:
+        Bdif_n
     """
     if n==0:
         raise Exception("Sorry, the n=0 mode is still not implemented. Use n!=0")
@@ -259,129 +305,132 @@ def Bdif_n(s,theta,n,Vr1,Vr2,Vy1,Vy2,alfa1,beta1,alfa2,r1,r2,rho1,rho2,A1,A2,s_d
 
 
 
-def Bvlsd_n(s,theta,n,r1,r2,r_ref,Q,GAMMA):
+def Bvlsd_n(s,n,r1,r2,r0,Q,GAMMA,theta=0):
     """
     Transmission matrix for vaneless diffuser:
     |dVr2|           |dVr1| 
     |dVy2| = Bvlsd_n*|dVy1|
     |dp2|            |dp1|
-    s : Laplace variable s=sigma+j*omega
-    theta : azimuthal cordinate
-    n : circumferential harmonic number
-    r1 : inlet non dimensional radius
-    r2 : outlet non dimensional radius
-    r0 : reference radius for Trad computation
-    Q : non dimensional source term
-    GAMMA : non dimensional rotational term of the potential flow
+    
+    ARGUMENTS:
+        s : Laplace variable s=sigma-j*omega
+        n : circumferential harmonic number
+        r1 : inlet non dimensional radius
+        r2 : outlet non dimensional radius
+        r0 : reference radius for Trad computation
+        Q : non dimensional source term
+        GAMMA : non dimensional rotational term of the potential flow
+        theta : azimuthal cordinate (zero default)
+
+    
+    RETURN:
+        Bvlsd_n
     """
-    if n==0:
-        raise Exception("Sorry, the n=0 mode is still not implemented. Use n!=0")
-    M_2 = Trad_n(r2, r_ref, n, s, theta, Q, GAMMA)
-    M_1 = np.linalg.inv(Trad_n(r1, r_ref, n, s, theta, Q, GAMMA))
+    
+    M_2 = Trad_n(r2, r0, n, s, Q, GAMMA, theta=theta)
+    M_1 = np.linalg.inv(Trad_n(r1, r0, n, s, Q, GAMMA, theta=theta))
     Bvlsd = np.matmul(M_2,M_1)*np.exp(1j*n*theta)
     return Bvlsd
 
 
 
 #%% Methods to find the complex roots of a complex function
-def shot_gun_method(complex_function, s, R, N=30, tol=1e-6, attempts=30):
-    """
-    Shot-gun method taken from Spakozvzski PhD thesis, needed to compute the complex zeros of a complex function.
+# def shot_gun_method(complex_function, s, R, N=30, tol=1e-6, attempts=30):
+#     """
+#     Shot-gun method taken from Spakozvzski PhD thesis, needed to compute the complex zeros of a complex function.
     
-    ARGUMENTS
-    complex_function : is the complex function that we want to find the roots
-    s : is the initial guess for the complex root, around which we will shoot many random points
-    R : radius around s, where we will randomly shoot at the beginning
-    N : number of shots per round
-    tol : tolerance for the point to be a pole
-    attempts : number of attempts in the same zone, in order to find different poles that could be there
+#     ARGUMENTS
+#     complex_function : is the complex function that we want to find the roots
+#     s : is the initial guess for the complex root, around which we will shoot many random points
+#     R : radius around s, where we will randomly shoot at the beginning
+#     N : number of shots per round
+#     tol : tolerance for the point to be a pole
+#     attempts : number of attempts in the same zone, in order to find different poles that could be there
     
-    RETURN:
-    poles : list of found poles
-    """
-    print('-----------------------------------------------------------------------')
-    print('SHOT GUN METHOD CALLED')
-    print('Shot center: ')
-    print(s)
-    print('Shot radius: ')
-    print(R)
-    s0 = s #initial location for pole search
-    R0 = R #initial radius for pole search
-    N0 = N #initial number of shot points in the zone
-    mu=3 #under-relaxation coefficient for the radius. 3 is the value sueggested in the thesis
-    poles = [] #initialize a list of found poles
+#     RETURN:
+#     poles : list of found poles
+#     """
+#     print('-----------------------------------------------------------------------')
+#     print('SHOT GUN METHOD CALLED')
+#     print('Shot center: ')
+#     print(s)
+#     print('Shot radius: ')
+#     print(R)
+#     s0 = s #initial location for pole search
+#     R0 = R #initial radius for pole search
+#     N0 = N #initial number of shot points in the zone
+#     mu=3 #under-relaxation coefficient for the radius. 3 is the value sueggested in the thesis
+#     poles = [] #initialize a list of found poles
     
-    #Run the loop until we have 1 point, the radius is larger than zero, and the error is above a threshold
-    for rounds in range(0,attempts):    
-        s = s0 #for every round reset the method to initial values
-        R = R0
-        N = N0
-        while (N > 0):
-            s_points = np.zeros(N,dtype=complex)
-            J_points = np.zeros(N)
-            error_points = np.zeros(N)
-            for kk in range(0,N):    
-                r = np.random.uniform(0, R) #random distance from the shot point
-                phi = np.random.uniform(0, 2*np.pi) #random phase angle from the shot point
-                s_points[kk] = s+r*np.exp(1j*phi) #random points where determinante will be computed 
-                error_points[kk] = np.abs(complex_function(s_points[kk]))
-                J_points[kk] = (error_points[kk])**(-2) #errors associated to every random point
-            CG = np.sum(s_points*J_points)/np.sum(J_points) #center of gravity of points
-            min_pos = np.argmin(error_points) #index of the best point
-            min_error = error_points[min_pos] #error of the best point
-            s = s_points[min_pos] #update central location for new loop
-            R = mu*np.abs(CG-s_points[min_pos]) #update radius for new loop
-            N = N-1 #reduce the number of points for the next round
+#     #Run the loop until we have 1 point, the radius is larger than zero, and the error is above a threshold
+#     for rounds in range(0,attempts):    
+#         s = s0 #for every round reset the method to initial values
+#         R = R0
+#         N = N0
+#         while (N > 0):
+#             s_points = np.zeros(N,dtype=complex)
+#             J_points = np.zeros(N)
+#             error_points = np.zeros(N)
+#             for kk in range(0,N):    
+#                 r = np.random.uniform(0, R) #random distance from the shot point
+#                 phi = np.random.uniform(0, 2*np.pi) #random phase angle from the shot point
+#                 s_points[kk] = s+r*np.exp(1j*phi) #random points where determinante will be computed 
+#                 error_points[kk] = np.abs(complex_function(s_points[kk]))
+#                 J_points[kk] = (error_points[kk])**(-2) #errors associated to every random point
+#             CG = np.sum(s_points*J_points)/np.sum(J_points) #center of gravity of points
+#             min_pos = np.argmin(error_points) #index of the best point
+#             min_error = error_points[min_pos] #error of the best point
+#             s = s_points[min_pos] #update central location for new loop
+#             R = mu*np.abs(CG-s_points[min_pos]) #update radius for new loop
+#             N = N-1 #reduce the number of points for the next round
         
-        #decide if to append the new pole to the list of poles
-        if min_error < tol:
-            copy = False #assuming initially that this pole is not a copy, see if it is
-            for k in poles:
-                distance = np.abs(s-k)
-                if distance < tol:
-                    copy = copy or True
-                else:
-                    copy = copy or False
-            if copy==False:
-                poles.append(s)
-    print('-----------------------------------------------------------------------')
-    return poles  
+#         #decide if to append the new pole to the list of poles
+#         if min_error < tol:
+#             copy = False #assuming initially that this pole is not a copy, see if it is
+#             for k in poles:
+#                 distance = np.abs(s-k)
+#                 if distance < tol:
+#                     copy = copy or True
+#                 else:
+#                     copy = copy or False
+#             if copy==False:
+#                 poles.append(s)
+#     print('-----------------------------------------------------------------------')
+#     return poles  
 
     
-def shot_gun_method2(complex_function, domain, n_grid, n, N=50, tol=1e-6, attempts=50):
+def Shot_Gun(complex_function, domain, n_grid, n=1, N=30, tol=1e-6, attempts=30):
     """
     Shot-gun method taken from Spakozvzski PhD thesis, needed to compute the complex zeros of a complex function.
-    The difference with method 1 is that here we provide the domain of intereste, and the grid  on which we want
-    to look for the poles
     
     ARGUMENTS
-    complex_function : is the complex function that we want to find the roots
-    domain : domain where we look for poles
-    n_grid : number of intervals in x and y in the complex domain 
-    N : number of shots per round
-    tol : tolerance for the point to be a pole
-    attempts : number of attempts in the same zone, in order to find different poles that could be there
+        complex_function : pointer to the function that we want to find the roots
+        domain : domain where we look for poles, in format [x_min, x_max, y_min, y_max]
+        n_grid : number of intervals in x and y in the complex domain, in format [n_x, n_y]
+        n : circumferential harmonic, needed from the complex function (1 as default)
+        N : number of shots per round (default=30)
+        tol : tolerance for the point to be a pole (default 1e-6)
+        attempts : number of attempts in the same zone in order to find different poles in the same zone (default=30)
     
     RETURN:
-    poles : array of poles
+    poles : array of poles (complex type)
     """
     if n==0:
         raise Exception("Sorry, the n=0 mode is still not implemented. Use n!=0")
     print('-----------------------------------------------------------------------')
     print('SHOT GUN METHOD CALLED')
-    print('-----------------------------------------------------------------------')
     left_lim = domain[0] #left border of the domain
     right_lim = domain[1] #right border of the domain
     down_lim = domain[2] #lower border
     upper_lim = domain[3] #upper border
-    lx = (right_lim-left_lim)/(n_grid[0]-1) #interval step in x direction
-    ly = (upper_lim-down_lim)/(n_grid[1]-1) #interval step in y direction
+    lx = (right_lim-left_lim)/(n_grid[0]) #interval step in x direction
+    ly = (upper_lim-down_lim)/(n_grid[1]) #interval step in y direction
     N0 = N #backup values
     lx0 = lx #backup value
     ly0 = ly #backup value
-    s_real = np.linspace(left_lim+lx/2, right_lim-lx/2, n_grid[0]-1) #real value of points
-    s_imag = np.linspace(down_lim+ly/2, upper_lim-ly/2, n_grid[1]-1) #imaginary value of points
-    mu=3 #under-relaxation coefficient. It is equal to 3 in the thesis
+    s_real = np.linspace(left_lim+lx/2, right_lim-lx/2, n_grid[0]) #real value of points
+    s_imag = np.linspace(down_lim+ly/2, upper_lim-ly/2, n_grid[1]) #imaginary value of points
+    mu=3 #relaxation coefficient. It is equal to 3 in the thesis
     
     pole_list = [] #initialize pole list
     for ii in range(len(s_real)):
@@ -431,54 +480,56 @@ def shot_gun_method2(complex_function, domain, n_grid, n, N=50, tol=1e-6, attemp
 
     poles = np.array(pole_list)    
     print('-------------------------------------------')
+    print('SHOT GUN EXIT SUCCESSFUL')
+    print('-----------------------------------------------------------------------')
     return poles
 
 
 
-def mapping_poles(s_r_min,s_r_max,s_i_min,s_i_max,Myfunc, ii=0):
-    """
-    Brute force method in order to find all the poles of a certain complex function in a certain domain
-    ARGUMENT:
-        s_r_min : minimum real part of the domain
-        s_r_max : max real part of the domain
-        s_i_min : minimum imaginary part of the domain
-        s_i_max : maximum imaginary part of the domain
-        Myfunc : complex function that we want to find the poles of
-    RETURN:
-        poles : list of complex poles if found
-    """
-    grid_real = 300 #number of grid points in real direction
-    grid_im = 300 #number of points in imaginary direction
-    s_real = np.linspace(s_r_min,s_r_max,grid_real)
-    s_im = np.linspace(s_i_min,s_i_max,grid_im)
-    real_grid, imag_grid = np.meshgrid(s_real,s_im)
-    magnitude = np.zeros((len(s_real),len(s_im)))
-    poles = []
-    for i in range(0,len(s_real)):
-        for j in range(0,len(s_im)):
-            magnitude[i,j] = np.abs(Myfunc(s_real[i]+1j*s_im[j]))
-            if magnitude[i,j]<1e-1: #criterion to decide if it is a pole or not
-                poles.append(s_real[i]+1j*s_im[j])
-    poles_real = np.array([poles]).real.reshape(len(poles))
-    poles_imag = np.array([poles]).imag.reshape(len(poles))
-    plt.figure(figsize=(10,6))
-    plt.scatter(poles_real,poles_imag)
-    plt.xlim([s_r_min,s_r_max])
-    plt.ylim([s_i_min,s_i_max])
-    plt.xlabel(r'$\sigma_{n}$')
-    plt.ylabel(r'$j \omega_{n}$')
-    plt.grid()
-    plt.title('Root locus')
+# def mapping_poles(s_r_min,s_r_max,s_i_min,s_i_max,Myfunc, ii=0):
+#     """
+#     Brute force method in order to find all the poles of a certain complex function in a certain domain
+#     ARGUMENT:
+#         s_r_min : minimum real part of the domain
+#         s_r_max : max real part of the domain
+#         s_i_min : minimum imaginary part of the domain
+#         s_i_max : maximum imaginary part of the domain
+#         Myfunc : complex function that we want to find the poles of
+#     RETURN:
+#         poles : list of complex poles if found
+#     """
+#     grid_real = 300 #number of grid points in real direction
+#     grid_im = 300 #number of points in imaginary direction
+#     s_real = np.linspace(s_r_min,s_r_max,grid_real)
+#     s_im = np.linspace(s_i_min,s_i_max,grid_im)
+#     real_grid, imag_grid = np.meshgrid(s_real,s_im)
+#     magnitude = np.zeros((len(s_real),len(s_im)))
+#     poles = []
+#     for i in range(0,len(s_real)):
+#         for j in range(0,len(s_im)):
+#             magnitude[i,j] = np.abs(Myfunc(s_real[i]+1j*s_im[j]))
+#             if magnitude[i,j]<1e-1: #criterion to decide if it is a pole or not
+#                 poles.append(s_real[i]+1j*s_im[j])
+#     poles_real = np.array([poles]).real.reshape(len(poles))
+#     poles_imag = np.array([poles]).imag.reshape(len(poles))
+#     plt.figure(figsize=(10,6))
+#     plt.scatter(poles_real,poles_imag)
+#     plt.xlim([s_r_min,s_r_max])
+#     plt.ylim([s_i_min,s_i_max])
+#     plt.xlabel(r'$\sigma_{n}$')
+#     plt.ylabel(r'$j \omega_{n}$')
+#     plt.grid()
+#     plt.title('Root locus')
     
-    levels = np.linspace(0,0.1,21)
-    plt.figure(figsize=(10,6))
-    plt.contourf(real_grid,imag_grid,magnitude, levels=levels)
-    plt.xlabel(r'$\sigma_{n}$')
-    plt.ylabel(r'$j \omega_{n}$')
-    plt.colorbar()
-    plt.title('Determinant Map')
+#     levels = np.linspace(0,0.1,21)
+#     plt.figure(figsize=(10,6))
+#     plt.contourf(real_grid,imag_grid,magnitude, levels=levels)
+#     plt.xlabel(r'$\sigma_{n}$')
+#     plt.ylabel(r'$j \omega_{n}$')
+#     plt.colorbar()
+#     plt.title('Determinant Map')
     
-    return poles
+#     return poles
 
 
 

@@ -78,13 +78,20 @@ Vx4 = Vx1
 Vy4 = 0
 
 #%% compute the results for each harmonic
+LAMBDA = 1.08
+MU = 1.7888
+tau_u = 1 #from thesis
+tau_s = tau_u*c_s/(np.cos(gamma_s)*Vx1)
+tau_r = tau_u*c_r/(np.cos(gamma_r)*Vx1)
+LAMBDA = lambda_r
+MU = lambda_s+lambda_r
 
-#system function
+#system function from matrix stacking method
 def rotor_stator(s, n, theta=0):
-    m1 = np.linalg.inv(Tax_n(x4, s, theta, n, Vx4, Vy4))
-    m2 = Bsta_n(s, theta, n, Vx3, Vy3, Vy4, alfa3, alfa4, lambda_s, dLs_dTana)
-    m4 = Brot_n(s, theta, n, Vx1, Vy1, Vy2, alfa1, beta1, beta2, lambda_r, dLr_dTanb)
-    m5 = Tax_n(x1, s, theta, n, Vx1, Vy1)
+    m1 = np.linalg.inv(Tax_n(x4, s, n, Vx4, Vy4, theta=theta))
+    m2 = Bsta_n(s, n, Vx3, Vy3, Vy4, alfa3, alfa4, lambda_s, dLs_dTana, theta=theta, tau_s=tau_s)
+    m4 = Brot_n(s, n, Vx1, Vy1, Vy2, alfa1, beta1, beta2, lambda_r, dLr_dTanb, theta=theta, tau_r=tau_r)
+    m5 = Tax_n(x1, s, n, Vx1, Vy1, theta=theta)
     m6 = np.linalg.multi_dot([m1,m2,m4,m5])
     EC = np.array([[1,0,0]])
     IC = np.array([[0,1,0],
@@ -92,26 +99,19 @@ def rotor_stator(s, n, theta=0):
     Y = np.concatenate((np.matmul(EC,m6),IC))
     return np.linalg.det(Y)
 
+#system function from semi-analytical solution
 def rotor_stator_benchmark(s, n, theta=0):
-    LAMBDA = 1.08
-    MU = 1.7888
-    tau_u = 1
-    tau_s = tau_u*c_s/(np.cos(gamma_s)*Vx1)
-    tau_r = tau_u*c_r/(np.cos(gamma_r)*Vx1)
-    # dLr_dphi = -1
-    # dLs_dphi = 0.5
     return (MU+2/n)*s-dLr_dPhi*(1-1/(1+tau_r*(s+1j*n)))-dLs_dphi*(1-1/(1+tau_s*s))+LAMBDA*1j*n
 
 domain = [-2.0,0.5,0.0,3.0]
-# domain = [-10,10,-10,10]
-grid = [5,5]
-n=np.arange(1,4)
+grid = [1,1]
+n=np.arange(1,7)
 plt.figure(figsize=format_fig)
 for nn in n:
-    # poles = shot_gun_method2(rotor_stator,domain, grid, nn, attempts = 10)
-    poles_bmk = shot_gun_method2(rotor_stator_benchmark,domain, grid, nn, attempts = 10)
-    # plt.plot(poles.real,-poles.imag,'x', label='SG n '+str(nn))
-    plt.plot(poles_bmk.real,-poles_bmk.imag,'o', label='AN n '+str(nn))
+    poles = Shot_Gun(rotor_stator, domain, grid, n=nn, attempts=50)
+    poles_bmk = Shot_Gun(rotor_stator_benchmark,domain, grid, n=nn, attempts=50)
+    plt.plot(poles.real,-poles.imag,'o', label='n:'+str(nn))
+    plt.plot(poles_bmk.real,-poles_bmk.imag,'kx')
 real_axis_x = np.linspace(domain[0],domain[1],100)
 real_axis_y = np.zeros(len(real_axis_x))   
 imag_axis_y = np.linspace(domain[2],domain[3],100)

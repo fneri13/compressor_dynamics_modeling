@@ -73,11 +73,11 @@ Vy4 = 0
 
 #system function
 def rotor_stator(s, n, theta=0):
-    m1 = np.linalg.inv(Tax_n(x4, s, theta, n, Vx4, Vy4))
-    m2 = Bsta_n(s, theta, n, Vx3, Vy3, Vy4, alfa3, alfa4, lambda_s, dLs_dTana)
-    m3 = Bgap_n(x2, x3, s, theta, n, Vx2, Vy2)
-    m4 = Brot_n(s, theta, n, Vx1, Vy1, Vy2, alfa1, beta1, beta2, lambda_r, dLr_dTanb)
-    m5 = Tax_n(x1, s, theta, n, Vx1, Vy1)
+    m1 = np.linalg.inv(Tax_n(x4, s, n, Vx4, Vy4, theta=theta))
+    m2 = Bsta_n(s, n, Vx3, Vy3, Vy4, alfa3, alfa4, lambda_s, dLs_dTana, theta=theta)
+    m3 = Bgap_n(x2, x3, s, n, Vx2, Vy2, theta=theta)
+    m4 = Brot_n(s, n, Vx1, Vy1, Vy2, alfa1, beta1, beta2, lambda_r, dLr_dTanb, theta=theta)
+    m5 = Tax_n(x1, s, n, Vx1, Vy1, theta=theta)
     m6 = np.linalg.multi_dot([m1,m2,m3,m4,m5])
     EC = np.array([[1,0,0]])
     IC = np.array([[0,1,0],
@@ -86,11 +86,11 @@ def rotor_stator(s, n, theta=0):
     return np.linalg.det(Y)
 
 domain = [-2.5,0.5,-0.5,4.5]
-grid = [5,5]
+grid = [3,3]
 n=np.arange(1,7)
 plt.figure(figsize=format_fig)
 for nn in n:
-    poles = shot_gun_method2(rotor_stator,domain, grid, nn, attempts = 5)
+    poles = Shot_Gun(rotor_stator,domain, grid, n=nn)
     plt.plot(poles.real,-poles.imag,'o', label='n '+str(nn))
 real_axis_x = np.linspace(domain[0],domain[1],100)
 real_axis_y = np.zeros(len(real_axis_x))   

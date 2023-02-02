@@ -5,7 +5,7 @@ Created on Mon Dec 19 16:17:31 2022
 
 @author: fn
 
-try to replicate section 5.1 of Spakovszky PhD thesis
+test file for functions.py
 """
 
 import matplotlib.pyplot as plt
@@ -63,6 +63,7 @@ lambda_s = 0.256 #inertia parameter rotor
 
 #%%debug parameters
 r = 1
+r0 = 0.9
 n = 1
 s = 1+1j
 theta = np.pi/4
@@ -87,32 +88,31 @@ dLi_dTanb = -0.9
 dLd_dTana = -0.5
 
 #build all the functions written in the functions file, to see it if they work
-swirler = Trad_n(r, r, n, s, theta, Q, GAMMA)  
-axial = Tax_n(x, s, theta, n, Vx1, Vy2)  
-stator = Bsta_n(s, theta, n, Vx, Vy1, Vy2, alfa1, alfa2, lambda_s, dLs_dTana)
-rotor = Brot_n(s, theta, n, Vx1, Vy1, Vy2, alfa1, beta1, beta2, lambda_r, dLr_dTanb) 
-impeller = Bimp_n(s, theta, n, Vx1, Vr2, Vy1, Vy2, alfa1, beta1, beta2, r1, r2, rho1, rho2, A1, A2, s_i, dLi_dTanb)
-diffuser = Bdif_n(s, theta, n, Vr1, Vr2, Vy1, Vy2, alfa1, beta1, alfa2, r1, r2, rho1, rho2, A1, A2, s_dif, dLd_dTana)
-vaneless_diffuser = Bvlsd_n(s,theta,n,r1,r2,r1,Q,GAMMA)  
-gap = Bgap_n(x1,x2,s,theta,n,Vx,Vy)
+swirler = Trad_n(r, r, n, s, Q, GAMMA)  
+axial = Tax_n(x, s, n, Vx1, Vy1)  
+stator = Bsta_n(s, n, Vx, Vy1, Vy2, alfa1, alfa2, lambda_s, dLs_dTana, theta=1)
+rotor = Brot_n(s, n, Vx1, Vy1, Vy2, alfa1, beta1, beta2, lambda_r, dLr_dTanb, theta=0.5) 
+impeller = Bimp_n(s, n, Vx1, Vr2, Vy1, Vy2, alfa1, beta1, beta2, r1, r2, rho1, rho2, A1, A2, s_i, dLi_dTanb, theta=1)
+diffuser = Bdif_n(s, n, Vr1, Vr2, Vy1, Vy2, alfa1, beta1, alfa2, r1, r2, rho1, rho2, A1, A2, s_dif, dLd_dTana, theta=0.1)
+vaneless_diffuser = Bvlsd_n(s, n, r1,r2, r1, Q, GAMMA, theta=1)  
+gap = Bgap_n(x1, x2, s, n, Vx, Vy, theta=1)
 
-#check radial functions
-# res, res_prime, res_second = Rad_fun(1.5,1.5,1,1+1j,1,1)
-# res2 = Rn(1.5,1,1,1+1j,1,1)
-# res_prime2 = Rn_prime_r(1.5,1,1,1+1j,1,1)
-# res_second2 = Rn_second_r(1.5,1,1,1+1j,1,1)
+r = 1
+r0 = 1
+RN, RN1, RN2 = Rad_fun(r, r0, n, s, Q, GAMMA)
+
 #%%Poles of a test function  
 
 def test_function(s,n):
-    #test function to debug the shot gun method
+    #test function to debug the shot gun method. 7 poles around unitary circle
     return s**7+1
 
 
 domain = [-2,2,-2,2]
-grid = [2,2]
+grid = [3,3]
 poles_analytic = []
 plt.figure(figsize=format_fig)
-poles = shot_gun_method2(test_function, domain, grid, 1)
+poles = Shot_Gun(test_function, domain, grid)
 plt.plot(poles.real,-poles.imag,'o', label='shot-gun')
 for k in range(0,7):
     poles_analytic.append(np.exp(1j*(np.pi+2*k*np.pi/7)))
@@ -147,7 +147,7 @@ n=np.arange(1,7)
 poles_list_analytic_stat = []
 plt.figure(figsize=format_fig)
 for nn in n:
-    poles = shot_gun_method2(stator_row, domain, grid, nn)
+    poles = Shot_Gun(stator_row, domain, grid, n=nn)
     plt.plot(poles.real,-poles.imag,'o', label='n='+str(nn))
     poles_list_analytic_stat.append(complex(nn*Vx)) #not physical poles
     poles_list_analytic_stat.append(complex((dLs_dTana*np.tan(alfa1)/Vx-Vx)/(lambda_s+2/nn),
@@ -182,7 +182,7 @@ n=np.arange(1,7)
 poles_analytic_rot = []
 plt.figure(figsize=format_fig)
 for nn in n:
-    poles = shot_gun_method2(rotor_row, domain, grid, nn)
+    poles = Shot_Gun(rotor_row, domain, grid, n=nn)
     plt.plot(poles.real,-poles.imag,'o', label='n '+str(nn))
     poles_analytic_rot.append(complex(((np.tan(beta2)+dLr_dTanb*np.tan(beta1)/Vx-Vx*(1+np.tan(alfa2)**2)+np.tan(alfa2))/(lambda_r+2/nn)),
                                         (dLr_dTanb/Vx + nn*lambda_r+1)/(lambda_r+2/nn)))
