@@ -56,12 +56,13 @@ BC_vec[1] = ((GAMMA-1)/Q)*np.exp(1j*n*(theta0))
 BC_vec[2] = 0
 #find the potential and vortical modes in the system that satisfy the BC
 DEN_mode = np.matmul(np.linalg.inv(Y),BC_vec)
-
-fig, axes = plt.subplots(3,1, figsize=format_fig)
+Wr0 = np.sqrt(1+((GAMMA-1)/Q)**2)
+fig, axes = plt.subplots(4,1, figsize=format_fig)
 axes[0].set_ylabel(r'$\delta w_{r}$')
 axes[1].set_ylabel(r'$\delta w_{\theta}$')
 axes[2].set_ylabel(r'$\delta p $')
-axes[2].set_xlabel(r'$\theta $')
+axes[3].set_ylabel(r'$\delta p_t $')
+axes[3].set_xlabel(r'$\theta $')
 
 for k in range(0,len(radii)):
     radius = radii[k]
@@ -75,21 +76,23 @@ for k in range(0,len(radii)):
     axes[0].plot(theta_deg, vec[0,:], label='r='+str(radius))
     axes[1].plot(theta_deg, vec[1,:])
     axes[2].plot(theta_deg, vec[2,:])
+    axes[3].plot(theta_deg, vec[2,:]+vec[1,:]**2+vec[0,:]**2)
+
 fig.legend()
 
 #%% VARIATIONS WITH RADIUS
 radii = np.linspace(R2,1.25,300)
-# fig, axes = plt.subplots(3,1, figsize=format_fig)
-# axes[0].set_ylabel(r'$\delta w_{r}$')
-# axes[1].set_ylabel(r'$\delta w_{\theta}$')
-# axes[2].set_ylabel(r'$\delta p $')
-# axes[2].set_xlabel(r'$r $')
+fig, axes = plt.subplots(3,1, figsize=format_fig)
+axes[0].set_ylabel(r'$\delta w_{r}$')
+axes[1].set_ylabel(r'$\delta w_{\theta}$')
+axes[2].set_ylabel(r'$\delta p $')
+axes[2].set_xlabel(r'$r $')
 vec = np.zeros((3,len(radii)),dtype=complex)
 for k in range(0,len(radii)):
     vec[:,k] = np.matmul(Trad_n(radii[k], r0 , n, 1j*omega, Q, GAMMA),DEN_mode).reshape(3)
-# axes[0].plot(radii, vec[0,:].real)
-# axes[1].plot(radii, vec[1,:].real)
-# axes[2].plot(radii, vec[2,:].real)
+axes[0].plot(radii, np.abs(vec[0,:]))
+axes[1].plot(radii, np.abs(vec[1,:]))
+axes[2].plot(radii, np.abs(vec[2,:]))
 
 Wr_mag = np.abs(vec[0,:])/np.max(vec[0,:])
 Wt_mag = np.abs(vec[1,:])/np.max(vec[1,:])

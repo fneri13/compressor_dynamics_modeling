@@ -97,9 +97,11 @@ diffuser = Bdif_n(s, n, Vr1, Vr2, Vy1, Vy2, alfa1, beta1, alfa2, r1, r2, rho1, r
 vaneless_diffuser = Bvlsd_n(s, n, r1,r2, r1, Q, GAMMA, theta=1)  
 gap = Bgap_n(x1, x2, s, n, Vx, Vy, theta=1)
 
+axial = Tax_n(0, 1, 1, 1, 1)
+swirler = Trad_n(1, 1, 1, 1, 1, 1)
+
 r = 1
 r0 = 1
-RN, RN1, RN2 = Rad_fun(r, r0, n, s, Q, GAMMA)
 
 #%%Poles of a test function  
 
@@ -193,3 +195,52 @@ plt.xlabel(r'$\sigma_{n}$')
 plt.ylabel(r'$j \omega_{n}$')
 plt.title('Poles of an isolated rotor')
 plt.savefig(path+'/poles_rotor.png')
+
+#%%plot of radial functions
+from functions import *
+
+r = np.linspace(1,1.5,1000)
+r0 = 1
+Rn = np.zeros((len(r)),dtype=complex)
+Rn_prime = np.zeros((len(r)),dtype=complex)
+Rn_second_ = np.zeros((len(r)),dtype=complex)
+for i in range(0,len(r)):
+    Rn[i], Rn_prime[i]= Rad_fun(r[i], r0, 1, 1, 1, 1)
+    Rn_second_[i] = Rn_second(r[i], r0, 1, 1, 1, 1)
+
+fig, axes = plt.subplots(3,1, figsize=format_fig)
+axes[0].set_ylabel(r'$R_n$')
+axes[1].set_ylabel(r'$\frac{dR_n}{dr}$')
+axes[2].set_ylabel(r'$\frac{d^2 R_n} {dr^2}$')
+axes[2].set_xlabel(r'$r $')
+axes[0].plot(r, np.abs(Rn))
+axes[1].plot(r, np.abs(Rn_prime))
+axes[2].plot(r, np.abs(Rn_second_))
+
+Rn_prime2 = np.zeros((len(r)),dtype=complex)
+N = len(r)-1
+for i in range(0,N):
+    Rn_prime2[i] = (Rn[i+1]-Rn[i])/(r[i+1]-r[i])
+Rn_prime2[N] = Rn_prime2[N-1]
+axes[1].plot(r, np.abs(Rn_prime2))
+
+
+
+Rn_second2 = np.zeros((len(r)),dtype=complex)
+N = len(r)-1
+for i in range(0,N):
+    Rn_second2[i] = (Rn_prime[i+1]-Rn_prime[i])/(r[i+1]-r[i])
+Rn_second2[N] = Rn_second2[N-1]
+axes[2].plot(r, np.abs(Rn_second2))
+
+
+
+
+
+
+
+
+
+
+
+

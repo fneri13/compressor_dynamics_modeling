@@ -36,9 +36,6 @@ Vx1 = 0.34 #non dimensional background axial flow velocity at inlet
 Vy1 = 0 #non dimensional background azimuthal flow velocity at outlet
 Deltax = 0
 
-LAMBDA = 1 #rotor inertia parameter
-MU = 2 #all rows inertia parameter
-
 #from the inertia parameters we need to go back to axial spacing in order to recostruct the matrix
 
 #rotor parameters (pag. 147)
@@ -50,7 +47,8 @@ dLr_dPhi = -0.6938 #steady state rotor loss derivative at background condition
 dLr_dTanb = dLr_dPhi/((np.tan(alfa1)-np.tan(beta1))**2) #steady state rotor loss derivative at background condition
 c_r = 0.135 #blade chord
 gamma_r = -50.2*np.pi/180 #stagger angle rotor blades
-lambda_r = 1.08 #inertia parameter rotor
+# lambda_r = 0.212 #inertia parameter rotor
+lambda_r = c_r/np.cos(gamma_r)**2
 
 #stator parameters (pag. 147)
 beta3 = -35*np.pi/180 #relative inlet swirl
@@ -61,7 +59,7 @@ dLs_dTana = 0.0411 #steady state stator loss at inlet condition of the stator
 dLs_dphi = -dLs_dTana*((np.tan(alfa3)-np.tan(beta3))**2)
 c_s = 0.121 #blade chord
 gamma_s = 61.8*np.pi/180 #stagger angle rotor blades
-lambda_s = MU - LAMBDA #inertia parameter stator
+lambda_s = c_s/np.cos(gamma_s) #inertia parameter stator
 
 #axial cordinates
 x1 = 0
@@ -78,13 +76,11 @@ Vx4 = Vx1
 Vy4 = 0
 
 #%% compute the results for each harmonic
-LAMBDA = 1.08
-MU = 1.7888
-tau_u = 1 #from thesis
+LAMBDA = lambda_r #inertia parameter of the rotor row only
+MU = lambda_r+lambda_s #inertia parameter of rotor+stator rows
+tau_u = 0 #from thesis
 tau_s = tau_u*c_s/(np.cos(gamma_s)*Vx1)
 tau_r = tau_u*c_r/(np.cos(gamma_r)*Vx1)
-LAMBDA = lambda_r
-MU = lambda_s+lambda_r
 
 #system function from matrix stacking method
 def rotor_stator(s, n, theta=0):
@@ -104,12 +100,14 @@ def rotor_stator_benchmark(s, n, theta=0):
     return (MU+2/n)*s-dLr_dPhi*(1-1/(1+tau_r*(s+1j*n)))-dLs_dphi*(1-1/(1+tau_s*s))+LAMBDA*1j*n
 
 domain = [-2.0,0.5,0.0,3.0]
+# domain = [-5.0,5,-5,5]
+
 grid = [1,1]
 n=np.arange(1,7)
 plt.figure(figsize=format_fig)
 for nn in n:
-    poles = Shot_Gun(rotor_stator, domain, grid, n=nn, attempts=25, tol=1e-6)
-    poles_bmk = Shot_Gun(rotor_stator_benchmark,domain, grid, n=nn, attempts=75, tol=1e-6)
+    poles = Shot_Gun(rotor_stator, domain, grid, n=nn, attempts=10, tol=1e-6)
+    poles_bmk = Shot_Gun(rotor_stator_benchmark,domain, grid, n=nn, attempts=10, tol=1e-6)
     plt.plot(poles.real,-poles.imag,'o', label='n:'+str(nn))
     plt.plot(poles_bmk.real,-poles_bmk.imag,'kx')
 real_axis_x = np.linspace(domain[0],domain[1],100)

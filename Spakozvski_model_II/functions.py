@@ -89,13 +89,11 @@ def Rad_fun(r,r0,n,s,Q,GAMMA):
     RETURNS:
         y[0] = Rn
         y[1] = dRn_dr
-        y[2] = d2Rn_dr2
     """
     if n==0:
         raise Exception("Sorry, the n=0 mode is still not implemented. Use n!=0")
-    N = 1000
+    N = 5000
     x = np.linspace(r0,r,N+1)
-    
     def fp(x):
         return np.exp(-1j*n*GAMMA/Q*np.log(x) - s/2/Q*x**2)*x**(+n+1)
     def fn(x):
@@ -105,16 +103,22 @@ def Rad_fun(r,r0,n,s,Q,GAMMA):
     fp = fp(x) #negative integrand
     Fp = np.sum(fp[0:len(x)-1]+fp[1:len(x)])/2*np.sum((x[1:len(x)]-x[0:len(x)-1])) #positive intgrand integrated
     Fn = np.sum(fn[0:len(x)-1]+fn[1:len(x)])/2*np.sum((x[1:len(x)]-x[0:len(x)-1])) #positive intgrand integrated
-    dfp = (-1j*n*GAMMA/Q/r-r/Q*s)*fp[N] + (+n+1)*r**(+n)*np.exp(-1j*n*GAMMA/Q*np.log(r)-s/2/Q*r**2) #positive integrand derivative
-    dfn = (-1j*n*GAMMA/Q/r-r/Q*s)*fn[N] + (-n+1)*r**(-n)*np.exp(-1j*n*GAMMA/Q*np.log(r)-s/2/Q*r**2) #negative integrand derivative
-    
+    # dfp = (-1j*n*GAMMA/Q/r-r/Q*s)*fp[N] + (+n+1)*r**(+n)*np.exp(-1j*n*GAMMA/Q*np.log(r)-s/2/Q*r**2) #positive integrand derivative
+    # dfn = (-1j*n*GAMMA/Q/r-r/Q*s)*fn[N] + (-n+1)*r**(-n)*np.exp(-1j*n*GAMMA/Q*np.log(r)-s/2/Q*r**2) #negative integrand derivative  
     Rn = r**n*Fn - r**(-n)*Fp
     Rn_prime = n*r**(n-1)*Fn + r**n*fn[N] + n*r**(-n-1)*Fp - r**(-n)*fp[N]
-    Rn_second = (n**2-n)*r**(n-2)*Fn + 2*n*r**(n-1)*fn[N]+r**(n)*dfn -(n**2+n)*r**(-n-2)*Fp + 2*n*r**(-n-1)*fp[N]-r**(-n)*dfp
-                
-    return Rn, Rn_prime, Rn_second
-    
+    # Rn_second = (n**2-n)*r**(n-2)*Fn + 2*n*r**(n-1)*fn[N] + r**n*dfn -(n**2+n)*r**(-n-2)*Fp + 2*n*r**(-n-1)*fp[N] - r**(-n)*dfp   
+    return Rn, Rn_prime
 
+def Rn_second(r,r0,n,s,Q,GAMMA):
+    """
+    Hard-coded, because the original version in Rad_fun doesn't convince me'
+    """
+    r_plus = r*1.001
+    Rn_prime = Rad_fun(r, r0, n, s, Q, GAMMA)[1]
+    Rn_prime_plus = Rad_fun(r_plus, r0, n, s, Q, GAMMA)[1]
+    Rn_second = (Rn_prime_plus-Rn_prime)/(r_plus-r)
+    return Rn_second
 
 def Trad_n(r,r0,n,s,Q,GAMMA,theta=0):
     """
@@ -155,7 +159,7 @@ def Trad_n(r,r0,n,s,Q,GAMMA,theta=0):
     Trad[1,2] = -Rad_fun(r, r0, n, s, Q, GAMMA)[1]
     Trad[2,0] = 1j*Q*(1-n)*r**(n-2)+(GAMMA/r+s*r/1j/n-1j*Q/r/n)*n*r**(n-1)
     Trad[2,1] = -1j*Q*(1+n)*r**(-n-2)-(GAMMA/r+s*r/1j/n+1j*Q/r/n)*n*r**(-n-1)
-    Trad[2,2] = (GAMMA/r+s*r/1j/n-1j*Q/r/n)*Rad_fun(r, r0, n, s, Q, GAMMA)[1]-1j*Q/n*Rad_fun(r, r0, n, s, Q, GAMMA)[2]
+    Trad[2,2] = (GAMMA/r+s*r/1j/n-1j*Q/r/n)*Rad_fun(r, r0, n, s, Q, GAMMA)[1]-1j*Q/n*Rn_second(r, r0, n, s, Q, GAMMA)
     return Trad*np.exp(1j*n*theta)
 
 
@@ -335,78 +339,14 @@ def Bvlsd_n(s,n,r1,r2,r0,Q,GAMMA,theta=0):
 
 
 #%% Methods to find the complex roots of a complex function
-# def shot_gun_method(complex_function, s, R, N=30, tol=1e-6, attempts=30):
-#     """
-#     Shot-gun method taken from Spakozvzski PhD thesis, needed to compute the complex zeros of a complex function.
-    
-#     ARGUMENTS
-#     complex_function : is the complex function that we want to find the roots
-#     s : is the initial guess for the complex root, around which we will shoot many random points
-#     R : radius around s, where we will randomly shoot at the beginning
-#     N : number of shots per round
-#     tol : tolerance for the point to be a pole
-#     attempts : number of attempts in the same zone, in order to find different poles that could be there
-    
-#     RETURN:
-#     poles : list of found poles
-#     """
-#     print('-----------------------------------------------------------------------')
-#     print('SHOT GUN METHOD CALLED')
-#     print('Shot center: ')
-#     print(s)
-#     print('Shot radius: ')
-#     print(R)
-#     s0 = s #initial location for pole search
-#     R0 = R #initial radius for pole search
-#     N0 = N #initial number of shot points in the zone
-#     mu=3 #under-relaxation coefficient for the radius. 3 is the value sueggested in the thesis
-#     poles = [] #initialize a list of found poles
-    
-#     #Run the loop until we have 1 point, the radius is larger than zero, and the error is above a threshold
-#     for rounds in range(0,attempts):    
-#         s = s0 #for every round reset the method to initial values
-#         R = R0
-#         N = N0
-#         while (N > 0):
-#             s_points = np.zeros(N,dtype=complex)
-#             J_points = np.zeros(N)
-#             error_points = np.zeros(N)
-#             for kk in range(0,N):    
-#                 r = np.random.uniform(0, R) #random distance from the shot point
-#                 phi = np.random.uniform(0, 2*np.pi) #random phase angle from the shot point
-#                 s_points[kk] = s+r*np.exp(1j*phi) #random points where determinante will be computed 
-#                 error_points[kk] = np.abs(complex_function(s_points[kk]))
-#                 J_points[kk] = (error_points[kk])**(-2) #errors associated to every random point
-#             CG = np.sum(s_points*J_points)/np.sum(J_points) #center of gravity of points
-#             min_pos = np.argmin(error_points) #index of the best point
-#             min_error = error_points[min_pos] #error of the best point
-#             s = s_points[min_pos] #update central location for new loop
-#             R = mu*np.abs(CG-s_points[min_pos]) #update radius for new loop
-#             N = N-1 #reduce the number of points for the next round
-        
-#         #decide if to append the new pole to the list of poles
-#         if min_error < tol:
-#             copy = False #assuming initially that this pole is not a copy, see if it is
-#             for k in poles:
-#                 distance = np.abs(s-k)
-#                 if distance < tol:
-#                     copy = copy or True
-#                 else:
-#                     copy = copy or False
-#             if copy==False:
-#                 poles.append(s)
-#     print('-----------------------------------------------------------------------')
-#     return poles  
-
-    
-def Shot_Gun(complex_function, domain, n_grid, n=1, N=30, tol=1e-6, attempts=30):
+def Shot_Gun(complex_function, domain, n_grid=[1,1], n=1, N=30, tol=1e-6, attempts=30):
     """
     Shot-gun method taken from Spakozvzski PhD thesis, needed to compute the complex zeros of a complex function.
     
     ARGUMENTS
         complex_function : pointer to the function that we want to find the roots
         domain : domain where we look for poles, in format [x_min, x_max, y_min, y_max]
-        n_grid : number of intervals in x and y in the complex domain, in format [n_x, n_y]
+        n_grid : number of intervals in x and y in the complex domain, in format [n_x, n_y]. Default [1,1]
         n : circumferential harmonic, needed from the complex function (1 as default)
         N : number of shots per round (default=30)
         tol : tolerance for the point to be a pole (default 1e-6)
@@ -483,53 +423,6 @@ def Shot_Gun(complex_function, domain, n_grid, n=1, N=30, tol=1e-6, attempts=30)
     print('SHOT GUN EXIT SUCCESSFUL')
     print('-----------------------------------------------------------------------')
     return poles
-
-
-
-# def mapping_poles(s_r_min,s_r_max,s_i_min,s_i_max,Myfunc, ii=0):
-#     """
-#     Brute force method in order to find all the poles of a certain complex function in a certain domain
-#     ARGUMENT:
-#         s_r_min : minimum real part of the domain
-#         s_r_max : max real part of the domain
-#         s_i_min : minimum imaginary part of the domain
-#         s_i_max : maximum imaginary part of the domain
-#         Myfunc : complex function that we want to find the poles of
-#     RETURN:
-#         poles : list of complex poles if found
-#     """
-#     grid_real = 300 #number of grid points in real direction
-#     grid_im = 300 #number of points in imaginary direction
-#     s_real = np.linspace(s_r_min,s_r_max,grid_real)
-#     s_im = np.linspace(s_i_min,s_i_max,grid_im)
-#     real_grid, imag_grid = np.meshgrid(s_real,s_im)
-#     magnitude = np.zeros((len(s_real),len(s_im)))
-#     poles = []
-#     for i in range(0,len(s_real)):
-#         for j in range(0,len(s_im)):
-#             magnitude[i,j] = np.abs(Myfunc(s_real[i]+1j*s_im[j]))
-#             if magnitude[i,j]<1e-1: #criterion to decide if it is a pole or not
-#                 poles.append(s_real[i]+1j*s_im[j])
-#     poles_real = np.array([poles]).real.reshape(len(poles))
-#     poles_imag = np.array([poles]).imag.reshape(len(poles))
-#     plt.figure(figsize=(10,6))
-#     plt.scatter(poles_real,poles_imag)
-#     plt.xlim([s_r_min,s_r_max])
-#     plt.ylim([s_i_min,s_i_max])
-#     plt.xlabel(r'$\sigma_{n}$')
-#     plt.ylabel(r'$j \omega_{n}$')
-#     plt.grid()
-#     plt.title('Root locus')
-    
-#     levels = np.linspace(0,0.1,21)
-#     plt.figure(figsize=(10,6))
-#     plt.contourf(real_grid,imag_grid,magnitude, levels=levels)
-#     plt.xlabel(r'$\sigma_{n}$')
-#     plt.ylabel(r'$j \omega_{n}$')
-#     plt.colorbar()
-#     plt.title('Determinant Map')
-    
-#     return poles
 
 
 
