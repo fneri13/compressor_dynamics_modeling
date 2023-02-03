@@ -92,7 +92,7 @@ def Rad_fun(r,r0,n,s,Q,GAMMA):
     """
     if n==0:
         raise Exception("Sorry, the n=0 mode is still not implemented. Use n!=0")
-    N = 5000
+    N = 1000
     x = np.linspace(r0,r,N+1)
     def fp(x):
         return np.exp(-1j*n*GAMMA/Q*np.log(x) - s/2/Q*x**2)*x**(+n+1)
@@ -107,14 +107,15 @@ def Rad_fun(r,r0,n,s,Q,GAMMA):
     # dfn = (-1j*n*GAMMA/Q/r-r/Q*s)*fn[N] + (-n+1)*r**(-n)*np.exp(-1j*n*GAMMA/Q*np.log(r)-s/2/Q*r**2) #negative integrand derivative  
     Rn = r**n*Fn - r**(-n)*Fp
     Rn_prime = n*r**(n-1)*Fn + r**n*fn[N] + n*r**(-n-1)*Fp - r**(-n)*fp[N]
+
     # Rn_second = (n**2-n)*r**(n-2)*Fn + 2*n*r**(n-1)*fn[N] + r**n*dfn -(n**2+n)*r**(-n-2)*Fp + 2*n*r**(-n-1)*fp[N] - r**(-n)*dfp   
     return Rn, Rn_prime
 
 def Rn_second(r,r0,n,s,Q,GAMMA):
     """
-    Hard-coded, because the original version in Rad_fun doesn't convince me'
+    Second derivative hard-coded, because the original version in Rad_fun doesn't convince me'
     """
-    r_plus = r*1.001
+    r_plus = r*1.0001
     Rn_prime = Rad_fun(r, r0, n, s, Q, GAMMA)[1]
     Rn_prime_plus = Rad_fun(r_plus, r0, n, s, Q, GAMMA)[1]
     Rn_second = (Rn_prime_plus-Rn_prime)/(r_plus-r)

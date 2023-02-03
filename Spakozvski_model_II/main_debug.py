@@ -21,7 +21,7 @@ plt.rc('text', usetex=False)
 plt.rc('xtick',labelsize=10)
 plt.rc('ytick',labelsize=10)
 plt.rcParams['font.size'] = 14
-format_fig = (9,5)
+format_fig = (12,8)
 
 #create directory for pictures
 path = "pics"
@@ -200,13 +200,18 @@ plt.savefig(path+'/poles_rotor.png')
 from functions import *
 
 r = np.linspace(1,1.5,1000)
-r0 = 1
+r0 = r[0]
 Rn = np.zeros((len(r)),dtype=complex)
 Rn_prime = np.zeros((len(r)),dtype=complex)
 Rn_second_ = np.zeros((len(r)),dtype=complex)
+#proof value
+n = 3
+s = 1+6j
+Q = 2.1
+GAMMA = 0.9
 for i in range(0,len(r)):
-    Rn[i], Rn_prime[i]= Rad_fun(r[i], r0, 1, 1, 1, 1)
-    Rn_second_[i] = Rn_second(r[i], r0, 1, 1, 1, 1)
+    Rn[i], Rn_prime[i] = Rad_fun(r[i], r0,n,s,Q,GAMMA)
+    Rn_second_[i] = Rn_second(r[i], r0, n,s,Q,GAMMA)
 
 fig, axes = plt.subplots(3,1, figsize=format_fig)
 axes[0].set_ylabel(r'$R_n$')
