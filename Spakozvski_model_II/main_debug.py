@@ -199,26 +199,26 @@ plt.savefig(path+'/poles_rotor.png')
 #%%plot of radial functions
 from functions import *
 
-r = np.linspace(1,1.5,1000)
+r = np.linspace(1,1.5,5000)
 r0 = r[0]
 Rn = np.zeros((len(r)),dtype=complex)
 Rn_prime = np.zeros((len(r)),dtype=complex)
 Rn_second_ = np.zeros((len(r)),dtype=complex)
 #proof value
 n = 3
-s = 1+6j
-Q = 2.1
-GAMMA = 0.9
+s = 0+1j
+Q = 1
+GAMMA = 1
 for i in range(0,len(r)):
     Rn[i], Rn_prime[i] = Rad_fun(r[i], r0,n,s,Q,GAMMA)
     Rn_second_[i] = Rn_second(r[i], r0, n,s,Q,GAMMA)
 
 fig, axes = plt.subplots(3,1, figsize=format_fig)
-axes[0].set_ylabel(r'$R_n$')
+axes[0].set_ylabel(r'$\frac{R_n}{r}$')
 axes[1].set_ylabel(r'$\frac{dR_n}{dr}$')
 axes[2].set_ylabel(r'$\frac{d^2 R_n} {dr^2}$')
 axes[2].set_xlabel(r'$r $')
-axes[0].plot(r, np.abs(Rn))
+axes[0].plot(r, np.abs(Rn)/r)
 axes[1].plot(r, np.abs(Rn_prime))
 axes[2].plot(r, np.abs(Rn_second_))
 

@@ -40,12 +40,12 @@ Wt_2 = np.exp(1j*n*theta0)*(GAMMA-1)/Q
 
 #radial position where we want the data
 # radii = np.array([R2, 1.1, 1.2, 1.3, 1.4, 1.5])
-radii = np.array([1,1.05,1.1, 1.15, 1.2])
+radii = np.array([1,1.05,1.1, 1.15, 1.2, 1.5])
 
 r0 = R2 #this is the big problem. no reason for it. there is no way to understand what is its meaning
 #boundary conditions are prescribed inlet velocities, and outlet pressure at R3 = 0
-T2 = Trad_n(R2, r0, n, 1j*omega, Q, GAMMA)
-T3 = Trad_n(R3, r0, n, 1j*omega, Q, GAMMA)
+T2 = Trad_n(R2, R2, n, 1j*omega, Q, GAMMA)
+T3 = Trad_n(R3, R2, n, 1j*omega, Q, GAMMA)
 Y = np.zeros((3,3), dtype=complex)
 Y[0,:] = T2[0,:]
 Y[1,:] = T2[1,:]
@@ -57,12 +57,14 @@ BC_vec[2] = 0
 #find the potential and vortical modes in the system that satisfy the BC
 DEN_mode = np.matmul(np.linalg.inv(Y),BC_vec)
 Wr0 = np.sqrt(1+((GAMMA-1)/Q)**2)
-fig, axes = plt.subplots(4,1, figsize=format_fig)
-axes[0].set_ylabel(r'$\delta w_{r}$')
-axes[1].set_ylabel(r'$\delta w_{\theta}$')
-axes[2].set_ylabel(r'$\delta p $')
-axes[3].set_ylabel(r'$\delta p_t $')
-axes[3].set_xlabel(r'$\theta $')
+fig, axes = plt.subplots(2,2, figsize=format_fig)
+axes[0,0].set_ylabel(r'$\delta w_{r}$')
+axes[1,0].set_ylabel(r'$\delta w_{\theta}$')
+axes[0,1].set_ylabel(r'$\delta p_t $')
+axes[1,1].set_ylabel(r'$\delta p $')
+axes[1,0].set_xlabel(r'$\theta $')
+axes[1,1].set_xlabel(r'$\theta $')
+
 
 for k in range(0,len(radii)):
     radius = radii[k]
@@ -73,10 +75,10 @@ for k in range(0,len(radii)):
         #shift of period/4 in order to match the plots presented in the thesis
         vec[:,i] = np.matmul(Trad_n(radius, r0 , n, -1j*n, Q, GAMMA, theta=t+1/4*theta_max),DEN_mode).reshape(3)
         i = i+1       
-    axes[0].plot(theta_deg, vec[0,:], label='r='+str(radius))
-    axes[1].plot(theta_deg, vec[1,:])
-    axes[2].plot(theta_deg, vec[2,:])
-    axes[3].plot(theta_deg, vec[2,:]+vec[1,:]**2+vec[0,:]**2)
+    axes[0,0].plot(theta_deg, vec[0,:], label='r='+str(radius))
+    axes[1,0].plot(theta_deg, vec[1,:])
+    axes[1,1].plot(theta_deg, vec[2,:])
+    axes[0,1].plot(theta_deg, vec[2,:]+0.5*(vec[1,:]**2+vec[0,:]**2))
 
 fig.legend()
 
@@ -94,12 +96,13 @@ axes[0].plot(radii, np.abs(vec[0,:]))
 axes[1].plot(radii, np.abs(vec[1,:]))
 axes[2].plot(radii, np.abs(vec[2,:]))
 
-Wr_mag = np.abs(vec[0,:])/np.max(vec[0,:])
-Wt_mag = np.abs(vec[1,:])/np.max(vec[1,:])
+Wr_mag = np.abs(vec[0,:])/np.abs(vec[0,0])
+Wt_mag = np.abs(vec[1,:])/np.abs(vec[1,0])
 
 W_phase = np.angle(vec[0,:]-vec[1,:])*180/np.pi
-fig, axes = plt.subplots(2,1, figsize=format_fig)
+fig, axes = plt.subplots(2,1, figsize=(6,9))
 axes[0].set_ylabel(r'$\frac{|\delta w|}{|\delta w_{0}|}$')
+axes[0].set_ylim([0,1.1])
 axes[1].set_ylabel(r'$\varphi(\delta w_r -\delta w_{\theta} )$')
 axes[1].set_xlabel(r'$r $')
 axes[0].plot(radii, Wr_mag, label=r'$|\delta w_r|$')
