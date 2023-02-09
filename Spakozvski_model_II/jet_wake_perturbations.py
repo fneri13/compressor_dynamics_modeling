@@ -83,31 +83,38 @@ for k in range(0,len(radii)):
 fig.legend()
 
 #%% VARIATIONS WITH RADIUS
-radii = np.linspace(R2,1.25,300)
+radii = np.linspace(R2,1.5,500)
 fig, axes = plt.subplots(3,1, figsize=format_fig)
 axes[0].set_ylabel(r'$\delta w_{r}$')
 axes[1].set_ylabel(r'$\delta w_{\theta}$')
 axes[2].set_ylabel(r'$\delta p $')
 axes[2].set_xlabel(r'$r $')
-vec = np.zeros((3,len(radii)),dtype=complex)
+vec_rad = np.zeros((3,len(radii)),dtype=complex)
 for k in range(0,len(radii)):
-    vec[:,k] = np.matmul(Trad_n(radii[k], r0 , n, 1j*omega, Q, GAMMA),DEN_mode).reshape(3)
-axes[0].plot(radii, np.abs(vec[0,:]))
-axes[1].plot(radii, np.abs(vec[1,:]))
-axes[2].plot(radii, np.abs(vec[2,:]))
+    vec_rad[:,k] = np.matmul(Trad_n(radii[k], r0 , n, 1j*omega, Q, GAMMA),DEN_mode).reshape(3)
+axes[0].plot(radii, np.abs(vec_rad[0,:]))
+axes[1].plot(radii, np.abs(vec_rad[1,:]))
+axes[2].plot(radii, np.abs(vec_rad[2,:]))
 
-Wr_mag = np.abs(vec[0,:])/np.abs(vec[0,0])
-Wt_mag = np.abs(vec[1,:])/np.abs(vec[1,0])
+Wr_mag = np.abs(vec_rad[0,:])/np.abs(vec_rad[0,0])
+Wt_mag = np.abs(vec_rad[1,:])/np.abs(vec_rad[1,0])
 
-W_phase = np.angle(vec[0,:]-vec[1,:])*180/np.pi
-fig, axes = plt.subplots(2,1, figsize=(6,9))
+phase_Wr = np.unwrap(np.angle(vec_rad[0,:]))*180/np.pi
+# plt.figure()
+# plt.plot(phase_Wr)
+phase_Wtheta = np.unwrap(np.angle(vec_rad[1,:]))*180/np.pi
+# plt.figure()
+# plt.plot(phase_Wtheta)
+delta_phase = -phase_Wr+phase_Wtheta+360
+fig, axes = plt.subplots(2,1, figsize=(7,9))
 axes[0].set_ylabel(r'$\frac{|\delta w|}{|\delta w_{0}|}$')
-axes[0].set_ylim([0,1.1])
+# axes[0].set_ylim([0,1.1])
 axes[1].set_ylabel(r'$\varphi(\delta w_r -\delta w_{\theta} )$')
 axes[1].set_xlabel(r'$r $')
 axes[0].plot(radii, Wr_mag, label=r'$|\delta w_r|$')
 axes[0].plot(radii, Wt_mag, label=r'$|\delta w_{\theta}|$')
-axes[1].plot(radii, W_phase)
+axes[1].plot(radii, delta_phase)
+# axes[1].set_ylim([175,195])
 axes[0].legend()
 
 

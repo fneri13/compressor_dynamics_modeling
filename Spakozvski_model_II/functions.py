@@ -92,7 +92,7 @@ def Rad_fun(r,r0,n,s,Q,GAMMA):
     """
     if n==0:
         raise Exception("Sorry, the n=0 mode is still not implemented. Use n!=0")
-    N = 2000
+    N = 1000
     x = np.linspace(r0,r,N+1)
     def fp(x):
         return np.exp(-1j*n*GAMMA/Q*np.log(x) - s/2/Q*x**2)*x**(+n+1)
