@@ -40,7 +40,7 @@ Wt_2 = np.exp(1j*n*theta0)*(GAMMA-1)/Q
 
 #radial position where we want the data
 # radii = np.array([R2, 1.1, 1.2, 1.3, 1.4, 1.5])
-radii = np.array([1,1.05,1.1, 1.15, 1.2, 1.5])
+radii = np.array([R2,1.1, 1.2, 1.3, 1.4, R3])
 
 r0 = R2 #this is the big problem. no reason for it. there is no way to understand what is its meaning
 #boundary conditions are prescribed inlet velocities, and outlet pressure at R3 = 0
