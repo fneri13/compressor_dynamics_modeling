@@ -199,31 +199,34 @@ plt.savefig(path+'/poles_rotor.png')
 #%%plot of radial functions
 from functions import *
 
-r = np.linspace(1,1.5,1000)
+r = np.linspace(1,2.5,1000)
 r0 = r[0]
 Rn = np.zeros((len(r)),dtype=complex)
 Rn_prime = np.zeros((len(r)),dtype=complex)
 Rn_second_ = np.zeros((len(r)),dtype=complex)
 #proof value
 n = 3
-s = -0.3+20j
+s = 20j
 Q = 1
 GAMMA = 1
 for i in range(0,len(r)):
     Rn[i], Rn_prime[i] = Rad_fun(r[i], r0,n,s,Q,GAMMA)
     Rn_second_[i] = Rn_second(r[i], r0, n,s,Q,GAMMA)
 
-fig, axes = plt.subplots(4,1, figsize=(12,9))
-fig.suptitle('Radial functions')
+fig, axes = plt.subplots(3,1, figsize=(12,9))
+fig.suptitle('Radial functions, s='+str(s.real)+'+'+str(s.imag)+'j')
 axes[0].set_ylabel(r'$R_n$')
-axes[1].set_ylabel(r'$\frac{R_n}{r}$')
-axes[2].set_ylabel(r'$\frac{dR_n}{dr}$')
-axes[3].set_ylabel(r'$\frac{d^2 R_n} {dr^2}$')
+axes[1].set_ylabel(r'$\frac{dR_n}{dr}$')
+axes[2].set_ylabel(r'$\frac{d^2 R_n} {dr^2}$')
 axes[2].set_xlabel(r'$r $')
-axes[0].plot(r, Rn)
-axes[1].plot(r, Rn/r)
-axes[2].plot(r, Rn_prime)
-axes[3].plot(r, Rn_second_)
+axes[0].plot(r, Rn.real, label='real')
+axes[0].plot(r, Rn.imag, label='imag')
+axes[1].plot(r, Rn_prime.real)
+axes[1].plot(r, Rn_prime.imag)
+axes[2].plot(r, Rn_second_.real)
+axes[2].plot(r, Rn_second_.imag)
+fig.legend()
+
 
 #first derivative by finite difference
 Rn_prime2 = np.zeros((len(r)),dtype=complex)
