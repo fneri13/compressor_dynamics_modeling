@@ -15,9 +15,9 @@ from functions import *
 # Preamble: customization of matplotlib
 # Configuration for plots
 plt.rc('text', usetex=False)      
-plt.rc('xtick',labelsize=10)
-plt.rc('ytick',labelsize=10)
-plt.rcParams['font.size'] = 14
+plt.rc('xtick',labelsize=8)
+plt.rc('ytick',labelsize=8)
+plt.rcParams['font.size'] = 10
 format_fig = (10,8)
 
 #%%DATA INPUT OF THE EXERCISE
@@ -26,21 +26,22 @@ R3 = 1.5 #outlet radius
 Nbl = 20 #number of blades
 Q = 0.215 #source term
 GAMMA = 0.7032 #circulation term
+# GAMMA = 0 #circulation term
 theta_max = 2*np.pi/Nbl #period of the perturbation
 azimuthal_sampling_points = 100 #number of points along the period
 theta = np.linspace(0,theta_max,azimuthal_sampling_points) #theta domain
 theta_deg = theta *180/np.pi #theta domain in degrees
-n = 20 #interested in the 20th harmonic, since we are looking at perturbation coming from the 20th harmonics
+n = Nbl #interested in the 20th harmonic, since we are looking at perturbation coming from the 20th harmonics
 theta0 = theta[0]
-omega = -n
+omega = -Nbl 
 
 #INITIAL CONDITIONS
 Wr_2 = np.exp(1j*n*theta0)
 Wt_2 = np.exp(1j*n*theta0)*(GAMMA-1)/Q
 
 #radial position where we want the data
-# radii = np.array([R2, 1.1, 1.2, 1.3, 1.4, 1.5])
-radii = np.array([R2,1.1, 1.2, 1.3, 1.4, R3])
+# radii = np.array([R2,1.1, 1.2, 1.3, 1.4, R3])
+radii = np.array([R2,1.05, 1.1, 1.15, 1.2])
 
 r0 = R2 #this is the big problem. no reason for it. there is no way to understand what is its meaning
 #boundary conditions are prescribed inlet velocities, and outlet pressure at R3 = 0
@@ -83,7 +84,7 @@ for k in range(0,len(radii)):
 fig.legend()
 
 #%% VARIATIONS WITH RADIUS
-radii = np.linspace(R2,1.6,500)
+radii = np.linspace(R2,1.25,500)
 fig, axes = plt.subplots(3,1, figsize=format_fig)
 axes[0].set_ylabel(r'$\delta w_{r}$')
 axes[1].set_ylabel(r'$\delta w_{\theta}$')
@@ -92,9 +93,36 @@ axes[2].set_xlabel(r'$r $')
 vec_rad = np.zeros((3,len(radii)),dtype=complex)
 for k in range(0,len(radii)):
     vec_rad[:,k] = np.matmul(Trad_n(radii[k], r0 , n, 1j*omega, Q, GAMMA),DEN_mode).reshape(3)
-axes[0].plot(radii, np.abs(vec_rad[0,:]))
-axes[1].plot(radii, np.abs(vec_rad[1,:]))
-axes[2].plot(radii, np.abs(vec_rad[2,:]))
+axes[0].plot(radii, vec_rad[0,:].real)
+axes[0].plot(radii, vec_rad[0,:].imag)
+axes[1].plot(radii, vec_rad[1,:].real)
+axes[1].plot(radii, vec_rad[1,:].imag)
+axes[2].plot(radii, vec_rad[2,:].real)
+axes[2].plot(radii, vec_rad[2,:].imag)
+
+#plot of the phasors of the perturbation
+fig, axes = plt.subplots(1,3, figsize=(18,6))
+fig.suptitle('Perturbation Phasors')
+axes[0].set_title(r'$\dot{\delta W_r}$')
+axes[0].set_xlabel('Real')
+axes[0].set_ylabel('Im')
+axes[1].set_title(r'$\dot{\delta W_{\theta}}$')
+axes[1].set_xlabel('Real')
+axes[1].set_ylabel('Im')
+axes[2].set_title(r'$\dot{\delta p}$')
+axes[2].set_ylabel('Im')
+axes[2].set_xlabel('Real')
+axes[0].plot(vec_rad[0,:].real, vec_rad[0,:].imag)
+axes[0].plot(vec_rad[0,0].real, vec_rad[0,0].imag, 'ko')
+axes[0].plot(0,0,'kx')
+axes[1].plot(vec_rad[1,:].real, vec_rad[1,:].imag)
+axes[1].plot(vec_rad[1,0].real, vec_rad[1,0].imag, 'ko')
+axes[1].plot(0,0,'kx')
+axes[2].plot(vec_rad[2,:].real, vec_rad[2,:].imag)
+axes[2].plot(vec_rad[2,0].real, vec_rad[2,0].imag, 'ko')
+axes[2].plot(0,0,'kx')
+
+
 
 Wr_mag = np.abs(vec_rad[0,:])/np.abs(vec_rad[0,0])
 Wt_mag = np.abs(vec_rad[1,:])/np.abs(vec_rad[1,0])

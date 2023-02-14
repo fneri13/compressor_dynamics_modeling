@@ -32,9 +32,9 @@ if not isExist:
    os.makedirs(path)
 
 #%%INPUT DATA for the implementation of the generic actuator disk of Greitzer, zero gap
-Vx1 = 0.34 #non dimensional background axial flow velocity at inlet
+Vx1 = 1 #non dimensional background axial flow velocity at inlet
 Vy1 = 0 #non dimensional background azimuthal flow velocity at outlet
-Deltax = 0
+DeltaX = 0
 
 #from the inertia parameters we need to go back to axial spacing in order to recostruct the matrix
 
@@ -64,7 +64,7 @@ lambda_s = c_s/np.cos(gamma_s) #inertia parameter stator
 #axial cordinates
 x1 = 0
 x2 = c_r*np.cos(gamma_r)
-x3 = x2
+x3 = x2 + DeltaX
 x4 = x3 + c_s*np.cos(gamma_s)
 
 #velocities across the stages
@@ -76,9 +76,9 @@ Vx4 = Vx1
 Vy4 = 0
 
 #%% compute the results for each harmonic
-LAMBDA = lambda_r #inertia parameter of the rotor row only
-MU = lambda_r+lambda_s #inertia parameter of rotor+stator rows
-tau_u = 0 #from thesis
+LAMBDA = 1.08 #inertia parameter of the rotor row only
+MU = 1.788 #inertia parameter of rotor+stator rows
+tau_u = 1 #from thesis
 tau_s = tau_u*c_s/(np.cos(gamma_s)*Vx1)
 tau_r = tau_u*c_r/(np.cos(gamma_r)*Vx1)
 
@@ -99,15 +99,19 @@ def rotor_stator(s, n, theta=0):
 def rotor_stator_benchmark(s, n, theta=0):
     return (MU+2/n)*s-dLr_dPhi*(1-1/(1+tau_r*(s+1j*n)))-dLs_dphi*(1-1/(1+tau_s*s))+LAMBDA*1j*n
 
-domain = [-2.0,0.5,0.0,3.0]
-# domain = [-5.0,5,-5,5]
+# domain = [-2.0,0.5,0.0,3.0]
+domain = [-10,5,-5,5]
 
 grid = [1,1]
 n=np.arange(1,7)
 plt.figure(figsize=format_fig)
+poles_fneri = {}
+poles_spak = {}
 for nn in n:
     poles = Shot_Gun(rotor_stator, domain, grid, n=nn, attempts=10, tol=1e-6)
+    poles_fneri[nn] = poles
     poles_bmk = Shot_Gun(rotor_stator_benchmark,domain, grid, n=nn, attempts=10, tol=1e-6)
+    poles_spak[nn] = poles_bmk
     plt.plot(poles.real,-poles.imag,'o', label='n:'+str(nn))
     plt.plot(poles_bmk.real,-poles_bmk.imag,'kx')
 real_axis_x = np.linspace(domain[0],domain[1],100)
@@ -125,8 +129,19 @@ plt.title('Root locus')
 plt.savefig(path+'/poles_rotor_stator_lag.png')
 
 
-
-
+#compare the errors of the poler on the rotor stator matrix
+err_fneri = {} #dictionary for the poles found with shot-gun method
+err_spak = {} #dictionary for the poles found by analytical function
+for nn in n:
+    dum1 = 0
+    dum2 = 0
+    for kk in range(0,len(poles_fneri[nn])-1):
+        dum1 = dum1 + np.abs(rotor_stator(poles_fneri[nn][kk], nn))
+    for kk in range(0,len(poles_spak[nn])-1):
+        dum2 = dum2 + np.abs(rotor_stator(poles_spak[nn][kk], nn))
+    
+    err_fneri[nn] = dum1/(len(poles_fneri[nn])+1) #1 is needed in order to avoid divide by zero
+    err_spak[nn] = dum2/(len(poles_spak[nn])+1)
 
 
 
