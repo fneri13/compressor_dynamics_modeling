@@ -199,14 +199,14 @@ plt.savefig(path+'/poles_rotor.png')
 #%%plot of radial functions
 from functions import *
 
-r = np.linspace(1,2.5,1000)
+r = np.linspace(1,1.5,1000)
 r0 = r[0]
 Rn = np.zeros((len(r)),dtype=complex)
 Rn_prime = np.zeros((len(r)),dtype=complex)
 Rn_second_ = np.zeros((len(r)),dtype=complex)
 #proof value
 n = 3
-s = 20j
+s = 10j
 Q = 1
 GAMMA = 1
 for i in range(0,len(r)):
@@ -226,6 +226,14 @@ axes[1].plot(r, Rn_prime.imag)
 axes[2].plot(r, Rn_second_.real)
 axes[2].plot(r, Rn_second_.imag)
 fig.legend()
+
+fig, axes = plt.subplots(2,1, figsize=(7,10))
+fig.suptitle('Radial functions, s='+str(s.real)+'+'+str(s.imag)+'j')
+axes[0].set_ylabel(r'$Re[R_n]$')
+axes[1].set_ylabel(r'$Im[R_n]$')
+axes[1].set_xlabel(r'$r $')
+axes[0].plot(r, Rn.real)
+axes[1].plot(r, Rn.imag)
 
 
 #first derivative by finite difference

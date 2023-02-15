@@ -94,6 +94,7 @@ def Rad_fun(r,r0,n,s,Q,GAMMA):
         raise Exception("Sorry, the n=0 mode is still not implemented. Use n!=0")
     N = 1000
     x = np.linspace(r0,r,N+1)
+    dx = x[1]-x[0]
     def fp(x):
         return np.exp(-1j*n*GAMMA/Q*np.log(x) - s/2/Q*x**2)*x**(+n+1)
     def fn(x):
@@ -101,8 +102,8 @@ def Rad_fun(r,r0,n,s,Q,GAMMA):
     
     fn = fn(x) #positive integrand
     fp = fp(x) #negative integrand
-    Fp = np.sum(fp[0:len(x)-1]+fp[1:len(x)])/2*np.sum((x[1:len(x)]-x[0:len(x)-1])) #positive intgrand integrated
-    Fn = np.sum(fn[0:len(x)-1]+fn[1:len(x)])/2*np.sum((x[1:len(x)]-x[0:len(x)-1])) #positive intgrand integrated
+    Fp = np.sum(fp[0:len(x)-1]+fp[1:len(x)])/2*dx #positive intgrand integrated
+    Fn = np.sum(fn[0:len(x)-1]+fn[1:len(x)])/2*dx #positive intgrand integrated
     # dfp = (-1j*n*GAMMA/Q/r-r/Q*s)*fp[N] + (+n+1)*r**(+n)*np.exp(-1j*n*GAMMA/Q*np.log(r)-s/2/Q*r**2) #positive integrand derivative
     # dfn = (-1j*n*GAMMA/Q/r-r/Q*s)*fn[N] + (-n+1)*r**(-n)*np.exp(-1j*n*GAMMA/Q*np.log(r)-s/2/Q*r**2) #negative integrand derivative  
     Rn = r**n*Fn - r**(-n)*Fp

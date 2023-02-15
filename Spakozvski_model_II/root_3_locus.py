@@ -29,7 +29,7 @@ isExist = os.path.exists(path)
 if not isExist:
    os.makedirs(path)
 DELTAX = np.linspace(0.01, 1, 250)
-poles_fneri = {}
+poles_3 = {}
  
 for hh in DELTAX:   
     #%%INPUT DATA
@@ -92,41 +92,15 @@ for hh in DELTAX:
     domain = [-4.5,0.5,-0.5,2]
     grid = [1,1]
     n=np.arange(3,4)
-    # plt.figure(figsize=format_fig)
-    # for nn in n:
     poles = Shot_Gun(rotor_stator,domain, grid, n=3)
-    poles_fneri[hh] = poles
-        # plt.plot(poles.real,-poles.imag,'o', label='n '+str(nn))
-    # real_axis_x = np.linspace(domain[0],domain[1],100)
-    # real_axis_y = np.zeros(len(real_axis_x))   
-    # imag_axis_y = np.linspace(domain[2],domain[3],100)
-    # imag_axis_x = np.zeros(len(imag_axis_y))
-    # plt.plot(real_axis_x,real_axis_y,'--k', linewidth=0.5)
-    # plt.plot(imag_axis_x,imag_axis_y,'--k', linewidth = 0.5)
-    # plt.xlim([domain[0],domain[1]])
-    # plt.ylim([domain[2],domain[3]])
-    # plt.legend()
-    # plt.xlabel(r'$\sigma_{n}$')
-    # plt.ylabel(r'$j \omega_{n}$')
-    # plt.title('Root locus')
-    # plt.savefig(path+'/poles_rotor_stator_deltax_'+str(hh)+'.png')
+    poles_3[hh] = poles #the hh index of dictionary contains the mode3 poles
+        
 
-
-#compare the errors of the poler on the rotor stator matrix
-# err_fneri = {} #dictionary for the poles found with shot-gun method
-# for nn in n:
-#     dum1 = 0
-#     for kk in range(0,len(poles_fneri[nn])-1):
-#         dum1 = dum1 + np.abs(rotor_stator(poles_fneri[nn][kk], nn))
-#     err_fneri[nn] = dum1/(len(poles_fneri[nn])+1) #1 is needed in order to avoid divide by zero
-
-# #print the errors of the found poles
-# print(err_fneri)
 
 
 poles_evolve = np.array([], dtype=complex)
-for k in poles_fneri.keys():
-    poles_evolve = np.append(poles_evolve, poles_fneri[k])
+for k in poles_3.keys():
+    poles_evolve = np.append(poles_evolve, poles_3[k])
 plt.figure(figsize=(12,10))
 plt.scatter(poles_evolve.real, -poles_evolve.imag )
 real_axis_x = np.linspace(domain[0],domain[1],100)
@@ -142,22 +116,34 @@ plt.ylabel(r'$j \omega_{n}$')
 plt.title('Root locus poles n=3')
 plt.savefig(path+'/pole_3_locus.png')
 
-#%%
-theta = np.linspace(0,2*np.pi,1000)
-y1 = np.sin(theta)
-y2 = np.sin(2*theta)
-y3 = np.sin(3*theta)
-plt.figure(figsize=(10,5))
-plt.plot(theta,y1,linewidth=0.65,label='n=1')
-plt.plot(theta,y2,linewidth=0.65,label='n=2')
-plt.plot(theta,y3,linewidth=0.65,label='n=3')
-plt.legend()
-plt.xlabel(r'$\theta$')
-plt.ylabel(r'$\delta p$')
-plt.xticks([0,2*np.pi])
-plt.yticks([])
+X =np.array([])
+growth_rate = np.array([])
+rotation_rate = np.array([])
 
+fig, ax = plt.subplots(1, figsize=(10,8))
+for s in poles_3.keys():
+    multiplicity = len(poles_3[s])
+    print(multiplicity)
+    deltaX = np.ones(multiplicity)*s
+    X = np.append(X, deltaX)
+    pole_plot = poles_3[s]
+    growth_rate = np.append(growth_rate, pole_plot.real)
+    rotation_rate = np.append(rotation_rate, -pole_plot.imag)
+    ax.plot(deltaX, -pole_plot.imag, 'r.', label='Rotation Rate')
+    ax.plot(deltaX, pole_plot.real, 'b.', label='Growth Rate')
+ax.set_xlabel(r'$\Delta x$')
+ax.set_ylabel('Growth rate / Rotation rate')
+ax.set_xlim([0,1])
+ax.set_ylim([-2,2])
+# fig.legend()
 
-
-
-
+fig, ax = plt.subplots(1, figsize=(10,8))
+ax.plot(X, rotation_rate, 'ro', label='Rotation Rate')
+ax.plot(X, growth_rate, 'bo', label='Growth Rate')
+ax.plot(real_axis_x,real_axis_y,'--k', linewidth=0.8)
+ax.set_xlabel(r'$\Delta x$')
+ax.set_ylabel('Growth rate / Rotation rate')
+ax.set_xlim([0,1])
+ax.set_ylim([-2,2])
+fig.legend()
+plt.savefig(path+'/pole_3_growth_rotation.png')
