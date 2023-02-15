@@ -208,7 +208,7 @@ Rn_second_ = np.zeros((len(r)),dtype=complex)
 n = 3
 s = 10j
 Q = 1
-GAMMA = 1
+GAMMA = 1.0
 for i in range(0,len(r)):
     Rn[i], Rn_prime[i] = Rad_fun(r[i], r0,n,s,Q,GAMMA)
     Rn_second_[i] = Rn_second(r[i], r0, n,s,Q,GAMMA)
