@@ -114,7 +114,7 @@ def Rad_fun(r,r0,n,s,Q,GAMMA):
 
 def Rn_second(r,r0,n,s,Q,GAMMA):
     """
-    Second derivative hard-coded, because the original version in Rad_fun doesn't convince me'
+    Second derivative hard-coded, because the original version in Rad_fun doesn't convince me
     """
     r_plus = r*1.0001
     Rn_prime = Rad_fun(r, r0, n, s, Q, GAMMA)[1]
