@@ -108,9 +108,9 @@ plt.figure(figsize=format_fig)
 poles_fneri = {}
 poles_spak = {}
 for nn in n:
-    poles = Shot_Gun(rotor_stator, domain, grid, n=nn, attempts=10, tol=1e-6)
+    poles = Shot_Gun(rotor_stator, domain, grid, n=nn, attempts=30, tol=1e-6)
     poles_fneri[nn] = poles
-    poles_bmk = Shot_Gun(rotor_stator_benchmark,domain, grid, n=nn, attempts=10, tol=1e-6)
+    poles_bmk = Shot_Gun(rotor_stator_benchmark,domain, grid, n=nn, attempts=30, tol=1e-6)
     poles_spak[nn] = poles_bmk
     plt.plot(poles.real,-poles.imag,'o', label='n:'+str(nn))
     plt.plot(poles_bmk.real,-poles_bmk.imag,'kx')

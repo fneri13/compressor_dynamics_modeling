@@ -395,7 +395,7 @@ def Shot_Gun(complex_function, domain, n_grid=[1,1], n=1, N=30, tol=1e-6, attemp
                         error_points[kk] = np.abs(complex_function(s_points[kk],n))
                         if error_points[kk]<1e-6:
                             pole_list.append(s_points[kk])
-                            J_points[kk] = 1000
+                            J_points[kk] = 1000 #to avoid division by zero
                         else:
                             J_points[kk] = (error_points[kk])**(-2) #errors associated to every random point
                     CG = np.sum(s_points*J_points)/np.sum(J_points) #center of gravity of points
@@ -408,18 +408,16 @@ def Shot_Gun(complex_function, domain, n_grid=[1,1], n=1, N=30, tol=1e-6, attemp
                     N = N-1 #reduce the number of points for the next round  
                 
                 if min_error < tol:
-                    copy = False #assuming initially that this pole is not a copy, see if it is
-                    for k in pole_list:
-                        distance = np.abs(s-k)
-                        if distance < tol:
-                            copy = copy or True
-                        else:
-                            copy = copy or False
-                    if copy==False:
-                        pole_list.append(s)
-                        print('append pole..')
+                    pole_list.append(s)
 
-    poles = np.array(pole_list)    
+    poles = np.array(pole_list) 
+    
+    #remove all the duplicate poles
+    for hh in range(1,len(poles)):
+            for ll in range(0,hh):
+                if (np.abs(poles[hh]-poles[ll])<1e-3):
+                    poles[hh] = 0+0j
+    poles = poles[poles != np.array(0+0j)]
     print('-------------------------------------------')
     print('SHOT GUN EXIT SUCCESSFUL')
     print('-----------------------------------------------------------------------')
