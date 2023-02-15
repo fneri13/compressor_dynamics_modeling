@@ -90,27 +90,24 @@ def Rad_fun(r,r0,n,s,Q,GAMMA):
         y[0] = Rn
         y[1] = dRn_dr
     """
+    from scipy.integrate import quad
     if n==0:
         raise Exception("Sorry, the n=0 mode is still not implemented. Use n!=0")
-    N = 1000
-    x = np.linspace(r0,r,N+1)
-    dx = x[1]-x[0]
-    def fp(x):
-        return np.exp(-1j*n*GAMMA/Q*np.log(x) - s/2/Q*x**2)*x**(+n+1)
-    def fn(x):
-        return np.exp(-1j*n*GAMMA/Q*np.log(x) - s/2/Q*x**2)*x**(-n+1)
+    # N = 1000
+    # x = np.linspace(r0,r,N+1)
+    # dx = x[1]-x[0]
+    def integrand(x, r, r0, n, s, Q, GAMMA):
+        return np.exp(-1j*n*GAMMA/Q*np.log(x) - s/2/Q*x**2)*(r**(n)*x**(-n+1)-r**(-n)*x**(+n+1))
+    def real_integrand(x, r, r0, n, s, Q, GAMMA):
+        return integrand(x, r, r0, n, s, Q, GAMMA).real
+    def imag_integrand(x, r, r0, n, s, Q, GAMMA):
+        return integrand(x, r, r0, n, s, Q, GAMMA).imag
     
-    fn = fn(x) #positive integrand
-    fp = fp(x) #negative integrand
-    Fp = np.sum(fp[0:len(x)-1]+fp[1:len(x)])/2*dx #positive intgrand integrated
-    Fn = np.sum(fn[0:len(x)-1]+fn[1:len(x)])/2*dx #positive intgrand integrated
-    # dfp = (-1j*n*GAMMA/Q/r-r/Q*s)*fp[N] + (+n+1)*r**(+n)*np.exp(-1j*n*GAMMA/Q*np.log(r)-s/2/Q*r**2) #positive integrand derivative
-    # dfn = (-1j*n*GAMMA/Q/r-r/Q*s)*fn[N] + (-n+1)*r**(-n)*np.exp(-1j*n*GAMMA/Q*np.log(r)-s/2/Q*r**2) #negative integrand derivative  
-    Rn = r**n*Fn - r**(-n)*Fp
-    Rn_prime = n*r**(n-1)*Fn + r**n*fn[N] + n*r**(-n-1)*Fp - r**(-n)*fp[N]
-
-    # Rn_second = (n**2-n)*r**(n-2)*Fn + 2*n*r**(n-1)*fn[N] + r**n*dfn -(n**2+n)*r**(-n-2)*Fp + 2*n*r**(-n-1)*fp[N] - r**(-n)*dfp   
-    return Rn, Rn_prime
+    Rn_r = quad(real_integrand, r0, r, args=(r, r0, n, s, Q, GAMMA))
+    Rn_i = quad(imag_integrand, r0, r, args=(r, r0, n, s, Q, GAMMA))
+    Rn = Rn_r[0]+1j*Rn_i[0]
+    
+    return Rn, 0
 
 def Rn_second(r,r0,n,s,Q,GAMMA):
     """

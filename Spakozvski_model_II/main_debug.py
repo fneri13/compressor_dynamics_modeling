@@ -105,108 +105,108 @@ r0 = 1
 
 #%%Poles of a test function  
 
-def test_function(s,n):
-    #test function to debug the shot gun method. 7 poles around unitary circle
-    return s**7+1
+# def test_function(s,n):
+#     #test function to debug the shot gun method. 7 poles around unitary circle
+#     return s**7+1
 
 
-domain = [-2,2,-2,2]
-grid = [3,3]
-poles_analytic = []
-plt.figure(figsize=format_fig)
-poles = Shot_Gun(test_function, domain, grid)
-plt.plot(poles.real,-poles.imag,'o', label='shot-gun')
-for k in range(0,7):
-    poles_analytic.append(np.exp(1j*(np.pi+2*k*np.pi/7)))
-poles_analytic = np.array(poles_analytic, dtype=complex)
-plt.plot(poles_analytic.real,poles_analytic.imag,'kx', label = 'Analytic')
-plt.legend()
-plt.xlabel(r'$\sigma_{n}$')
-plt.ylabel(r'$j \omega_{n}$')
-plt.title(r'$s^7 = -1$')
-plt.savefig(path+'/poles_test.png')
+# domain = [-2,2,-2,2]
+# grid = [3,3]
+# poles_analytic = []
+# plt.figure(figsize=format_fig)
+# poles = Shot_Gun(test_function, domain, grid)
+# plt.plot(poles.real,-poles.imag,'o', label='shot-gun')
+# for k in range(0,7):
+#     poles_analytic.append(np.exp(1j*(np.pi+2*k*np.pi/7)))
+# poles_analytic = np.array(poles_analytic, dtype=complex)
+# plt.plot(poles_analytic.real,poles_analytic.imag,'kx', label = 'Analytic')
+# plt.legend()
+# plt.xlabel(r'$\sigma_{n}$')
+# plt.ylabel(r'$j \omega_{n}$')
+# plt.title(r'$s^7 = -1$')
+# plt.savefig(path+'/poles_test.png')
 
 
 
 #%% pre-stall waves in an isolated stator
-def stator_row(s, n, theta=0):
-    #function of the stator 5.4.3
-    A = np.zeros((3,3),dtype=complex)
-    A[0,0] = 1
-    A[0,1] = -1
-    A[0,2] = -1
-    A[1,0] = 0
-    A[1,1] = -1j
-    A[1,2] = -1j*s/(n*Vx)
-    A[2,0] = dLs_dTana*(1j-np.tan(alfa1))/Vx**2 + s*(lambda_s*n +1)/(n*Vx)
-    A[2,1] = s/(n*Vx)
-    A[2,2]= 1
-    return np.linalg.det(A)
+# def stator_row(s, n, theta=0):
+#     #function of the stator 5.4.3
+#     A = np.zeros((3,3),dtype=complex)
+#     A[0,0] = 1
+#     A[0,1] = -1
+#     A[0,2] = -1
+#     A[1,0] = 0
+#     A[1,1] = -1j
+#     A[1,2] = -1j*s/(n*Vx)
+#     A[2,0] = dLs_dTana*(1j-np.tan(alfa1))/Vx**2 + s*(lambda_s*n +1)/(n*Vx)
+#     A[2,1] = s/(n*Vx)
+#     A[2,2]= 1
+#     return np.linalg.det(A)
 
-domain = [-2,2,-2,2]
-grid = [2,2]
-n=np.arange(1,7)
-poles_list_analytic_stat = []
-plt.figure(figsize=format_fig)
-for nn in n:
-    poles = Shot_Gun(stator_row, domain, grid, n=nn)
-    plt.plot(poles.real,-poles.imag,'o', label='n='+str(nn))
-    poles_list_analytic_stat.append(complex(nn*Vx)) #not physical poles
-    poles_list_analytic_stat.append(complex((dLs_dTana*np.tan(alfa1)/Vx-Vx)/(lambda_s+2/nn),
-                                        (dLs_dTana/Vx)/(lambda_s+2/nn)))
-poles_list_analytic_stat = np.array(poles_list_analytic_stat, dtype=complex)
-plt.plot(poles_list_analytic_stat.real,poles_list_analytic_stat.imag,'kx', label = 'Analytic')
-plt.legend()
-plt.xlabel(r'$\sigma_{n}$')
-plt.ylabel(r'$j \omega_{n}$')
-plt.title('Poles of an isolated stator')
-plt.savefig(path+'/poles_stator.png')
+# domain = [-2,2,-2,2]
+# grid = [2,2]
+# n=np.arange(1,7)
+# poles_list_analytic_stat = []
+# plt.figure(figsize=format_fig)
+# for nn in n:
+#     poles = Shot_Gun(stator_row, domain, grid, n=nn)
+#     plt.plot(poles.real,-poles.imag,'o', label='n='+str(nn))
+#     poles_list_analytic_stat.append(complex(nn*Vx)) #not physical poles
+#     poles_list_analytic_stat.append(complex((dLs_dTana*np.tan(alfa1)/Vx-Vx)/(lambda_s+2/nn),
+#                                         (dLs_dTana/Vx)/(lambda_s+2/nn)))
+# poles_list_analytic_stat = np.array(poles_list_analytic_stat, dtype=complex)
+# plt.plot(poles_list_analytic_stat.real,poles_list_analytic_stat.imag,'kx', label = 'Analytic')
+# plt.legend()
+# plt.xlabel(r'$\sigma_{n}$')
+# plt.ylabel(r'$j \omega_{n}$')
+# plt.title('Poles of an isolated stator')
+# plt.savefig(path+'/poles_stator.png')
 
 
 #%% pre-stall waves in an isolated rotor 5.4.2
-def rotor_row(s, n, theta=0):
-    #function of the system rotor stator interaction 5.4.3
-    A = np.zeros((3,3),dtype=complex)
-    A[0,0] = 1
-    A[0,1] = 0
-    A[0,2] = -1
-    A[1,0] = 0
-    A[1,1] = 1
-    A[1,2] = -1/Vx + 1j*s/(n*Vx)
-    A[2,0] = dLr_dTanb*(1j-np.tan(beta1))/Vx**2 + s*(lambda_r*n +1)/(n*Vx) + (1j*n*lambda_r-np.tan(beta2))/Vx
-    A[2,1] = 1j-np.tan(alfa2)
-    A[2,2]= 1+np.tan(alfa2)*(np.tan(alfa2)-1j*s/(n*Vx))
-    return np.linalg.det(A)
+# def rotor_row(s, n, theta=0):
+#     #function of the system rotor stator interaction 5.4.3
+#     A = np.zeros((3,3),dtype=complex)
+#     A[0,0] = 1
+#     A[0,1] = 0
+#     A[0,2] = -1
+#     A[1,0] = 0
+#     A[1,1] = 1
+#     A[1,2] = -1/Vx + 1j*s/(n*Vx)
+#     A[2,0] = dLr_dTanb*(1j-np.tan(beta1))/Vx**2 + s*(lambda_r*n +1)/(n*Vx) + (1j*n*lambda_r-np.tan(beta2))/Vx
+#     A[2,1] = 1j-np.tan(alfa2)
+#     A[2,2]= 1+np.tan(alfa2)*(np.tan(alfa2)-1j*s/(n*Vx))
+#     return np.linalg.det(A)
 
-domain = [-2,2,-2,2]
-grid=[2,2]
-n=np.arange(1,7)
-poles_analytic_rot = []
-plt.figure(figsize=format_fig)
-for nn in n:
-    poles = Shot_Gun(rotor_row, domain, grid, n=nn)
-    plt.plot(poles.real,-poles.imag,'o', label='n '+str(nn))
-    poles_analytic_rot.append(complex(((np.tan(beta2)+dLr_dTanb*np.tan(beta1)/Vx-Vx*(1+np.tan(alfa2)**2)+np.tan(alfa2))/(lambda_r+2/nn)),
-                                        (dLr_dTanb/Vx + nn*lambda_r+1)/(lambda_r+2/nn)))
-poles_analytic_rot = np.array(poles_analytic_rot, dtype=complex)
-plt.plot(poles_analytic_rot.real,poles_analytic_rot.imag,'kx', label = 'Analytic')
-plt.legend()
-plt.xlabel(r'$\sigma_{n}$')
-plt.ylabel(r'$j \omega_{n}$')
-plt.title('Poles of an isolated rotor')
-plt.savefig(path+'/poles_rotor.png')
+# domain = [-2,2,-2,2]
+# grid=[2,2]
+# n=np.arange(1,7)
+# poles_analytic_rot = []
+# plt.figure(figsize=format_fig)
+# for nn in n:
+#     poles = Shot_Gun(rotor_row, domain, grid, n=nn)
+#     plt.plot(poles.real,-poles.imag,'o', label='n '+str(nn))
+#     poles_analytic_rot.append(complex(((np.tan(beta2)+dLr_dTanb*np.tan(beta1)/Vx-Vx*(1+np.tan(alfa2)**2)+np.tan(alfa2))/(lambda_r+2/nn)),
+#                                         (dLr_dTanb/Vx + nn*lambda_r+1)/(lambda_r+2/nn)))
+# poles_analytic_rot = np.array(poles_analytic_rot, dtype=complex)
+# plt.plot(poles_analytic_rot.real,poles_analytic_rot.imag,'kx', label = 'Analytic')
+# plt.legend()
+# plt.xlabel(r'$\sigma_{n}$')
+# plt.ylabel(r'$j \omega_{n}$')
+# plt.title('Poles of an isolated rotor')
+# plt.savefig(path+'/poles_rotor.png')
 
 #%%plot of radial functions
 from functions import *
 
-r = np.linspace(1,1.5,1000)
+r = np.linspace(1,2,1000)
 r0 = r[0]
 Rn = np.zeros((len(r)),dtype=complex)
 Rn_prime = np.zeros((len(r)),dtype=complex)
 Rn_second_ = np.zeros((len(r)),dtype=complex)
 #proof value
 n = 3
-s = 10j
+s = 5
 Q = 1
 GAMMA = 1.0
 for i in range(0,len(r)):
