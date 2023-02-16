@@ -22,8 +22,8 @@ format_fig = (10,8)
 
 #%%DATA INPUT OF THE EXERCISE
 R2 = 1 #initial radius
-R3 = 1.5 #outlet radius
-Nbl = 20 #number of blades
+R3 = 3 #outlet radius
+Nbl = 4 #number of blades
 Q = 0.215 #source term
 GAMMA = 0.7032 #circulation term
 # GAMMA = 0 #circulation term
@@ -41,7 +41,8 @@ Wt_2 = np.exp(1j*n*theta0)*(GAMMA-1)/Q
 
 #radial position where we want the data
 # radii = np.array([R2,1.1, 1.2, 1.3, 1.4, R3])
-radii = np.array([R2,1.05, 1.1, 1.15, 1.2])
+radii = np.array([R2,1.05, 1.1, 1.15, 1.2, R3])
+# radii = np.array([R2,1.002,1.004,1.006,1.008, 1.01])
 
 r0 = R2 #this is the big problem. no reason for it. there is no way to understand what is its meaning
 #boundary conditions are prescribed inlet velocities, and outlet pressure at R3 = 0
@@ -84,7 +85,7 @@ for k in range(0,len(radii)):
 fig.legend()
 
 #%% VARIATIONS WITH RADIUS
-radii = np.linspace(R2,1.8,500)
+radii = np.linspace(R2,3.5,3000)
 fig, axes = plt.subplots(3,1, figsize=format_fig)
 axes[0].set_ylabel(r'$\delta w_{r}$')
 axes[1].set_ylabel(r'$\delta w_{\theta}$')

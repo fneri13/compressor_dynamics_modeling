@@ -199,14 +199,14 @@ plt.savefig(path+'/poles_rotor.png')
 #%%plot of radial functions
 from functions import *
 
-r = np.linspace(1,1.5,1000)
+r = np.linspace(1,1.5,10000)
 r0 = r[0]
 Rn = np.zeros((len(r)),dtype=complex)
 Rn_prime = np.zeros((len(r)),dtype=complex)
 Rn_second_ = np.zeros((len(r)),dtype=complex)
 #proof value
-n = 3
-s = 10j
+n = 20
+s = -20j
 Q = 1
 GAMMA = 1
 for i in range(0,len(r)):
