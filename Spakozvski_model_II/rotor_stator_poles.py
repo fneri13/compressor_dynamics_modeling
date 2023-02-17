@@ -86,12 +86,12 @@ def rotor_stator(s, n, theta=0):
     Y = np.concatenate((np.matmul(EC,m6),IC))
     return np.linalg.det(Y)
 
-domain = [-4.5,0.5,-0.5,2]
+domain = [-2,2,-1.5,1.5]
 grid = [1,1]
-n=np.arange(1,7)
-plt.figure(figsize=format_fig)
+n=np.arange(7,31)
+plt.figure(figsize=(16,9))
 for nn in n:
-    poles = Shot_Gun(rotor_stator,domain, grid, n=nn, attempts=50)
+    poles = Shot_Gun(rotor_stator,domain, grid, n=nn, attempts=30)
     poles_fneri[nn] = poles
     plt.plot(poles.real,-poles.imag,'o', label='n '+str(nn))
 real_axis_x = np.linspace(domain[0],domain[1],100)
