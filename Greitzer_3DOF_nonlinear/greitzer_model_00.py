@@ -54,7 +54,7 @@ dt = 25e-3                                  #throttle diameter [m]
 At = (np.pi*dt**2)/4                        #throttle area [m2]
 Lt = 2                                      #throttle length [m]
 Vp = (At*Lt + Ac*Lc)*100                          #plenum volume [m3]
-B_real = (U_ref/(2*a))*np.sqrt(Vp/(Ac*Lc))  #B parameter of the described compressor
+B_real = 2.0*(U_ref/(2*a))*np.sqrt(Vp/(Ac*Lc))  #B parameter of the described compressor
 G_real = Lt*Ac/(Lc*At)                      #G parameter of the described compressor
 k_valve = 4.2           
 
@@ -203,9 +203,9 @@ fig.savefig(path+'/phase_trajectories_perturbations.png')
 
 #plot the compressor curve
 plt.figure(figsize=format_fig)
-plt.plot(phi,psi_c,linewidth=0.6,label='Compressor line')
-plt.plot(phi,psi_v,linewidth=0.6,label='Throttle line')
-plt.plot(sol[:,0],sol[:,2],'--k',linewidth=0.8, label = 'Transient')
+plt.plot(phi,psi_c,linewidth=1.0,label='Compressor line')
+plt.plot(phi,psi_v,linewidth=1.0,label='Throttle line')
+plt.plot(sol[:,0],sol[:,2],'--k',linewidth=1.0, label = 'Transient')
 plt.plot(IC_flow_c, IC_psi, 'ko', label='Initial condition')
 plt.ylabel(r'$\Psi$')
 plt.xlabel(r'$\Phi_c$')

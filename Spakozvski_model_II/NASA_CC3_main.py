@@ -38,7 +38,7 @@ R3 = R2*1.078 #LE radius of vaned diffuser
 div_angle = 7.8*np.pi/180 #divergence angle of vane blades
 R4 = 181.5*1e-3 #diffuser outlet radius
 s_i = 1.3064 #gas path length in impeller
-s_d = 1.1187 #diffuser path length
+s_dif = 1.1187 #diffuser path length
 lambda_i = 1.1508 #impeller inertia factor
 lambda_d = 0.8518 #diffuser inertia factor
 
@@ -106,6 +106,76 @@ W2_op = V2r_op/np.sin(beta2)
 alpha3_op = np.arctan((U2-W2_op*np.sin(beta2))/V2r_op)
 alpha3_op_deg = alpha3_op *180/np.pi
 
+Vx1 = V1_x_op/U_ref
+Vx2 = 0
+Vx3 = 0
+Vx4 = mdot_op/(A4*R_ref**2)/rho/U_ref #from continuity (assuming turning at point 4)
+Vx5 = Vx4*A4/A5
+Vy1 = 0 #0prerotation
+Vy2 = (U2 - V2r_op/np.tan(beta2))/U_ref
+Vy3 = Vy2*r2/r3
+Vy4 = Vy3*r3/r4 #completely guessed
+Vy5 = Vy4*r4/r5
+Vr1 = 0
+Vr2 = V2r_op/U_ref
+Vr3 = Vr2*(r2/r3) #the are is linear in r, not quadratic
+Vr4 = mdot_op/(A4*R_ref**2)/rho/U_ref #from continuity
+Vr4_2 = Vr3*r3/r4 #ok this is double check for continuity
+Vr5 = 0
+
+alfa3 = np.arctan(Vy3/Vr3)
+beta3 = beta2
+alfa4 = np.arctan(Vy4/Vr4)
+rho4 = rho
+rho3 = rho
+dLd_dTana = 0 #visual
+Q = 2*np.pi*r2*Vr2 #non dimensional source term at station 2
+GAMMA = 2*np.pi*r2*Vy2 #non dimensional circulation term at station 2
+alfa1 = 0
+U1 = U2*r1/r2/U_ref
+beta1 = np.arctan(-U1/Vx1)
+rho1 = rho
+rho2 = rho
+dLi_dTanb = 0
+
+#%% BUILD THE SYSTEM TRANSFER FUNCTION
+#system function
+def centrifugal_vaned(s, n, theta=0):
+    m1 = np.linalg.inv(Tax_n(x4, s, n, Vx4, Vy4, theta=theta))
+    m2 = Bdif_n(s, n, Vr3, Vr4, Vy3, Vy4, alfa3, beta3, alfa4, r3, r4, rho3, rho4, A3, A4, s_dif, dLd_dTana)
+    m3 = Bvlsd_n(s, n, r2, r3, r2, Q, GAMMA)
+    m4 = Bimp_n(s, n, Vx1, Vr2, Vy1, Vy2, alfa1, beta1, beta2, r1, r2, rho1, rho2, A1, A2, s_i, dLi_dTanb)
+    m5 = Tax_n(x1, s, n, Vx1, Vy1, theta=theta)
+    m6 = np.linalg.multi_dot([m1,m2,m3,m4,m5])
+    EC = np.array([[(-s/n-Vx5-1j*Vy5)*np.exp(n*x5),(s/n-Vx5+1j*Vy5)*np.exp(-n*x5),0]])
+    IC = np.array([[0,1,0],
+                    [0,0,1]])
+    Y = np.concatenate((np.matmul(EC,m6),IC))
+    return np.linalg.det(Y)
+
+
+
+domain = [-3.5,0.5,-2.5,6]
+grid = [2,2]
+n=np.arange(1,7)
+poles = {}
+plt.figure(figsize=(16,9))
+for nn in n:
+    poles[nn] = Shot_Gun(centrifugal_vaned, domain, grid, n=nn, attempts=30)
+    plt.plot(poles[nn].real,-poles[nn].imag, 'o',label='n '+str(nn))
+real_axis_x = np.linspace(domain[0],domain[1],100)
+real_axis_y = np.zeros(len(real_axis_x))   
+imag_axis_y = np.linspace(domain[2],domain[3],100)
+imag_axis_x = np.zeros(len(imag_axis_y))
+plt.plot(real_axis_x,real_axis_y,'--k', linewidth=0.5)
+plt.plot(imag_axis_x,imag_axis_y,'--k', linewidth = 0.5)
+# plt.xlim([domain[0],domain[1]])
+# plt.ylim([domain[2],domain[3]])
+plt.legend()
+plt.xlabel(r'$\sigma_{n}$')
+plt.ylabel(r'$j \omega_{n}$')
+plt.title('Root locus')
+# plt.savefig(path+'/poles_rotor_stator_deltax_03.png')
 
 
 
