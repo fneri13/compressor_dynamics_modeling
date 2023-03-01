@@ -6,7 +6,7 @@ Created on Tue Jan 17 11:21:25 2023
 @author: F. Neri, TU Delft 
 
 Construction of the matrices needed in the Spakovszky models PhD thesis.
-The n=0 mode is still missing!
+The n=0 mode is still missing.
 """
 
 import numpy as np
