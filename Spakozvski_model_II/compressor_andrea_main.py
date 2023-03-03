@@ -280,7 +280,7 @@ for wpoint in working_points:
     plt.figure(figsize=format_fig)
     for nn in n:
         print('Harmonic Number: ' + str(nn) + ' of ' + str(n[-1]))
-        poles[nn] = Shot_Gun(centrifugal_vaneless, domain, grid, n=nn, attempts=30, N=60)
+        poles[nn] = Shot_Gun(centrifugal_vaneless, domain, grid, n=nn, attempts=40, N=40)
         plt.plot(poles[nn].real,-poles[nn].imag, 'o',label='n '+str(nn))
     poles_global[wpoint] = poles #for every working point attach the poles to the big dictionary of all poles
     real_axis_x = np.linspace(domain[0],domain[1],100)
