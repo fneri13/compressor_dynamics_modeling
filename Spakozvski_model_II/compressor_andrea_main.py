@@ -19,7 +19,7 @@ from functions import *
 plt.rc('text', usetex=False)      
 plt.rc('xtick',labelsize=10)
 plt.rc('ytick',labelsize=10)
-plt.rcParams['font.size'] = 14
+plt.rcParams['font.size'] = 10
 format_fig = (9,7)
 
 #%% Relevant geometric parameters for the compressor selected by Andrea on the Pareto front. All the variables that begin with capital
@@ -256,7 +256,7 @@ wpoint = 15 #working point selected
 working_points = [0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30]
 fig, ax = plt.subplots(1, figsize=format_fig)
 ax.plot(phi,beta_ts[speedline,0:index_max], label='rpm '+str(int(rpm[speedline])))
-
+poles_global = {} #dictionary for the whole set of poles
 for wpoint in working_points:
     print('Working Point: ' +str(wpoint)+' of ' + str(working_points[-1]))
     def centrifugal_vaneless(s, n, theta=0):
@@ -276,12 +276,13 @@ for wpoint in working_points:
     domain = [-3,1.5,-10,10]
     grid = [1,1]
     n=np.arange(1,5)
-    poles = {}
+    poles = {} #dictionary of poles for a single working point
     plt.figure(figsize=format_fig)
     for nn in n:
         print('Harmonic Number: ' + str(nn) + ' of ' + str(n[-1]))
-        poles[nn] = Shot_Gun(centrifugal_vaneless, domain, grid, n=nn, attempts=50, N=30)
+        poles[nn] = Shot_Gun(centrifugal_vaneless, domain, grid, n=nn, attempts=30, N=60)
         plt.plot(poles[nn].real,-poles[nn].imag, 'o',label='n '+str(nn))
+    poles_global[wpoint] = poles #for every working point attach the poles to the big dictionary of all poles
     real_axis_x = np.linspace(domain[0],domain[1],100)
     real_axis_y = np.zeros(len(real_axis_x))   
     imag_axis_y = np.linspace(domain[2],domain[3],100)
@@ -296,8 +297,7 @@ for wpoint in working_points:
     plt.title('Root locus, operating point: '+str(wpoint))
     plt.savefig('pics/poles_iris_compressor_'+str(wpoint)+'.png')
     
-    # plt.figure(figsize=format_fig)
-    ax.plot(phi[wpoint],beta_ts[speedline,wpoint],'o' ,label='operating point: '+str(wpoint))
+    ax.plot(phi[wpoint],beta_ts[speedline,wpoint],'o' ,label='op. point: '+str(wpoint))
 ax.set_ylabel(r'$\beta_{ts}$')
 ax.set_xlabel(r'$\phi$')
 ax.legend()

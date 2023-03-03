@@ -11,7 +11,7 @@ from PIL import Image
 import os
 
 # set the path for the images
-path = "pics/gif_pic/"
+path = "pics/pics_gif/"
 
 # get all image filenames in the directory
 files = os.listdir(path)
