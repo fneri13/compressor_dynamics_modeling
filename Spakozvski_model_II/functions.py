@@ -341,7 +341,7 @@ def Bvlsd_n(s,n,r1,r2,r0,Q,GAMMA,theta=0):
 
 
 #%% Methods to find the complex roots of a complex function
-def Shot_Gun(complex_function, domain, n_grid=[1,1], n=1, N=30, tol=1e-6, attempts=30):
+def Shot_Gun(complex_function, domain, n_grid=[1,1], n=1, N=30, tol=1e-6, attempts=30, verbose=False):
     """
     Shot-gun method taken from Spakozvzski PhD thesis, needed to compute the complex zeros of a complex function.
     
@@ -353,14 +353,15 @@ def Shot_Gun(complex_function, domain, n_grid=[1,1], n=1, N=30, tol=1e-6, attemp
         N : number of shots per round (default=30)
         tol : tolerance for the point to be a pole (default 1e-6)
         attempts : number of attempts in the same zone in order to find different poles in the same zone (default=30)
-    
+        verbose : print some info (default=False)
     RETURN:
     poles : array of poles (complex type)
     """
     if n==0:
         raise Exception("Sorry, the n=0 mode is still not implemented. Use n!=0")
-    print('-----------------------------------------------------------------------')
-    print('SHOT GUN METHOD CALLED')
+    if verbose:
+        print('-----------------------------------------------------------------------')
+        print('SHOT GUN METHOD CALLED')
     left_lim = domain[0] #left border of the domain
     right_lim = domain[1] #right border of the domain
     down_lim = domain[2] #lower border
@@ -377,8 +378,9 @@ def Shot_Gun(complex_function, domain, n_grid=[1,1], n=1, N=30, tol=1e-6, attemp
     pole_list = [] #initialize pole list
     for ii in range(len(s_real)):
         for jj in range(len(s_imag)):
-            print('-------------------------------------------')
-            print('Zone centered in s = (' + str(s_real[ii]) + ','+str(s_imag[jj])+'j)')
+            if verbose:
+                print('-------------------------------------------')
+                print('Zone centered in s = (' + str(s_real[ii]) + ','+str(s_imag[jj])+'j)')
             for rounds in range(0,attempts):    
                 #for every round in the same zone initialize the parameters
                 s = s_real[ii]+1j*s_imag[jj]
@@ -419,9 +421,10 @@ def Shot_Gun(complex_function, domain, n_grid=[1,1], n=1, N=30, tol=1e-6, attemp
                 if (np.abs(poles[hh]-poles[ll])<1e-3):
                     poles[hh] = 0+0j
     poles = poles[poles != np.array(0+0j)]
-    print('-------------------------------------------')
-    print('SHOT GUN EXIT SUCCESSFUL')
-    print('-----------------------------------------------------------------------')
+    if verbose:
+        print('-------------------------------------------')
+        print('SHOT GUN EXIT SUCCESSFUL')
+        print('-----------------------------------------------------------------------')
     return poles
 
 

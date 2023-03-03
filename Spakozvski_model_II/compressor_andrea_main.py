@@ -5,7 +5,7 @@ Created on Thu Jan 26 13:41:32 2023
 
 @author: Francesco Neri, TU Delft
 
-Exercise on poles location for the centrifugal compressor described in "The Effect of Size and Working Fluid on the
+Exercise on poles location for the IRIS centrifugal compressor described in "The Effect of Size and Working Fluid on the
 Multi-Objective Design of High-Speed Centrifugal Compressors" by Andrea Giuffre. The compressor selected is the one
 picked from the pareto front.
 """
@@ -25,10 +25,10 @@ format_fig = (9,7)
 #%% Relevant geometric parameters for the compressor selected by Andrea on the Pareto front. All the variables that begin with capital
 # letters are dimensional. Otherwise they have been non-dimensionalized
 
-blades = 14 #number of blades (normal +split)
+total_blades = 14 #number of blades (normal +split)
 main_blades = 7 #main blades
 splitter_blades = 7 #splitter blades
-n_max = blades//4+1 #maximum harmonic to take in consideration (2 blades in a half-wavelength)
+n_max = total_blades//4+1 #maximum harmonic to take in consideration (2 blades in a half-wavelength)
 
 #COMPRESSOR DESIGN SELECTED ALONG THE PARETO FRONT (SI units) - INPUT DATA
 fluid = 'R1233zd(E)' #fluid
@@ -39,26 +39,32 @@ R2 = 22.8*1e-3 #impeller exit radius [m]
 R3 = 35.2*1e-3 #diffuser outlet radius [m]
 H2 = 2.3*1e-3 #blade heigth exit impeller [m]
 H3 = 1.6*1e-3 #diffuser height [m]
-H4 = H3
+H4 = H3 #diffuser outlet height [m]
 Lax = 16*1e-3 #axial length [m]
 R4 = 49.3*1e-3 # external diameter compressor [m]
 Ts = 0.3*1e-3 #blade trailing edge at shroud [m]
 Th = 0.6*1e-3 #blade trailing edge at hub [m]
-Tte_mean = 0.5*(Ts+Th)
+Tte_mean = 0.5*(Ts+Th) #blade trailing edge assumed at mid span [m]
 R1 = (R1s+R1h)/2 #radius at impeller inlet [m]
+R_Ref = R2 #Reference parameters for non-dimensionalization
 
-#Reference parameters for non-dimensionalization
-R_Ref = R2
-
-#STATION LOCATIONS, non dimensionalized
-x1 = 0
-x2 = Lax/R_Ref
+#STA locations non dimensionalized
+x1 = 0 #impeller inlet
+x2 = Lax/R_Ref #impeller outlet/diffuser inlet
 # x3 = x2
-x4 = x2
+x4 = x2 #diffuser outlet
 r1 = R1/R_Ref
 r2 = R2/R_Ref
 r3 = R3/R_Ref
-# r4 = R4/R_Ref
+r4 = R4/R_Ref
+
+#Cross sections
+A1 = np.pi*(R1s**2 - R1h**2) #cross section [m2]
+A2 = 2*np.pi*R2*H2 #cross section [m2]
+A4 = 2*np.pi*R4*H4 #cross section [m2]
+A1_blade = A1/main_blades #cross section of one sector at impeller inlet [2]
+A2_blade = (A2-total_blades*H2*Tte_mean)/(total_blades) #cross section of one sector at impeller outlet [m2]
+s_i = np.sqrt(Lax**2+(R2-R1)**2)*1.3 #approximation of the meridional path length along the impeller [m]
 
 
 #%%IMPORT DATA FROM DATA FOLDER (IRIS COMPRESSOR ANDREA)
@@ -139,25 +145,26 @@ plt.ylabel(r'$\beta_{tt}$')
 plt.legend()
 
 
+#%%PREPROCESSING OF THE DATA, IN ORDER TO HAVE INPUT DATA READY FOR THE TRANSFER FUNCTIONS
 
-
-
-#%% WORKING CONDITIONS, DEPENDENT ON THE SPEED LINE
-
-speedline = 2 #index of the speedline to be used
+speedline = 2 #choose the speedline to be used
+print("Selected speedline : %2d rpm" %(rpm[speedline]))
 index_max = np.where(mass_flow[speedline,:] == 0)
 index_max = index_max[0]
 index_max = index_max[0]
-index_max = index_max-1 #index max in order to not consider the zeros
+index_max = index_max-1 #index max in order to avoid the choked data
 
 Omega = rpm[speedline]*2*np.pi/60
 U_Ref = Omega*R_Ref #the reference velocity is the outlet impeller peripheral speed
 A_Ref = R_Ref**2 
-A1 = np.pi*(R1s**2 - R1h**2)
-A2 = 2*np.pi*R2*H2
-A4 = 2*np.pi*R4*H4
 p_ratio_tt = beta_tt[speedline,0:index_max] #across the whole compressor
 mdot = mass_flow[speedline,0:index_max] 
+plt.figure(figsize=format_fig)
+plt.plot(mdot,p_ratio_tt)
+plt.ylabel(r'$\beta_{tt}$')
+plt.xlabel(r'$\dot{m}$')
+# plt.title('Pressure ratio')
+
 
 
 #axial velocities
@@ -166,9 +173,9 @@ vx2 = np.zeros(index_max)
 # vx3 = 0 
 vx4 = np.zeros(index_max)
 
-#azimuthal velocities
+#azimuthal absolute velocities
 vy1 = np.zeros(index_max)
-vy2 = (-Wt2[speedline,0:index_max]+Omega*R1)/U_Ref #attnetion to the sign
+vy2 = (-Wt2[speedline,0:index_max]+Omega*R1)/U_Ref #attention to the sign
 # vy3 = 
 vy4 = Vt4[speedline,0:index_max]/U_Ref
  
@@ -178,20 +185,11 @@ vr2 = Wm2[speedline,0:index_max]/U_Ref
 # vr3 = 
 vr4 = Vm4[speedline,0:index_max]/U_Ref
 
-alpha1 = np.arctan(vy1/vx1)
+alpha1 = np.arctan(vy1/vx1) #inlet absolute flow angle 
 
 #static pressures [Pa]
 p1 = P1[speedline,0:index_max]
-p1_t = p1 + 0.5*Rho1[speedline,0:index_max]*((vx1*U_Ref)**2+(vy1*U_Ref)**2+(vr1*U_Ref)**2)
-# plt.figure()
-# plt.plot(p1_t)
-# plt.plot(p1)
-# plt.figure()
-# plt.plot(p2_t)
-# plt.plot(p2)
-# plt.figure()
-# plt.plot(p4_t)
-# plt.plot(p4)
+p1_t = p1 + 0.5*Rho1[speedline,0:index_max]*((vx1*U_Ref)**2+(vy1*U_Ref)**2+(vr1*U_Ref)**2) #incompressible approximation
 p2 = P2[speedline,0:index_max]
 p2_t = p2 + 0.5*Rho2[speedline,0:index_max]*((vx2*U_Ref)**2+(vy2*U_Ref)**2+(vr2*U_Ref)**2)
 # p3 = not needed for the moment
@@ -204,26 +202,27 @@ rho1 = Rho1[speedline,0:index_max]
 rho2 = Rho2[speedline,0:index_max]
 # rho3 = 
 rho4 = Rho4[speedline,0:index_max]
+rho_imp = (rho1+rho2)/2 #average density in the impeller
 
-#some average for the impeller 
-rho_imp = (rho1+rho2)/2
-plt.figure()
-plt.plot(rho_imp)
 
-delta_htt_real = Omega*(R2*vy2*U_Ref - R1*vy1*U_Ref)
-delta_htt_ideal = delta_htt_real/eta_tt[speedline,0:index_max]
-psi_tt_real = delta_htt_real/U_Ref**2
-psi_tt_ideal = delta_htt_ideal/U_Ref**2
-delta_hts_real = Omega*(R2*vy2*U_Ref - R1*vy1*U_Ref) - 0.5*(vy2*U_Ref)**2
-delta_hts_ideal = delta_hts_real/eta_ts[speedline,0:index_max]
-L_imp = (delta_hts_ideal - delta_hts_real)/U_Ref**2
-phi = mdot/(rho1*U_Ref*A1) #inlet flow coefficient for the impeller
-dLimp_dphi = np.gradient(L_imp, phi)
-dLi_dTanb = np.gradient(L_imp, np.tan(Beta1[speedline,0:index_max]))
+#now this is a bit problematic. I assume that the global efficiency is also respected in the impeller alone
+# delta_htt_real = Omega*(R2*vy2*U_Ref - R1*vy1*U_Ref) #enthalpy increase experienced in the real impeller (it must be higher than the ideal)
+# delta_htt_ideal = delta_htt_real*eta_tt[speedline,0:index_max] #ideal enthalpy increase experienced in the real impeller
+# psi_tt_real = delta_htt_real/U_Ref**2 #real impeller work coefficient
+# psi_tt_ideal = delta_htt_ideal/U_Ref**2 #ideal impeller work coefficient
+# delta_hts_real = Omega*(R2*vy2*U_Ref - R1*vy1*U_Ref) - 0.5*(vy2*U_Ref)**2 #total to static, taking out exit kin. energy
+# delta_hts_ideal = delta_hts_real*eta_ts[speedline,0:index_max]
+# L_imp = (delta_hts_real - delta_hts_ideal)/U_Ref**2
+
 # plt.figure()
 # plt.plot(psi_tt_ideal)
 # plt.plot(psi_tt_real)
-
+psi_ts_real = (p2 - p1_t)/(rho_imp*U_Ref**2) 
+psi_ts_ideal = psi_ts_real/eta_ts[speedline,0:index_max] #ideal is assumed proportional to total to static efficiency
+L_imp = (psi_ts_ideal-psi_ts_real)
+phi = mdot/(rho1*U_Ref*A1) #inlet flow coefficient for the impeller
+dLimp_dphi = np.gradient(L_imp, phi)
+dLi_dTanb = np.gradient(L_imp, np.tan(Beta1[speedline,0:index_max]))
 
 
 plt.figure(figsize=format_fig)
@@ -250,47 +249,60 @@ GAMMA = 2*np.pi*r2*vy2 #non dimensional circulation term at station 2
 beta1 = Beta1[speedline,0:index_max]
 beta2 = Beta2[speedline,0:index_max]
 alpha4 = Alpha4[speedline,0:index_max]
-A1_blade = A1/main_blades
-A2_blade = A2/(main_blades+splitter_blades)
-s_i = np.sqrt(Lax**2+(R2-R1)**2)*1.3 #approximation of the meridional path length in the impeller
+
 
 wpoint = index_max//4
+wpoint = 15 #working point selected
+working_points = [0, 10, 20, 30]
+fig, ax = plt.subplots(1, figsize=format_fig)
+ax.plot(phi,beta_ts[speedline,0:index_max], label='rpm '+str(int(rpm[speedline])))
 
-def centrifugal_vaneless(s, n, theta=0):
-    m1 = np.linalg.inv(Trad_n(r4, r4, n, s, Q[wpoint], GAMMA[wpoint]))
-    m2 = Bvlsd_n(s, n, r2, r4, r2, Q[wpoint], GAMMA[wpoint])
-    m3 = Bimp_n(s, n, vx1[wpoint], vr2[wpoint], vy1[wpoint], vy2[wpoint], alpha1[wpoint], beta1[wpoint], 
-                beta2[wpoint], r1, r2, rho1[wpoint], rho2[wpoint], A1_blade, A2_blade, s_i, dLi_dTanb[wpoint])
-    m4 = Tax_n(x1, s, n, vx1[0], vy1[0])
-    m_res = np.linalg.multi_dot([m1,m2,m3,m4])
-    EC = np.array([[1,0,0]])
-    IC = np.array([[0,1,0],
-                   [0,0,1]])
-    Y = np.concatenate((np.matmul(EC,m_res),IC))
-    return np.linalg.det(Y)
-
-
-domain = [-5,5,-10,10]
-grid = [1,1]
-n=np.arange(1,5)
-poles = {}
-plt.figure(figsize=format_fig)
-for nn in n:
-    poles[nn] = Shot_Gun(centrifugal_vaneless, domain, grid, n=nn, attempts=50)
-    plt.plot(poles[nn].real,-poles[nn].imag, 'o',label='n '+str(nn))
-real_axis_x = np.linspace(domain[0],domain[1],100)
-real_axis_y = np.zeros(len(real_axis_x))   
-imag_axis_y = np.linspace(domain[2],domain[3],100)
-imag_axis_x = np.zeros(len(imag_axis_y))
-plt.plot(real_axis_x,real_axis_y,'--k', linewidth=0.5)
-plt.plot(imag_axis_x,imag_axis_y,'--k', linewidth = 0.5)
-plt.xlim([domain[0],domain[1]])
-plt.ylim([domain[2],domain[3]])
-plt.legend()
-plt.xlabel(r'$\sigma_{n}$')
-plt.ylabel(r'$j \omega_{n}$')
-plt.title('Root locus')
-plt.savefig('pics/poles_iris_compressor.png')
+for wpoint in working_points:
+    print('Working Point: ' +str(wpoint)+' of ' + str(working_points[-1]))
+    def centrifugal_vaneless(s, n, theta=0):
+        m1 = np.linalg.inv(Trad_n(r4, r4, n, s, Q[wpoint], GAMMA[wpoint]))
+        m2 = Bvlsd_n(s, n, r2, r4, r2, Q[wpoint], GAMMA[wpoint])
+        m3 = Bimp_n(s, n, vx1[wpoint], vr2[wpoint], vy1[wpoint], vy2[wpoint], alpha1[wpoint], beta1[wpoint], 
+                    beta2[wpoint], r1, r2, rho1[wpoint], rho2[wpoint], A1_blade, A2_blade, s_i, dLi_dTanb[wpoint])
+        m4 = Tax_n(x1, s, n, vx1[0], vy1[0])
+        m_res = np.linalg.multi_dot([m1,m2,m3,m4])
+        EC = np.array([[1,0,0]])
+        IC = np.array([[0,1,0],
+                       [0,0,1]])
+        Y = np.concatenate((np.matmul(EC,m_res),IC))
+        return np.linalg.det(Y)
+    
+    
+    domain = [-3,3,-10,10]
+    grid = [1,1]
+    n=np.arange(1,5)
+    poles = {}
+    plt.figure(figsize=format_fig)
+    for nn in n:
+        print('Harmonic Number: ', nn)
+        poles[nn] = Shot_Gun(centrifugal_vaneless, domain, grid, n=nn, attempts=40, N=40)
+        plt.plot(poles[nn].real,-poles[nn].imag, 'o',label='n '+str(nn))
+    real_axis_x = np.linspace(domain[0],domain[1],100)
+    real_axis_y = np.zeros(len(real_axis_x))   
+    imag_axis_y = np.linspace(domain[2],domain[3],100)
+    imag_axis_x = np.zeros(len(imag_axis_y))
+    plt.plot(real_axis_x,real_axis_y,'--k', linewidth=0.5)
+    plt.plot(imag_axis_x,imag_axis_y,'--k', linewidth = 0.5)
+    plt.xlim([domain[0],domain[1]])
+    plt.ylim([domain[2],domain[3]])
+    plt.legend()
+    plt.xlabel(r'$\sigma_{n}$')
+    plt.ylabel(r'$j \omega_{n}$')
+    plt.title('Root locus, operating point: '+str(wpoint))
+    plt.savefig('pics/poles_iris_compressor_'+str(wpoint)+'.png')
+    
+    # plt.figure(figsize=format_fig)
+    ax.plot(phi[wpoint],beta_ts[speedline,wpoint],'o' ,label='operating point: '+str(wpoint))
+ax.set_ylabel(r'$\beta_{ts}$')
+ax.set_xlabel(r'$\phi$')
+ax.legend()
+fig.suptitle('Operating point')
+fig.savefig('pics/operating_points_iris_compressor.png')
 
 
 
