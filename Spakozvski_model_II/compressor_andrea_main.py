@@ -253,7 +253,7 @@ alpha4 = Alpha4[speedline,0:index_max]
 
 wpoint = index_max//4
 wpoint = 15 #working point selected
-working_points = [0, 10, 20, 30]
+working_points = [0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30]
 fig, ax = plt.subplots(1, figsize=format_fig)
 ax.plot(phi,beta_ts[speedline,0:index_max], label='rpm '+str(int(rpm[speedline])))
 
@@ -273,14 +273,14 @@ for wpoint in working_points:
         return np.linalg.det(Y)
     
     
-    domain = [-3,3,-10,10]
+    domain = [-3,1.5,-10,10]
     grid = [1,1]
     n=np.arange(1,5)
     poles = {}
     plt.figure(figsize=format_fig)
     for nn in n:
-        print('Harmonic Number: ', nn)
-        poles[nn] = Shot_Gun(centrifugal_vaneless, domain, grid, n=nn, attempts=40, N=40)
+        print('Harmonic Number: ' + str(nn) + ' of ' + str(n[-1]))
+        poles[nn] = Shot_Gun(centrifugal_vaneless, domain, grid, n=nn, attempts=50, N=30)
         plt.plot(poles[nn].real,-poles[nn].imag, 'o',label='n '+str(nn))
     real_axis_x = np.linspace(domain[0],domain[1],100)
     real_axis_y = np.zeros(len(real_axis_x))   
