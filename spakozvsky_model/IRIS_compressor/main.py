@@ -70,7 +70,7 @@ s_i = np.sqrt(Lax**2+(R2-R1)**2)*1.3 #approximation of the meridional path lengt
 #%%IMPORT DATA FROM DATA FOLDER (IRIS COMPRESSOR ANDREA)
 # note: my STA numbers are shifted (1 mine = 0 Andrea, 2 mine = 1 Andrea, 4 mine = 2 Andrea)
 import pickle
-data_folder = "../data/IRIS_single_stage/design0_beta_3.450/operating_map/" #path to folder
+data_folder = "data/IRIS_single_stage/design0_beta_3.450/operating_map/" #path to folder
 
 #in the following arrays the zeros means that the working point was out of range (choked)
 #every row is a different speedline, given in the RPM vector
