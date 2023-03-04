@@ -1,7 +1,1 @@
-Greitzer_2DOF_linearized
-Greitzer_3DOF_linearized
-Greitzer_3DOF_nonlinear
-Post_Stall_Transient
-README.md
-Spakozvski_model_II
-propagation_speed_moore
+# Different models employed to understand the instability of commpressors
