@@ -147,7 +147,7 @@ plt.legend()
 
 #%%PREPROCESSING OF THE DATA, IN ORDER TO HAVE INPUT DATA READY FOR THE TRANSFER FUNCTIONS
 
-speedline = 2 #choose the speedline to be used
+speedline = 0 #choose the speedline to be used
 print("Selected speedline : %2d rpm" %(rpm[speedline]))
 index_max = np.where(mass_flow[speedline,:] == 0)
 index_max = index_max[0]
@@ -253,7 +253,7 @@ alpha4 = Alpha4[speedline,0:index_max]
 
 wpoint = index_max//4
 wpoint = 15 #working point selected
-working_points = [0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30]
+working_points = [0,2,4,6,8,10,12,14,16,18,20,22,24]
 fig, ax = plt.subplots(1, figsize=format_fig)
 ax.plot(phi,beta_ts[speedline,0:index_max], label='rpm '+str(int(rpm[speedline])))
 poles_global = {} #dictionary for the whole set of poles
@@ -295,14 +295,14 @@ for wpoint in working_points:
     plt.xlabel(r'$\sigma_{n}$')
     plt.ylabel(r'$j \omega_{n}$')
     plt.title('Root locus, operating point: '+str(wpoint))
-    plt.savefig('pics/poles_iris_compressor_'+str(wpoint)+'.png')
+    plt.savefig('pics/poles_iris_compressor_sl_'+str(speedline)+'_'+str(wpoint)+'.png')
     
     ax.plot(phi[wpoint],beta_ts[speedline,wpoint],'o' ,label='op. point: '+str(wpoint))
 ax.set_ylabel(r'$\beta_{ts}$')
 ax.set_xlabel(r'$\phi$')
 ax.legend()
 fig.suptitle('Operating point')
-fig.savefig('pics/operating_points_iris_compressor.png')
+fig.savefig('pics/operating_points_iris_compressor_speedline_'+str(speedline)+'.png')
 
 
 
