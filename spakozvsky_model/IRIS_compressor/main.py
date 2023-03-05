@@ -20,7 +20,7 @@ plt.rc('text', usetex=False)
 plt.rc('xtick',labelsize=10)
 plt.rc('ytick',labelsize=10)
 plt.rcParams['font.size'] = 10
-format_fig = (9,7)
+format_fig = (18,8)
 
 #%% Relevant geometric parameters for the compressor selected by Andrea on the Pareto front. All the variables that begin with capital
 # letters are dimensional. Otherwise they have been non-dimensionalized
@@ -147,7 +147,7 @@ plt.legend()
 
 #%%PREPROCESSING OF THE DATA, IN ORDER TO HAVE INPUT DATA READY FOR THE TRANSFER FUNCTIONS
 
-speedline = 0 #choose the speedline to be used
+speedline = 2 #choose the speedline to be used
 print("Selected speedline : %2d rpm" %(rpm[speedline]))
 index_max = np.where(mass_flow[speedline,:] == 0)
 index_max = index_max[0]
@@ -253,9 +253,9 @@ alpha4 = Alpha4[speedline,0:index_max]
 
 wpoint = index_max//4
 wpoint = 15 #working point selected
-working_points = [0,2,4,6,8,10,12,14,16,18,20,22,24]
-fig, ax = plt.subplots(1, figsize=format_fig)
-ax.plot(phi,beta_ts[speedline,0:index_max], label='rpm '+str(int(rpm[speedline])))
+working_points = [0,2,4,6,8,10,12,14,16,18,20]
+# working_points = [0,2]
+
 poles_global = {} #dictionary for the whole set of poles
 for wpoint in working_points:
     print('Working Point: ' +str(wpoint)+' of ' + str(working_points[-1]))
@@ -277,32 +277,37 @@ for wpoint in working_points:
     grid = [1,1]
     n=np.arange(1,5)
     poles = {} #dictionary of poles for a single working point
-    plt.figure(figsize=format_fig)
+    fig, ax = plt.subplots(1,2, figsize=format_fig)
+
     for nn in n:
         print('Harmonic Number: ' + str(nn) + ' of ' + str(n[-1]))
-        poles[nn] = Shot_Gun(centrifugal_vaneless, domain, grid, n=nn, attempts=40, N=40)
+        poles[nn] = Shot_Gun(centrifugal_vaneless, domain, grid, n=nn, attempts=45, N=45)
         plt.plot(poles[nn].real,-poles[nn].imag, 'o',label='n '+str(nn))
     poles_global[wpoint] = poles #for every working point attach the poles to the big dictionary of all poles
     real_axis_x = np.linspace(domain[0],domain[1],100)
     real_axis_y = np.zeros(len(real_axis_x))   
     imag_axis_y = np.linspace(domain[2],domain[3],100)
     imag_axis_x = np.zeros(len(imag_axis_y))
-    plt.plot(real_axis_x,real_axis_y,'--k', linewidth=0.5)
-    plt.plot(imag_axis_x,imag_axis_y,'--k', linewidth = 0.5)
-    plt.xlim([domain[0],domain[1]])
-    plt.ylim([domain[2],domain[3]])
-    plt.legend()
-    plt.xlabel(r'$\sigma_{n}$')
-    plt.ylabel(r'$j \omega_{n}$')
-    plt.title('Root locus, operating point: '+str(wpoint))
-    plt.savefig('pics/poles_iris_compressor_sl_'+str(speedline)+'_'+str(wpoint)+'.png')
+    ax[1].plot(real_axis_x,real_axis_y,'--k', linewidth=0.5)
+    ax[1].plot(imag_axis_x,imag_axis_y,'--k', linewidth = 0.5)
+    ax[1].set_xlim([domain[0],domain[1]])
+    ax[1].set_ylim([domain[2],domain[3]])
+    ax[1].legend()
+    ax[1].set_xlabel(r'$\sigma_{n}$')
+    ax[1].set_ylabel(r'$j \omega_{n}$')
+    ax[1].set_title('root locus, operating point: '+str(wpoint))
+    # plt.savefig('pics/poles_iris_compressor_sl_'+str(speedline)+'_'+str(wpoint)+'.png')
     
-    ax.plot(phi[wpoint],beta_ts[speedline,wpoint],'o' ,label='op. point: '+str(wpoint))
-ax.set_ylabel(r'$\beta_{ts}$')
-ax.set_xlabel(r'$\phi$')
-ax.legend()
-fig.suptitle('Operating point')
-fig.savefig('pics/operating_points_iris_compressor_speedline_'+str(speedline)+'.png')
+    #speedline plot
+    ax[0].plot(phi,beta_ts[speedline,0:index_max], label='rpm '+str(int(rpm[speedline])))
+    ax[0].plot(phi[wpoint],beta_ts[speedline,wpoint],'ro' ,label='op. point: '+str(wpoint))
+    ax[0].set_ylabel(r'$\beta_{ts}$')
+    ax[0].set_xlabel(r'$\phi$')
+    ax[0].set_title('operating point: '+str(wpoint))
+    fig.savefig('pics/root_locus_'+str(speedline)+'_op_'+str(wpoint)+'.png')
+    
+
+
 
 
 
