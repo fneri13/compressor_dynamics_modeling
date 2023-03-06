@@ -10,6 +10,8 @@ Exercise 5.4.3 of Spakovszky thesis
 
 import matplotlib.pyplot as plt
 import numpy as np
+import sys
+sys.path.insert(1, '../src/') #to add function folder
 from functions import *
 import os
 

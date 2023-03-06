@@ -11,8 +11,9 @@ test file for functions.py
 import matplotlib.pyplot as plt
 import numpy as np
 from functions import *
-import os
-
+import sys
+sys.path.insert(1, '../src/') #to add function folder
+from functions import *
 
 
 # Preamble: customization of matplotlib

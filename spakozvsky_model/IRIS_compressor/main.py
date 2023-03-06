@@ -12,6 +12,9 @@ picked from the pareto front.
 
 import matplotlib.pyplot as plt
 import numpy as np
+# from "../src/functions" import 
+import sys
+sys.path.insert(1, '../src/') #to add function folder
 from functions import *
 
 # Preamble: customization of matplotlib
@@ -118,41 +121,6 @@ with open(data_folder + 'beta_tt.pkl', 'rb') as f:
     beta_tt = pickle.load(f)
 with open(data_folder + 'rpm.pkl', 'rb') as f:
     rpm = pickle.load(f)
-    
-
-#plot of characteristics
-fig, ax = plt.subplots(1, figsize = (8,6))
-for s in range(0,len(rpm)):
-    speedline = s #choose the speedline to be used
-    index_max = np.where(mass_flow[speedline,:] == 0)
-    index_max = index_max[0]
-    index_max = index_max[0]
-    index_max = index_max-1 #index max in order to avoid the choked data
-    ax.plot(mass_flow[speedline,0:index_max], beta_ts[speedline,0:index_max], label='%0d krpm' %(rpm[speedline]/1000))
-ax.set_ylabel(r'$\beta_{ts}$')
-ax.set_xlabel(r'$\dot{m}$')
-ax.set_title('compressor characteristics')
-ax.plot(mass_flow[:,0], beta_ts[:,0], 'k^', label = 'Senoo')
-ax.plot(mass_flow[:,10], beta_ts[:,10], 'ko', label = 'Spakovszky') #instability point, visually located
-ax.legend()
-fig.savefig('pics/compressor_characteristics.png')
-
-#plot of efficiency
-fig, ax = plt.subplots(1, figsize = (8,6))
-for s in range(0,len(rpm)):
-    speedline = s #choose the speedline to be used
-    index_max = np.where(mass_flow[speedline,:] == 0)
-    index_max = index_max[0]
-    index_max = index_max[0]
-    index_max = index_max-1 #index max in order to avoid the choked data
-    ax.plot(mass_flow[speedline,0:index_max], eta_ts[speedline,0:index_max], label='%0d krpm' %(rpm[speedline]/1000))
-ax.set_ylabel(r'$\eta_{ts}$')
-ax.set_xlabel(r'$\dot{m}$')
-ax.set_title('compressor characteristics')
-ax.plot(mass_flow[:,0], eta_ts[:,0], 'k^', label = 'Senoo')
-ax.plot(mass_flow[:,10], eta_ts[:,10], 'ko', label = 'Spakovszky') #instability point, visually located
-ax.legend()
-fig.savefig('pics/compressor_efficiencies.png')
 
 
 #%%PREPROCESSING OF THE DATA, IN ORDER TO HAVE INPUT DATA READY FOR THE TRANSFER FUNCTIONS
@@ -321,9 +289,40 @@ for wpoint in working_points:
 
 
 
+#%% General plots
+#plot of characteristics
+fig, ax = plt.subplots(1, figsize = (8,6))
+for s in range(0,len(rpm)):
+    speedline = s #choose the speedline to be used
+    index_max = np.where(mass_flow[speedline,:] == 0)
+    index_max = index_max[0]
+    index_max = index_max[0]
+    index_max = index_max-1 #index max in order to avoid the choked data
+    ax.plot(mass_flow[speedline,0:index_max], beta_ts[speedline,0:index_max], label='%0d krpm' %(rpm[speedline]/1000))
+ax.set_ylabel(r'$\beta_{ts}$')
+ax.set_xlabel(r'$\dot{m}$')
+ax.set_title('compressor characteristics')
+ax.plot(mass_flow[:,0], beta_ts[:,0], 'k^', label = 'Senoo')
+ax.plot(mass_flow[:,10], beta_ts[:,10], 'ko', label = 'Spakovszky') #instability point, visually located
+ax.legend()
+fig.savefig('pics/compressor_characteristics.png')
 
-
-
+#plot of efficiency
+fig, ax = plt.subplots(1, figsize = (8,6))
+for s in range(0,len(rpm)):
+    speedline = s #choose the speedline to be used
+    index_max = np.where(mass_flow[speedline,:] == 0)
+    index_max = index_max[0]
+    index_max = index_max[0]
+    index_max = index_max-1 #index max in order to avoid the choked data
+    ax.plot(mass_flow[speedline,0:index_max], eta_ts[speedline,0:index_max], label='%0d krpm' %(rpm[speedline]/1000))
+ax.set_ylabel(r'$\eta_{ts}$')
+ax.set_xlabel(r'$\dot{m}$')
+ax.set_title('compressor characteristics')
+ax.plot(mass_flow[:,0], eta_ts[:,0], 'k^', label = 'Senoo')
+ax.plot(mass_flow[:,10], eta_ts[:,10], 'ko', label = 'Spakovszky') #instability point, visually located
+ax.legend()
+fig.savefig('pics/compressor_efficiencies.png')
 
 
 
