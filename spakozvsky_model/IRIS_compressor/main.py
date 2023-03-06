@@ -119,30 +119,40 @@ with open(data_folder + 'beta_tt.pkl', 'rb') as f:
 with open(data_folder + 'rpm.pkl', 'rb') as f:
     rpm = pickle.load(f)
     
-# in order to understand the ordering
-plt.figure('total to total efficiency')
-plt.plot(mass_flow[0,:], eta_tt[0,:],'o', label='70 krpm')
-plt.plot(mass_flow[1,:], eta_tt[1,:],'o', label='79 krpm')
-plt.plot(mass_flow[2,:], eta_tt[2,:],'o', label='88 krpm')
-plt.plot(mass_flow[3,:], eta_tt[3,:],'o', label='93 krpm')
-plt.plot(mass_flow[4,:], eta_tt[4,:],'o', label='97 krpm')
-plt.xlim([0.04,0.14])
-plt.ylim([0.6, 0.85])
-plt.xlabel(r'$\dot{m}$ [kg/s]')
-plt.ylabel(r'$\eta_{tt}$')
-plt.legend()
 
-plt.figure('total to total pressure ratio')
-plt.plot(mass_flow[0,:], beta_tt[0,:],'o', label='70 krpm')
-plt.plot(mass_flow[1,:], beta_tt[1,:],'o', label='79 krpm')
-plt.plot(mass_flow[2,:], beta_tt[2,:],'o', label='88 krpm')
-plt.plot(mass_flow[3,:], beta_tt[3,:],'o', label='93 krpm')
-plt.plot(mass_flow[4,:], beta_tt[4,:],'o', label='97 krpm')
-plt.xlim([0.04,0.14])
-plt.ylim([1.5, 6])
-plt.xlabel(r'$\dot{m}$ [kg/s]')
-plt.ylabel(r'$\beta_{tt}$')
-plt.legend()
+#plot of characteristics
+fig, ax = plt.subplots(1, figsize = (8,6))
+for s in range(0,len(rpm)):
+    speedline = s #choose the speedline to be used
+    index_max = np.where(mass_flow[speedline,:] == 0)
+    index_max = index_max[0]
+    index_max = index_max[0]
+    index_max = index_max-1 #index max in order to avoid the choked data
+    ax.plot(mass_flow[speedline,0:index_max], beta_ts[speedline,0:index_max], label='%0d krpm' %(rpm[speedline]/1000))
+ax.set_ylabel(r'$\beta_{ts}$')
+ax.set_xlabel(r'$\dot{m}$')
+ax.set_title('compressor characteristics')
+ax.plot(mass_flow[:,0], beta_ts[:,0], 'k^', label = 'Senoo')
+ax.plot(mass_flow[:,10], beta_ts[:,10], 'ko', label = 'Spakovszky') #instability point, visually located
+ax.legend()
+fig.savefig('pics/compressor_characteristics.png')
+
+#plot of efficiency
+fig, ax = plt.subplots(1, figsize = (8,6))
+for s in range(0,len(rpm)):
+    speedline = s #choose the speedline to be used
+    index_max = np.where(mass_flow[speedline,:] == 0)
+    index_max = index_max[0]
+    index_max = index_max[0]
+    index_max = index_max-1 #index max in order to avoid the choked data
+    ax.plot(mass_flow[speedline,0:index_max], eta_ts[speedline,0:index_max], label='%0d krpm' %(rpm[speedline]/1000))
+ax.set_ylabel(r'$\eta_{ts}$')
+ax.set_xlabel(r'$\dot{m}$')
+ax.set_title('compressor characteristics')
+ax.plot(mass_flow[:,0], eta_ts[:,0], 'k^', label = 'Senoo')
+ax.plot(mass_flow[:,10], eta_ts[:,10], 'ko', label = 'Spakovszky') #instability point, visually located
+ax.legend()
+fig.savefig('pics/compressor_efficiencies.png')
 
 
 #%%PREPROCESSING OF THE DATA, IN ORDER TO HAVE INPUT DATA READY FOR THE TRANSFER FUNCTIONS
@@ -153,6 +163,8 @@ index_max = np.where(mass_flow[speedline,:] == 0)
 index_max = index_max[0]
 index_max = index_max[0]
 index_max = index_max-1 #index max in order to avoid the choked data
+
+
 
 Omega = rpm[speedline]*2*np.pi/60
 U_Ref = Omega*R_Ref #the reference velocity is the outlet impeller peripheral speed
