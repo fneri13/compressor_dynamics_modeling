@@ -123,6 +123,10 @@ with open(data_folder + 'rpm.pkl', 'rb') as f:
     rpm = pickle.load(f)
 
 
+
+
+
+
 #%%PREPROCESSING OF THE DATA, IN ORDER TO HAVE INPUT DATA READY FOR THE TRANSFER FUNCTIONS
 
 speedline = 2 #choose the speedline to be used
@@ -222,8 +226,11 @@ plt.xlabel(r'$\beta_1$')
 plt.title('impeller loss derivative')
 
 
-#%% construct dynamic transfer function of the system
 
+
+
+
+#%% construct dynamic transfer function of the system
 Q = 2*np.pi*r2*vr2 #non dimensional source term at station 2
 GAMMA = 2*np.pi*r2*vy2 #non dimensional circulation term at station 2
 beta1 = Beta1[speedline,0:index_max]
@@ -325,10 +332,56 @@ ax.legend()
 fig.savefig('pics/compressor_efficiencies.png')
 
 
+#%%plot the characteristics for impeller and diffuser to analyze the slopes
+OMEGA = 2*np.pi*rpm/60
+U1 = OMEGA*R1
+U2 = OMEGA*R2
+phi_all = np.zeros(mass_flow.shape)
+p1_t_all = np.zeros(mass_flow.shape)
+p2_t_all = np.zeros(mass_flow.shape)
+p4_t_all = np.zeros(mass_flow.shape)
+PSI_ts_imp = np.zeros(mass_flow.shape)
+PSI_ss_diff = np.zeros(mass_flow.shape)
+PSI_tt_diff = np.zeros(mass_flow.shape)
+PSI_tt_imp = np.zeros(mass_flow.shape)
+for i in range(0,len(U)):
+    phi_all[i,:] = Wm1[i,:]/U2[i]
+    p1_t_all[i,:] = P1[i,:] + 0.5*Rho1[i,:]*(Wm1[i,:]**2+(Wt1[i,:]+U1[i])**2)
+    p2_t_all[i,:] = P2[i,:] + 0.5*Rho2[i,:]*(Wm2[i,:]**2+(Wt2[i,:]+U2[i])**2)
+    p4_t_all[i,:] = P4[i,:] + 0.5*Rho4[i,:]*(Vm4[i,:]**2+Vt4[i,:])
+    PSI_ts_imp[i,:] = (P2[i,:] - p1_t_all[i,:])/((Rho1[i,:]+Rho2[i,:])/2*U2[i]**2)
+    PSI_tt_imp[i,:] = (p2_t_all[i,:] - p1_t_all[i,:])/((Rho1[i,:]+Rho2[i,:])/2*U2[i]**2)
+    PSI_ss_diff[i,:] = (P4[i,:] - P2[i,:])/((Rho2[i,:]+Rho4[i,:])/2*U2[i]**2)
+    PSI_ts_diff[i,:] = (P4[i,:] - p2_t_all[i,:])/((Rho2[i,:]+Rho4[i,:])/2*U2[i]**2)
+    PSI_tt_diff[i,:] = (p4_t_all[i,:] - p2_t_all[i,:])/((Rho2[i,:]+Rho4[i,:])/2*U2[i]**2)
+    #the warning occurs because we are dividing by density, which is zero after choking conditions, but is not important
+    #since we are plotting before that.
 
-
-
-
-
-
-
+#plot of characteristics for impeller and diffuser
+fig, ax = plt.subplots(1,3, figsize = (17,5))
+for s in range(0,len(rpm)):
+    speedline = s 
+    index_max = np.where(mass_flow[speedline,:] == 0)
+    index_max = index_max[0]
+    index_max = index_max[0]
+    index_max = index_max-1 #index max in order to avoid the choked data
+    ax[0].plot(phi_all[speedline,0:index_max], PSI_tt_imp[speedline,0:index_max]+PSI_tt_diff[speedline,0:index_max])
+    ax[1].plot(phi_all[speedline,0:index_max], PSI_tt_imp[speedline,0:index_max])
+    ax[2].plot(phi_all[speedline,0:index_max], PSI_tt_diff[speedline,0:index_max], label='%0d krpm' %(rpm[speedline]/1000))
+ax[0].plot(phi_all[:,0], PSI_tt_imp[:,0]+PSI_tt_diff[:,0], 'k^', label = 'Senoo')
+ax[0].plot(phi_all[:,10], PSI_tt_imp[:,10]+PSI_tt_diff[:,10], 'ko', label = 'Spakovszky')
+ax[1].plot(phi_all[:,0], PSI_tt_imp[:,0], 'k^')
+ax[1].plot(phi_all[:,10], PSI_tt_imp[:,10], 'ko')
+ax[2].plot(phi_all[:,0], PSI_tt_diff[:,0], 'k^')
+ax[2].plot(phi_all[:,10], PSI_tt_diff[:,10], 'ko')
+ax[0].set_ylabel(r'$\psi_{tt}$')
+ax[0].set_xlabel(r'$\phi$')
+ax[0].set_title('full stage')
+ax[1].set_ylabel(r'$\psi_{tt}$')
+ax[1].set_xlabel(r'$\phi$')
+ax[1].set_title('impeller')
+ax[2].set_ylabel(r'$\psi_{tt}$')
+ax[2].set_xlabel(r'$\phi$')
+ax[2].set_title('diffuser')
+fig.legend()
+fig.savefig('pics/stage_tt_characteristics.png')
