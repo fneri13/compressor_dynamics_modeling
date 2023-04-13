@@ -14,7 +14,7 @@ from functions import *
 import sys
 sys.path.insert(1, '../src/') #to add function folder
 from functions import *
-
+import os 
 
 # Preamble: customization of matplotlib
 # Configuration for plots
