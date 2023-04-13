@@ -110,12 +110,70 @@ def test_function(s,n):
     #test function to debug the shot gun method. 7 poles around unitary circle
     return s**7+1
 
+#% pre-stall waves in an isolated rotor 5.4.2
+def rotor_row_matrix(s, n=1, theta=0):
+    #function of the system rotor stator interaction 5.4.3
+    A = np.zeros((3,3),dtype=complex)
+    A[0,0] = 1
+    A[0,1] = 0
+    A[0,2] = -1
+    A[1,0] = 0
+    A[1,1] = 1
+    A[1,2] = -1/Vx + 1j*s/(n*Vx)
+    A[2,0] = dLr_dTanb*(1j-np.tan(beta1))/Vx**2 + s*(lambda_r*n +1)/(n*Vx) + (1j*n*lambda_r-np.tan(beta2))/Vx
+    A[2,1] = 1j-np.tan(alfa2)
+    A[2,2]= 1+np.tan(alfa2)*(np.tan(alfa2)-1j*s/(n*Vx))
+    return A
 
-domain = [-2,2,-2,2]
-grid = [3,3]
+def SVD_Method(complex_function, domain, grid, n):
+    """
+    SVD method taken needed to compute the complex zeros of a complex function.
+    
+    ARGUMENTS
+        complex_function : pointer to the function that returns the matrix for which we want to find the poles
+        domain : domain where we look for poles, in format [x_min, x_max, y_min, y_max]
+        n_grid : number of intervals in x and y in the complex domain, in format [n_x, n_y]. Default [1,1]
+        n : circumferential harmonic, needed from the complex function (1 as default)
+        verbose : print some info (default=False)
+    RETURN:
+        poles : array of poles
+        contour : contour of the conditioning number inverse
+    """
+    if n==0:
+        raise Exception("Sorry, the n=0 mode is still not implemented. Use n!=0")
+    if verbose:
+        print('-----------------------------------------------------------------------')
+        print('SHOT GUN METHOD CALLED')
+    left_lim = domain[0] #left border of the domain
+    right_lim = domain[1] #right border of the domain
+    down_lim = domain[2] #lower border
+    upper_lim = domain[3] #upper border
+    lx = (right_lim-left_lim)/(n_grid[0]) #interval step in x direction
+    ly = (upper_lim-down_lim)/(n_grid[1]) #interval step in y direction
+    N0 = N #backup values
+    lx0 = lx #backup value
+    ly0 = ly #backup value
+    s_real = np.linspace(left_lim+lx/2, right_lim-lx/2, n_grid[0]) #real value of points
+    s_imag = np.linspace(down_lim+ly/2, upper_lim-ly/2, n_grid[1]) #imaginary value of points
+    lambda_inv = np.array((len(s_real), len(s_imag)))
+    for i in range(0,len(s_real)):
+        for j in range(0,len(s_imag)):
+            matrix = complex_function(s_real[i]+1j*s_imag[j])
+            U, sing, V = np.linalg.svd(matrix)
+            lambda_inv[i,j] = np.min(sing)/np.max(sing)
+    return lambda_inv
+
+
+
+
+
+
+domain = [-1.5,1.5,-1.5,1.5]
+grid = [10,10]
 poles_analytic = []
 plt.figure(figsize=format_fig)
-poles = Shot_Gun(test_function, domain, grid)
+#poles = Shot_Gun(test_function, domain, grid)
+poles = SVD_Method(rotor_row_matrix, domain, grid)
 plt.plot(poles.real,-poles.imag,'o', label='shot-gun')
 for k in range(0,7):
     poles_analytic.append(np.exp(1j*(np.pi+2*k*np.pi/7)))
