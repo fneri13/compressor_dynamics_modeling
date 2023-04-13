@@ -429,3 +429,49 @@ def Shot_Gun(complex_function, domain, n_grid=[1,1], n=1, N=30, tol=1e-6, attemp
 
 
 
+
+def SVD_Method(complex_matrix, domain, n_grid, n=1, verbose=False):
+    """
+    SVD method to compute the conditioning number of complex matrices.
+    
+    ARGUMENTS
+        complex_matrix : pointer to the function that returns the matrix for which we want to find the conditioning number
+        domain : domain where we look for poles, in format [x_min, x_max, y_min, y_max]
+        n_grid : number of intervals in x and y in the complex domain, in format [n_x, n_y].
+        n : circumferential harmonic, needed for the complex matrix (1 as default)
+        verbose : print some info (False as default)
+    RETURN:
+        lambda_inv : array of conditioning numbers on the complex domain
+        contour : contour of the inverse conditioning number inverse
+    """
+    if n==0:
+        raise Exception("Sorry, the n=0 mode is still not implemented. Use n!=0")
+    if verbose:
+        print('-----------------------------------------------------------------------')
+        print('SVD METHOD CALLED')
+    left_lim = domain[0] #left border of the domain
+    right_lim = domain[1] #right border of the domain
+    down_lim = domain[2] #lower border
+    upper_lim = domain[3] #upper border
+    lx = (right_lim-left_lim)/(n_grid[0]) #interval step in x direction
+    ly = (upper_lim-down_lim)/(n_grid[1]) #interval step in y direction
+    s_real = np.linspace(left_lim+lx/2, right_lim-lx/2, n_grid[0]) #real value of points
+    s_imag = np.linspace(down_lim+ly/2, upper_lim-ly/2, n_grid[1]) #imaginary value of points
+    lambda_inv = np.zeros((len(s_real), len(s_imag)))
+    for i in range(0,len(s_real)):
+        for j in range(0,len(s_imag)):
+            matrix = complex_matrix(s_real[i]-1j*s_imag[j], n=n) #form the matrix
+            U, sing, V = np.linalg.svd(matrix) #SVD decomposition
+            lambda_inv[i,j] = np.min(sing)/np.max(sing) #inverse of the conditioning number
+    S_REAL, S_IMAG = np.meshgrid(s_real,s_imag)
+    lambda_inv = lambda_inv/np.max(lambda_inv) #normalize it
+    plt.figure()
+    plt.contourf(S_REAL, +S_IMAG, lambda_inv)
+    plt.colorbar()
+    if verbose:
+        print('SVD METHOD EXIT SUCCESSFUL')
+        print('-----------------------------------------------------------------------')
+    return lambda_inv
+
+
+
