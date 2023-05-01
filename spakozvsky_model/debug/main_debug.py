@@ -10,7 +10,6 @@ test file for functions.py
 
 import matplotlib.pyplot as plt
 import numpy as np
-from functions import *
 import sys
 sys.path.insert(1, '../src/') #to add function folder
 from functions import *
@@ -110,12 +109,39 @@ def test_function(s,n):
     #test function to debug the shot gun method. 7 poles around unitary circle
     return s**7+1
 
+#% pre-stall waves in an isolated rotor 5.4.2
+def rotor_row_matrix(s, n=1, theta=0):
+    #function of the system rotor stator interaction 5.4.3
+    A = np.zeros((3,3),dtype=complex)
+    A[0,0] = 1
+    A[0,1] = 0
+    A[0,2] = -1
+    A[1,0] = 0
+    A[1,1] = 1
+    A[1,2] = -1/Vx + 1j*s/(n*Vx)
+    A[2,0] = dLr_dTanb*(1j-np.tan(beta1))/Vx**2 + s*(lambda_r*n +1)/(n*Vx) + (1j*n*lambda_r-np.tan(beta2))/Vx
+    A[2,1] = 1j-np.tan(alfa2)
+    A[2,2]= 1+np.tan(alfa2)*(np.tan(alfa2)-1j*s/(n*Vx))
+    return A
 
-domain = [-2,2,-2,2]
-grid = [3,3]
+domain = [0,0.5,0,4]
+grid = [100,100]
 poles_analytic = []
+poles = SVD_Method(rotor_row_matrix, domain, grid, n=1)
+poles = SVD_Method(rotor_row_matrix, domain, grid, n=2)
+poles = SVD_Method(rotor_row_matrix, domain, grid, n=3)
+poles = SVD_Method(rotor_row_matrix, domain, grid, n=4)
+poles = SVD_Method(rotor_row_matrix, domain, grid, n=5)
+poles = SVD_Method(rotor_row_matrix, domain, grid, n=6)
+
+
+
+
+
+
+#%%
 plt.figure(figsize=format_fig)
-poles = Shot_Gun(test_function, domain, grid)
+#poles = Shot_Gun(test_function, domain, grid)
 plt.plot(poles.real,-poles.imag,'o', label='shot-gun')
 for k in range(0,7):
     poles_analytic.append(np.exp(1j*(np.pi+2*k*np.pi/7)))
