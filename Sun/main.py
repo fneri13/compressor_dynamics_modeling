@@ -124,7 +124,6 @@ from Compressor import Compressor
 # ax[1,1].set_ylabel(r'$d\eta/dr$')
 
 #%%
-from Compressor import Compressor
 
 # Instantiate a compressor object with a compression ratio of 0.5
 # my_compressor = Compressor(x,y,z,rho,p1/rho,p2/rho,p3/rho,p)
@@ -144,7 +143,7 @@ my_compressor.scatterPlot3D('pressure')
 my_compressor.scatterPlot3DFull(20, 20, field='pressure',slices=500)
 
 
-my_compressor.CircumferentialAverage(50, 50)
+my_compressor.UnstructuredCircumferentialAverage(50, 50)
 my_compressor.scatterPlot2D('density', size=50)
 my_compressor.scatterPlot2D('radial', size=50)
 my_compressor.scatterPlot2D('tangential', size=50)
