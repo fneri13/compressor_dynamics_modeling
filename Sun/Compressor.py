@@ -42,6 +42,7 @@ class Compressor:
             self.ur = self.pr/self.rho
             self.ut = self.pt/self.rho
             self.uz = self.p3/self.rho
+            
         else:
             raise TypeError('No compatible datafile has been provided. Provide a valid file containing the unstructured CFD results')
         
@@ -158,6 +159,28 @@ class Compressor:
                     self.M_avg = np.append(self.M_avg,M_cg)
 
 
+
+    def FindBorder(self):
+        #for every z interval, take the min and the max value of the radial cordinate to extract upper and lower boundaries
+        Nz = 100
+        z_min = np.min(self.z)
+        z_max = np.max(self.z)
+        self.z_border = np.linspace(z_min, z_max, Nz)
+        self.r_upper = np.array(())
+        self.r_lower = np.array(())
+        
+        #find the upper and lower border for every z-interval
+        for ii in range(0,len(self.z_border)):
+            if ii<len(self.z_border)-1:
+                mesh_set = (self.z>=self.z_border[ii]) & (self.z<=self.z_border[ii+1]) #points in every grid zone
+            else:
+                mesh_set = (self.z>=self.z_border[ii-1]) & (self.z<=self.z_border[ii]) #points in every grid zone
+            r_group = self.r[mesh_set]
+            self.r_upper = np.append(self.r_upper, np.max(r_group))
+            self.r_lower = np.append(self.r_lower, np.min(r_group))
+        print('DO NOT USE FindBorder() METHOD, IT IS NOT WELL IMPLEMENTED YET')
+            
+        
 
     def scatterPlot3D(self, field='default', formatFig=(10,6), size=1, slices=25):
         """
@@ -305,6 +328,14 @@ class Compressor:
         """
         method for rendering full machine 3D scatter plot of a certain field. If the field is not provided, it just shows the nodes.
         It doesn't save new data attributes, it just shows a representation of the flowfield for a given number of blades.
+        
+        ARGUMENTS:
+            blades : number of blades to show
+            totalBlades : total number of blades of the machine
+            field : name of the field to plot
+            formatFig : figsize of the plot. Default = (10,6)
+            size = size of the dots in the scatter plot. Default = 1
+            slices = slicing number of the full data array. Default = 50
         """
         if (blades>totalBlades):
             blades = totalBlades
