@@ -100,44 +100,157 @@ ax.legend()
 
 
 #%% construct the matrix Dij for the derivatives. There is some conceptual issue here
-x = np.linspace(1,6,100)
-y = (x**2+x-2*np.sin(5*x))/(1-6*x+3*x) #general oscillating non-periodic function
-# y = np.sin(x)
+from numpy.polynomial.chebyshev import chebfit, chebval
+
+#analytical continuous function
+x = np.linspace(-1,1,1000)
+def nonPeriodicFunction(x):
+    return (x**2+x-3*np.sin(15*x))/(x**2+1)
+    # return (x**2)
+y = nonPeriodicFunction(x) #general oscillating non-periodic function
+
 
 # Define the degree of the Chebyshev series
-n = 10
+N = 20 #order of polynomial. N+1 gauss lobatto points
+
+#obtain the points, and function values at GL points
+x_GL = np.array(())
+for i in range(0,N+1):
+    x_GL = np.append(x_GL, np.cos(np.pi*i/(N))) #gauss lobatto points of the higher order polynonial
+y_GL = nonPeriodicFunction(x_GL)
+
+fig, ax = plt.subplots(figsize=(10,7))
+ax.plot(x,y,label=r'$y(x)$')
+ax.plot(x_GL, y_GL,'o', label='GL points N=%2d' %(N))
+ax.set_title('function')
+ax.set_xlabel(r'$x$')
+ax.set_ylabel(r'$y$')
+ax.legend()
+
 # Convert the function to its Chebyshev series representation
-c = chebfit(x, y, n)
+c = chebfit(x, y, N)
+y_interp = chebval(x, c)
+fig, ax = plt.subplots(figsize=(10,7))
+ax.plot(x,y,label=r'$y(x)$')
+ax.plot(x,y_interp,'s', label='interpolation')
+ax.set_title('chebyshev interpolation N=%2d' %(N))
+ax.set_xlabel(r'$x$')
+ax.set_ylabel(r'$y$')
+ax.legend()
 
-x_test = np.linspace(np.min(x), np.max(x), 1000)
-y_test = chebval(x_test, c)
 
-def ChebyshevDerivativeMatrix(x):
-    size = len(x) #dimension of the square matrix
-    D = np.zeros((size,size))
-    for i in range(0,size):
-        for j in range(0,size):
-            if i==j:
-                D[i,j] = 0
+def ChebyshevDerivativeMatrixAnalytical(x):
+    """
+    Define the first order derivative matrix, where x is the array of Gauss-Lobatto points
+    """
+    N = len(x) #dimension of the square matrix
+    D = np.zeros((N,N))
+    for i in range(0,N):
+        for j in range(0,N):
+            xi = np.cos(np.pi*i/N)
+            xj = np.cos(np.pi*j/N)
+            if (i==0 and j==0):
+                D[i,j] = (2*N**2+1)/6
+            elif (i==j and i>=1 and i<=N-1):
+                D[i,j] = -(xi)/2/(1-xi**2)
+            elif (i==j and i==N):
+                D[i,j] = -(2*N**2+1)/6
+            elif (i >=0 and j<=N and i!=j):
+                if (i==0 or i==N):
+                    ci = 2
+                elif (i>0 or i <N):
+                    ci =1
+                else:
+                    raise ValueError('Some mistake in the computation of the matrix')
+                
+                if (j==0 or j==N):
+                    cj = 2
+                elif (j>0 or j<N):
+                    cj =1
+                else:
+                    raise ValueError('Some mistake in the computation of the matrix')
+                
+                D[i,j] = (ci/cj)*(-1)**(i+j)/(xi-xj)
             else:
-                D[i,j] = (-1)**(i+j)/2/np.sin((x[i]-x[j])/2)
+                raise ValueError('Some mistake in the computation of the matrix')
     return D
 
-def ChebyshevFirstOrderDerivative(y,x):
-    D = ChebyshevDerivativeMatrix(x)
+def ChebyshevDerivativeMatrixBayliss(x):
+    """
+    Define the first order derivative matrix, where x is the array of Gauss-Lobatto points
+    """
+    N = len(x) #dimension of the square matrix
+    D = np.zeros((N,N))
+    for i in range(0,N):
+        for j in range(0,N):
+            xi = np.cos(np.pi*i/N)
+            xj = np.cos(np.pi*j/N)
+            # compute off-diagonal before
+            if (i!=j):
+                if (i==0 or i==N):
+                    ci = 2
+                elif (i>0 or i <N):
+                    ci =1
+                else:
+                    raise ValueError('Some mistake in the computation of the matrix')
+                
+                if (j==0 or j==N):
+                    cj = 2
+                elif (j>0 or j<N):
+                    cj =1
+                else:
+                    raise ValueError('Some mistake in the computation of the matrix')
+                    
+                D[i,j] = (ci/cj)*(-1)**(i+j)/(xi-xj)
+    for i in range(0,N):
+        tot_coeff = np.sum(D[i,:])
+        D[i,i] = - tot_coeff
+            
+    return D
+
+D = ChebyshevDerivativeMatrixAnalytical(x_GL) #check the sum of the rows to be zero
+D2 = ChebyshevDerivativeMatrixBayliss(x_GL) #check the sum of the rows to be zero
+
+
+def ChebyshevFirstOrderDerivativeAnalytical(y,x):
+    """
+    Compute the derivative using GL method, where x and y are the interpolation cordinates and values in the GL points
+    """
+    D = ChebyshevDerivativeMatrixAnalytical(x)
     dydx = np.matmul(D,y)
     return dydx
 
-dydx = ChebyshevFirstOrderDerivative(y_test, x_test)
+def ChebyshevFirstOrderDerivativeBayliss(y,x):
+    """
+    Compute the derivative using GL method, where x and y are the interpolation cordinates and values in the GL points
+    """
+    D = ChebyshevDerivativeMatrixBayliss(x)
+    dydx = np.matmul(D,y)
+    return dydx
+
+
+dydx_GL = ChebyshevFirstOrderDerivativeAnalytical(y_GL, x_GL) #derivative values at GL points
+dydx_GL2 = ChebyshevFirstOrderDerivativeBayliss(y_GL, x_GL) #derivative values at GL points
+
+
+#Compare with second order finite difference (numpy.gradient())
+x_FD = np.linspace(np.min(x),np.max(x),len(x_GL)) #same amount of points of the GL differentiation
+y_FD = nonPeriodicFunction(x_FD) #value of the function
+
+dydx_FD = np.gradient(y_FD, x_FD) #value of the finite difference values
+
+dydx = np.gradient(y,x) #analytical (refined domain) derivative
 
 fig, ax = plt.subplots(figsize=(10,7))
-ax.plot(x_test, y_test, lw=1 ,label=r'$y$')
-# ax.plot(x_test, dydx, lw=1 ,label=r'$dy/dx$')
-ax.set_title('Chebyshev derivative')
+ax.plot(x, dydx, label=r'$dy/dx$')
+ax.plot(x_GL, dydx_GL, '--o' ,lw=1 ,label=r'$dy/dx$ GL')
+ax.plot(x_GL, dydx_GL2, '--^' ,lw=1 ,label=r'$dy/dx$ GLB')
+ax.plot(x_FD, dydx_FD, '--s' ,lw=1 ,label=r'$dy/dx$ 2FD')
+ax.set_title('derivative N=%2d' %(N))
 ax.set_xlabel(r'$x$')
-# ax.set_ylabel(r'$y$')
-# ax.legend()
-
+# ax.set_ylim([np.min(dydx_an), np.max(dydx_an)])
+ax.set_ylabel(r'$\frac{dy}{dx}$')
+ax.legend()
 
 
 
