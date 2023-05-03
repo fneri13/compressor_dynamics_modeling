@@ -88,6 +88,59 @@ ax.set_ylim([0,0.25])
 ax.set_ylabel(r'$\det{A}$')
 ax.legend()
 
+#%%
+from Grid import Node, AnnulusDuctGrid
+#debug
+Nz = 100
+Nr = 60
+duct = AnnulusDuctGrid(r1, r2, L, Nz, Nr)
+
+density = np.random.rand(Nz, Nr)
+axialVel = np.random.rand(Nz, Nr)
+radialVel = np.random.rand(Nz, Nr)
+tangentialVel = np.random.rand(Nz, Nr)
+pressure = np.random.rand(Nz, Nr)
+for ii in range(0,Nz):
+    for jj in range(0,Nr):
+        density[ii,jj] = rho
+        axialVel[ii,jj] = M*a
+        radialVel[ii,jj] = 0
+        tangentialVel[ii,jj] = 0
+        pressure[ii,jj] = p
+        
+duct.AddDensityField(density)
+duct.AddVelocityField(axialVel, radialVel, tangentialVel)
+duct.AddPressureField(pressure)
+duct.ContourPlotDensity()
+duct.ContourPlotVelocity(1)
+duct.ContourPlotVelocity(2)
+duct.ContourPlotVelocity(3)
+duct.ContourPlotPressure()
+
+#%% 
+from Sun_Model import SunModel
+sun = SunModel(duct)
+sun.CreateAMatrix()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

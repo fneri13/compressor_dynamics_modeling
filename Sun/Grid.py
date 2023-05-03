@@ -40,22 +40,22 @@ class AnnulusDuctGrid:
     def __init__(self, rmin, rmax, L, Nz, Nr):
         self.nAxialNodes = Nz
         self.nRadialNodes = Nr
-        z = np.linspace(0,L,Nz)
-        r = np.linspace(rmin, rmax, Nr)
-        self.r_grid, self.z_grid = np.meshgrid(r,z)
+        self.z = np.linspace(0,L,Nz)
+        self.r = np.linspace(rmin, rmax, Nr)
+        self.r_grid, self.z_grid = np.meshgrid(self.r,self.z)
         self.grid = np.empty((Nz, Nr), dtype=Node)
         for ii in range(0,Nz):
             for jj in range(0,Nr):
                 if ii==0:
-                    self.grid[ii,jj] = Node(z[ii],r[jj],'inlet')
+                    self.grid[ii,jj] = Node(self.z[ii],self.r[jj],'inlet')
                 elif ii==Nz-1:
-                    self.grid[ii,jj] = Node(z[ii],r[jj],'outlet')
+                    self.grid[ii,jj] = Node(self.z[ii],self.r[jj],'outlet')
                 elif jj==0 and ii!=0 and ii!=Nz-1:
-                    self.grid[ii,jj] = Node(z[ii],r[jj],'hub')
+                    self.grid[ii,jj] = Node(self.z[ii],self.r[jj],'hub')
                 elif jj==Nr-1 and ii!=0 and ii!=Nz-1:
-                    self.grid[ii,jj] = Node(z[ii],r[jj],'shroud')
+                    self.grid[ii,jj] = Node(self.z[ii],self.r[jj],'shroud')
                 elif ii!=0 and ii!=Nz-1 and jj!=0 and jj!=Nr-1:
-                    self.grid[ii,jj] = Node(z[ii],r[jj],'')
+                    self.grid[ii,jj] = Node(self.z[ii],self.r[jj],'')
                 else:
                     raise ValueError("The constructor of the grid has some problems")
         
@@ -134,33 +134,6 @@ class AnnulusDuctGrid:
         cb.set_label(r'$p \ \ [-]$')
     
     
-
-#debugging
-data = AnnulusDuctGrid(1, 2, 5, 50, 25)
-rho = np.random.rand(50,25)
-u = np.random.rand(50,25)
-v = np.random.rand(50,25)
-w = np.random.rand(50,25)
-p = np.random.rand(50,25)
-for ii in range(0,50):
-    for jj in range(0,25):
-        rho[ii,jj] = ii*jj
-        u[ii,jj] = ii
-        v[ii,jj] = jj
-        w[ii,jj] = ii*jj**5
-        p[ii,jj] = ii+jj
-        
-data.AddDensityField(rho)
-data.AddVelocityField(u, v, w)
-data.AddPressureField(p)
-data.ContourPlotDensity()
-data.ContourPlotVelocity(1)
-data.ContourPlotVelocity(2)
-data.ContourPlotVelocity(3)
-data.ContourPlotPressure()
-
-
-data.PrintInfo()
 
 
 
