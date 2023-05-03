@@ -44,8 +44,8 @@ for i in range(0,N+1):
 fig, ax = plt.subplots(figsize=(10,6))
 ax.set_title(r'Chebyshev polynomials - Gauss/Lobatto Points')
 ax.plot(x, chebyt(N)(x))
-ax.plot(x_g, chebyt(N)(x_g),'o', label=rf'Gauss points')
-ax.plot(x_gl, chebyt(N)(x_gl),'o', label=rf'Gauss-Lobatto points')
+ax.plot(x_g, chebyt(N)(x_g),'o', label=r'Gauss points')
+ax.plot(x_gl, chebyt(N)(x_gl),'o', label=r'Gauss-Lobatto points')
 plt.legend()
 ax.set_xlabel(r'$x$')
 ax.set_ylabel(r'$T_{'+str(N)+'}(x)$')
@@ -139,7 +139,7 @@ ax.set_ylabel(r'$y$')
 ax.legend()
 
 
-def ChebyshevDerivativeMatrixAnalytical(x):
+def ChebyshevDerivativeMatrix(x):
     """
     Define the first order derivative matrix, where x is the array of Gauss-Lobatto points
     """
@@ -208,15 +208,15 @@ def ChebyshevDerivativeMatrixBayliss(x):
             
     return D
 
-D = ChebyshevDerivativeMatrixAnalytical(x_GL) #check the sum of the rows to be zero
+D = ChebyshevDerivativeMatrix(x_GL) #check the sum of the rows to be zero
 D2 = ChebyshevDerivativeMatrixBayliss(x_GL) #check the sum of the rows to be zero
 
 
-def ChebyshevFirstOrderDerivativeAnalytical(y,x):
+def ChebyshevFirstOrderDerivative(y,x):
     """
     Compute the derivative using GL method, where x and y are the interpolation cordinates and values in the GL points
     """
-    D = ChebyshevDerivativeMatrixAnalytical(x)
+    D = ChebyshevDerivativeMatrix(x)
     dydx = np.matmul(D,y)
     return dydx
 
@@ -229,7 +229,7 @@ def ChebyshevFirstOrderDerivativeBayliss(y,x):
     return dydx
 
 
-dydx_GL = ChebyshevFirstOrderDerivativeAnalytical(y_GL, x_GL) #derivative values at GL points
+dydx_GL = ChebyshevFirstOrderDerivative(y_GL, x_GL) #derivative values at GL points
 dydx_GL2 = ChebyshevFirstOrderDerivativeBayliss(y_GL, x_GL) #derivative values at GL points
 
 

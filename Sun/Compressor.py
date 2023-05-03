@@ -8,6 +8,7 @@ Created on Fri Apr 28 17:11:59 2023
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from Grid import Node
 
 class Compressor:
     """
