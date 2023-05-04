@@ -27,13 +27,13 @@ class SunModel:
         R : coefficient matrix of the known mean flow terms
         S : coefficient matric of the body force model
     """
-    def __init__(self, DuctObject):
+    def __init__(self, gridObject):
         """
         it builds the object and the related data
         """
-        self.data = DuctObject
-        self.nPoints = (DuctObject.nAxialNodes)*(DuctObject.nRadialNodes)
-        self.nInternalPoints = (DuctObject.nAxialNodes-2)*(DuctObject.nRadialNodes-2)
+        self.data = gridObject
+        self.nPoints = (gridObject.nAxialNodes)*(gridObject.nRadialNodes)
+        self.nInternalPoints = (gridObject.nAxialNodes-2)*(gridObject.nRadialNodes-2)
         self.A = np.zeros((self.nPoints*5, self.nPoints*5))
         self.B = np.zeros((self.nPoints*5, self.nPoints*5))
         self.C = np.zeros((self.nPoints*5, self.nPoints*5))
@@ -122,8 +122,7 @@ class SunModel:
         Coefficient matrix related to the mean flow known terms. To be implemented correctly in the general case. Now it is hardcoded
         for the uniform acoustic duct.
         """
-        print('attention because in this matrix, for the real case there are the gradients of the mean flow, that for the moment are not implemented, since the acoustic duct is a uniform flow. the zeros are hardcoded, so remember to implement the correct thing')
-        print('you should also check the R[2,1], it seems that there is a typo')
+        # print('attention because in this matrix, for the real case there are the gradients of the mean flow, that for the moment are not implemented, since the acoustic duct is a uniform flow. the zeros are hardcoded, so remember to implement the correct thing')
         nBlock = 0
         for IterZ in range(0,self.data.nAxialNodes):
             for IterR in range(0,self.data.nRadialNodes):
@@ -141,7 +140,7 @@ class SunModel:
                 R[1,3] = 0
                 R[1,4] = 0
                 R[2,0] = 0
-                R[2,1] = 0 #there is a doubt on this
+                R[2,1] = 0 
                 R[2,2] = self.data.radialVelocity[IterZ,IterR]/self.data.r[IterR]
                 R[2,3] = 0
                 R[2,4] = 0
@@ -151,7 +150,6 @@ class SunModel:
                 R[4,2] = 0
                 R[4,3] = 0
                 R[4,4] = self.gmma*(0+0+self.data.radialVelocity[IterZ,IterR]/self.data.r[IterR])
-                
                 
                 self.R[(nBlock*5):(nBlock+1)*5, (nBlock*5):(nBlock+1)*5] = R
                 nBlock = nBlock+1
@@ -166,16 +164,167 @@ class SunModel:
         self.CreateEMatrix()
         self.CreateRMatrix()
     
-    def GlobalStabilityMatrix(self, omega):
+    # def GlobalStabilityMatrix(self, omega):
+    #     """
+    #     Giving a complex eigenfrequency, it returns the global instability matrix (for the moment without caring about the boundary nodes)
+    #     radialDiff and axialDiff will give the elements of radial and axial differentiations using chebyshev gauss-lobatto method.
+        
+    #     It needs to be implemented
+    #     """
+    #     #Q = 1j*omega*self.A + radialDiff(self.B) + 1j*m*self.Cr + axialDiff(E) + self.R + self.S
+    #     # return Q
+    
+    def ComputeSpectralGrid(self):
+        self.dataSpectral = self.data.PhysicalToSpectralData()
+    
+    def ShowPhysicalGrid(self):
+        self.data.ShowGrid()
+        plt.title('physical grid')
+    
+    def ShowSpectralGrid(self):
+        self.dataSpectral.ShowGrid()
+        plt.title('spectral grid')
+    
+    def ComputeGridTransformationLaw(self):
         """
-        Giving a complex eigenfrequency, it returns the global instability matrix (for the moment without caring about the boundary nodes)
-        radialDiff and axialDiff will give the elements of radial and axial differentiations using chebyshev gauss-lobatto method.
-        
-        It needs to be implemented
+        The jacobian transform is implemented here. if you need, just drag it out and use it how you want
         """
-        #Q = 1j*omega*self.A + radialDiff(self.B) + 1j*m*self.Cr + axialDiff(E) + self.R + self.S
-        # return Q
-                        
+        physicalGridObj = self.data
+        spectralGridObj = self.dataSpectral
+        
+        #grids
+        Z = physicalGridObj.z_grid
+        R = physicalGridObj.r_grid
+        X = spectralGridObj.z_grid
+        Y = spectralGridObj.r_grid
+        
+        Nz = self.data.nAxialNodes
+        Nr = self.data.nRadialNodes
+        
+        #instantiate matrices
+        dxdr = np.zeros((Nz, Nr))
+        dxdz = np.zeros((Nz, Nr))
+        dydr = np.zeros((Nz, Nr))
+        dydz = np.zeros((Nz, Nr))
+        
+        #2nd order central difference for the grid. First take care of the corners, then of the edges, and then of the central points
+        for ii in range(0,Nz):
+            for jj in range(0,Nr):
+                if (ii==0 and jj==0): #lower-left corner
+                    dxdz[ii,jj] = (X[ii+1,jj]-X[ii,jj])/(1*(Z[ii+1,jj]-Z[ii,jj]))
+                    dxdr[ii,jj] = (X[ii,jj+1]-X[ii,jj])/(1*(R[ii,jj+1]-R[ii,jj]))
+                    dydz[ii,jj] = (Y[ii+1,jj]-Y[ii,jj])/(1*(Z[ii+1,jj]-Z[ii,jj]))
+                    dydr[ii,jj] = (Y[ii,jj+1]-Y[ii,jj])/(1*(R[ii,jj+1]-R[ii,jj]))
+                elif (ii==Nz-1 and jj==0): #lower-right corner
+                    dxdz[ii,jj] = (X[ii,jj]-X[ii-1,jj])/(1*(Z[ii,jj]-Z[ii-1,jj]))
+                    dxdr[ii,jj] = (X[ii,jj+1]-X[ii,jj])/(1*(R[ii,jj+1]-R[ii,jj]))
+                    dydz[ii,jj] = (Y[ii,jj]-Y[ii-1,jj])/(1*(Z[ii,jj]-Z[ii-1,jj]))
+                    dydr[ii,jj] = (Y[ii,jj+1]-Y[ii,jj])/(1*(R[ii,jj+1]-R[ii,jj]))
+                elif (ii==0 and jj==Nr-1): #upper-left corner
+                    dxdz[ii,jj] = (X[ii+1,jj]-X[ii,jj])/(1*(Z[ii+1,jj]-Z[ii,jj]))
+                    dxdr[ii,jj] = (X[ii,jj]-X[ii,jj-1])/(1*(R[ii,jj]-R[ii,jj-1]))
+                    dydz[ii,jj] = (Y[ii+1,jj]-Y[ii,jj])/(1*(Z[ii+1,jj]-Z[ii,jj]))
+                    dydr[ii,jj] = (Y[ii,jj]-Y[ii,jj-1])/(1*(R[ii,jj]-R[ii,jj-1]))
+                elif (ii==Nz-1 and jj==Nr-1): #upper-right corner
+                    dxdz[ii,jj] = (X[ii,jj]-X[ii-1,jj])/(1*(Z[ii,jj]-Z[ii-1,jj]))
+                    dxdr[ii,jj] = (X[ii,jj]-X[ii,jj-1])/(1*(R[ii,jj]-R[ii,jj-1]))
+                    dydz[ii,jj] = (Y[ii,jj]-Y[ii-1,jj])/(1*(Z[ii,jj]-Z[ii-1,jj]))
+                    dydr[ii,jj] = (Y[ii,jj]-Y[ii,jj-1])/(1*(R[ii,jj]-R[ii,jj-1]))
+                elif (ii==0): #left side
+                    dxdz[ii,jj] = (X[ii+1,jj]-X[ii,jj])/(1*(Z[ii+1,jj]-Z[ii,jj]))
+                    dxdr[ii,jj] = (X[ii,jj+1]-X[ii,jj-1])/(2*(R[ii,jj+1]-R[ii,jj-1]))
+                    dydz[ii,jj] = (Y[ii+1,jj]-Y[ii,jj])/(1*(Z[ii+1,jj]-Z[ii,jj]))
+                    dydr[ii,jj] = (Y[ii,jj+1]-Y[ii,jj-1])/(2*(R[ii,jj+1]-R[ii,jj-1]))
+                elif (ii==Nz-1): #right side
+                    dxdz[ii,jj] = (X[ii,jj]-X[ii-1,jj])/(1*(Z[ii,jj]-Z[ii-1,jj]))
+                    dxdr[ii,jj] = (X[ii,jj+1]-X[ii,jj-1])/(2*(R[ii,jj+1]-R[ii,jj-1]))
+                    dydz[ii,jj] = (Y[ii,jj]-Y[ii-1,jj])/(1*(Z[ii,jj]-Z[ii-1,jj]))
+                    dydr[ii,jj] = (Y[ii,jj+1]-Y[ii,jj-1])/(2*(R[ii,jj+1]-R[ii,jj-1]))
+                elif (jj==0): #lower side
+                    dxdz[ii,jj] = (X[ii+1,jj]-X[ii-1,jj])/(2*(Z[ii+1,jj]-Z[ii-1,jj]))
+                    dxdr[ii,jj] = (X[ii,jj+1]-X[ii,jj])/(1*(R[ii,jj+1]-R[ii,jj]))
+                    dydz[ii,jj] = (Y[ii+1,jj]-Y[ii-1,jj])/(2*(Z[ii+1,jj]-Z[ii-1,jj]))
+                    dydr[ii,jj] = (Y[ii,jj+1]-Y[ii,jj])/(1*(R[ii,jj+1]-R[ii,jj]))
+                elif (jj==Nr-1): #upper side
+                    dxdz[ii,jj] = (X[ii+1,jj]-X[ii-1,jj])/(2*(Z[ii+1,jj]-Z[ii-1,jj]))
+                    dxdr[ii,jj] = (X[ii,jj]-X[ii,jj-1])/(1*(R[ii,jj]-R[ii,jj-1]))
+                    dydz[ii,jj] = (Y[ii+1,jj]-Y[ii-1,jj])/(2*(Z[ii+1,jj]-Z[ii-1,jj]))
+                    dydr[ii,jj] = (Y[ii,jj]-Y[ii,jj-1])/(1*(R[ii,jj]-R[ii,jj-1]))
+                else: #internal points
+                    dxdz[ii,jj] = (X[ii+1,jj]-X[ii-1,jj])/(2*(Z[ii+1,jj]-Z[ii-1,jj]))
+                    dxdr[ii,jj] = (X[ii,jj+1]-X[ii,jj-1])/(2*(R[ii,jj+1]-R[ii,jj-1]))
+                    dydz[ii,jj] = (Y[ii+1,jj]-Y[ii-1,jj])/(2*(Z[ii+1,jj]-Z[ii-1,jj]))
+                    dydr[ii,jj] = (Y[ii,jj+1]-Y[ii,jj-1])/(2*(R[ii,jj+1]-R[ii,jj-1]))
+  
+        self.dxdz, self.dxdr, self.dydz, self.dydr = dxdz, dxdr, dydz, dydr
+    
+        
+    def ShowJacobianSpectralAxis(self, formatFig=(10,6)):
+        plt.figure(figsize=formatFig)
+        plt.scatter(self.dataSpectral.z_grid, self.dataSpectral.r_grid, c=self.dxdz)
+        plt.xlabel(r'$\xi$')
+        plt.ylabel(r'$\eta$')
+        plt.title(r'$\frac{\partial \xi}{\partial z}$')
+        cb = plt.colorbar()
+        cb.set_label(r'$\frac{\partial \xi}{\partial z}$')
+        
+        plt.figure(figsize=formatFig)
+        plt.scatter(self.dataSpectral.z_grid, self.dataSpectral.r_grid, c=self.dxdr)
+        plt.xlabel(r'$\xi$')
+        plt.ylabel(r'$\eta$')
+        cb = plt.colorbar()
+        plt.title(r'$\frac{\partial \xi}{\partial r}$')
+        cb.set_label(r'$\frac{\partial \xi}{\partial r}$')
+        
+        plt.figure(figsize=formatFig)
+        plt.scatter(self.dataSpectral.z_grid, self.dataSpectral.r_grid, c=self.dydz)
+        plt.xlabel(r'$\xi$')
+        plt.ylabel(r'$\eta$')
+        cb = plt.colorbar()
+        plt.title(r'$\frac{\partial \eta}{\partial z}$')
+        cb.set_label(r'$\frac{\partial \eta}{\partial z}$')
+        
+        plt.figure(figsize=formatFig)
+        plt.scatter(self.dataSpectral.z_grid, self.dataSpectral.r_grid, c=self.dydr)
+        plt.xlabel(r'$\xi$')
+        plt.ylabel(r'$\eta$')
+        cb = plt.colorbar()
+        plt.title(r'$\frac{\partial \eta}{\partial r}$')
+        cb.set_label(r'$\frac{\partial \eta}{\partial r}$')
+        
+    def ShowJacobianPhysicalAxis(self, formatFig=(10,6)):
+        plt.figure(figsize=formatFig)
+        plt.scatter(self.data.z_grid, self.data.r_grid, c=self.dxdz)
+        plt.xlabel(r'$Z$')
+        plt.ylabel(r'$R$')
+        plt.title(r'$\frac{\partial \xi}{\partial z}$')
+        cb = plt.colorbar()
+        cb.set_label(r'$\frac{\partial \xi}{\partial z}$')
+        
+        plt.figure(figsize=formatFig)
+        plt.scatter(self.data.z_grid, self.data.r_grid, c=self.dxdr)
+        plt.xlabel(r'$Z$')
+        plt.ylabel(r'$R$')
+        cb = plt.colorbar()
+        plt.title(r'$\frac{\partial \xi}{\partial r}$')
+        cb.set_label(r'$\frac{\partial \xi}{\partial r}$')
+        
+        plt.figure(figsize=formatFig)
+        plt.scatter(self.data.z_grid, self.data.r_grid, c=self.dydz)
+        plt.xlabel(r'$Z$')
+        plt.ylabel(r'$R$')
+        cb = plt.colorbar()
+        plt.title(r'$\frac{\partial \eta}{\partial z}$')
+        cb.set_label(r'$\frac{\partial \eta}{\partial z}$')
+        
+        plt.figure(figsize=formatFig)
+        plt.scatter(self.data.z_grid, self.data.r_grid, c=self.dydr)
+        plt.xlabel(r'$Z$')
+        plt.ylabel(r'$R$')
+        cb = plt.colorbar()
+        plt.title(r'$\frac{\partial \eta}{\partial r}$')
+        cb.set_label(r'$\frac{\partial \eta}{\partial r}$')
+
                         
 
         
@@ -185,45 +334,6 @@ class SunModel:
 
 
 
-#%%
-#input data
-r1 = 0.1826
-r2 = 0.2487
-M = 0.015
-p = 100e3
-T = 288
-L = 0.08
-R = 287
-gmma = 1.4
-rho = p/(R*T)
-a = np.sqrt(gmma*p/rho)
-
-#debug
-Nz = 3
-Nr = 3
-duct = AnnulusDuctGrid(r1, r2, L, Nz, Nr)
-
-#implement a constant uniform flow in the annulus duct
-density = np.random.rand(Nz, Nr)
-axialVel = np.random.rand(Nz, Nr)
-radialVel = np.random.rand(Nz, Nr)
-tangentialVel = np.random.rand(Nz, Nr)
-pressure = np.random.rand(Nz, Nr)
-for ii in range(0,Nz):
-    for jj in range(0,Nr):
-        density[ii,jj] = rho
-        axialVel[ii,jj] = M*a  
-        radialVel[ii,jj] = 0
-        tangentialVel[ii,jj] = 0
-        pressure[ii,jj] = p
-        
-
-duct.AddDensityField(density)
-duct.AddVelocityField(axialVel, radialVel, tangentialVel)
-duct.AddPressureField(pressure)
-
-sunObj = SunModel(duct)
-sunObj.CreateAllMatrices()
 
 
 

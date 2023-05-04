@@ -33,15 +33,28 @@ class Node:
         
         
 
-class AnnulusDuctGrid:
+class AnnulusDuctGrid():
     """
     Class of Grid for cylindrical duct. It contains a grid of Node objects, on which every node has the properties
     """
-    def __init__(self, rmin, rmax, L, Nz, Nr):
+    def __init__(self, zmin, zmax, rmin, rmax, Nz, Nr, mode='default'):
         self.nAxialNodes = Nz
         self.nRadialNodes = Nr
-        self.z = np.linspace(0,L,Nz)
-        self.r = np.linspace(rmin, rmax, Nr)
+        if mode == 'default':
+            self.z = np.linspace(zmin, zmax, Nz)
+            self.r = np.linspace(rmin, rmax, Nr)
+        elif mode == 'gauss-lobatto':
+            x = np.array(()) #xi direction
+            y = np.array(()) #eta direction
+            for i in range(0,self.nAxialNodes):
+                xnew = np.cos(i*np.pi/(self.nAxialNodes-1)) #gauss lobatto points
+                x = np.append(x, xnew)
+            for j in range(0,self.nRadialNodes):
+                ynew = np.cos(j*np.pi/(self.nRadialNodes-1)) #gauss lobatto points
+                y = np.append(y, ynew)
+            self.z = np.flip(x)
+            self.r = np.flip(y)
+        
         self.r_grid, self.z_grid = np.meshgrid(self.r,self.z)
         self.grid = np.empty((Nz, Nr), dtype=Node)
         for ii in range(0,Nz):
@@ -59,11 +72,11 @@ class AnnulusDuctGrid:
                 else:
                     raise ValueError("The constructor of the grid has some problems")
         
-        self.density = np.empty((self.nAxialNodes,self.nRadialNodes))
-        self.axialVelocity = np.empty((self.nAxialNodes,self.nRadialNodes))
-        self.radialVelocity = np.empty((self.nAxialNodes,self.nRadialNodes))
-        self.tangentialVelocity = np.empty((self.nAxialNodes,self.nRadialNodes))
-        self.pressure = np.empty((self.nAxialNodes,self.nRadialNodes))
+        self.density = np.zeros((self.nAxialNodes,self.nRadialNodes))
+        self.axialVelocity = np.zeros((self.nAxialNodes,self.nRadialNodes))
+        self.radialVelocity = np.zeros((self.nAxialNodes,self.nRadialNodes))
+        self.tangentialVelocity = np.zeros((self.nAxialNodes,self.nRadialNodes))
+        self.pressure = np.zeros((self.nAxialNodes,self.nRadialNodes))
 
         
     def PrintInfo(self, datafile='terminal'):
@@ -132,6 +145,57 @@ class AnnulusDuctGrid:
         plt.title('Pressure')
         cb = plt.colorbar()
         cb.set_label(r'$p \ \ [-]$')
+    
+    def PhysicalToSpectralData(self):
+        x = np.array(()) #xi direction
+        y = np.array(()) #eta direction
+        for i in range(0,self.nAxialNodes):
+            xnew = np.cos(i*np.pi/(self.nAxialNodes-1)) #gauss lobatto points
+            x = np.append(x, xnew)
+        for j in range(0,self.nRadialNodes):
+            ynew = np.cos(j*np.pi/(self.nRadialNodes-1)) #gauss lobatto points
+            y = np.append(y, ynew)
+        x = np.flip(x)
+        y = np.flip(y)
+        newGridObj = AnnulusDuctGrid(-1, 1, -1, 1, self.nAxialNodes, self.nRadialNodes, mode='gauss-lobatto')
+        newGridObj.AddDensityField(self.density) #add the same fields from the physical grid
+        newGridObj.AddVelocityField(self.axialVelocity, self.radialVelocity, self.tangentialVelocity)
+        newGridObj.AddPressureField(self.pressure)
+        return newGridObj
+    
+    def ShowGrid(self, formatFig=(10,6)):
+        # inlet_set = (self.grid.)
+        mark = np.empty((self.nAxialNodes, self.nRadialNodes), dtype=str)
+        for ii in range(0,self.nAxialNodes):
+            for jj in range(0,self.nRadialNodes):
+                if self.grid[ii,jj].marker=='inlet':
+                    mark[ii,jj] = "i"
+                elif self.grid[ii,jj].marker=='outlet':
+                    mark[ii,jj] = "o"
+                elif self.grid[ii,jj].marker=='hub':
+                    mark[ii,jj] = "h"
+                elif self.grid[ii,jj].marker=='shroud':
+                    mark[ii,jj] = "s"
+                else:
+                    mark[ii,jj] = ''
+
+        plt.figure(figsize=formatFig)
+        condition = mark == 'i'  # Define a boolean condition
+        plt.scatter(self.z_grid[condition], self.r_grid[condition], label='inlet')
+        condition = mark == 'o'  # Define a boolean condition
+        plt.scatter(self.z_grid[condition], self.r_grid[condition], label='outlet')
+        condition = mark == 'h'  # Define a boolean condition
+        plt.scatter(self.z_grid[condition], self.r_grid[condition], label='hub')
+        condition = mark == 's'  # Define a boolean condition
+        plt.scatter(self.z_grid[condition], self.r_grid[condition], label='shroud')
+        condition = mark == ''  # Define a boolean condition
+        plt.scatter(self.z_grid[condition], self.r_grid[condition], c='black')
+        
+        
+        plt.xlabel(r'$Z$')
+        plt.ylabel(r'$R$')
+        plt.legend()
+        
     
     
 
