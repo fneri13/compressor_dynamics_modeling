@@ -14,8 +14,8 @@ class Node:
     Class of Nodes, contaning cordinates, boundary marker and fluid dynamics field [rho,u,v,w,p]
     """
     def __init__(self, z, r, marker):
-        self.z = z #axis of the machine
-        self.r = r #axis of the machine
+        self.z = z #axial cordinate
+        self.r = r #radial cordinate
         self.marker = marker
     
     def PrintInfo(self, datafile='terminal'):
@@ -147,8 +147,12 @@ class AnnulusDuctGrid():
         cb.set_label(r'$p \ \ [-]$')
     
     def PhysicalToSpectralData(self):
-        x = np.array(()) #xi direction
-        y = np.array(()) #eta direction
+        """
+        it returns a new object with the same data of the original one, but mapped to a spectral system of cordinates, on the gauss-lobatto 
+        cordinates between [-1,1] 
+        """
+        x = np.array(()) #synonim for xi direction = corresponding to streamwise direction
+        y = np.array(()) #synonim for eta direction = corresponding to spanwise direction
         for i in range(0,self.nAxialNodes):
             xnew = np.cos(i*np.pi/(self.nAxialNodes-1)) #gauss lobatto points
             x = np.append(x, xnew)
@@ -164,7 +168,9 @@ class AnnulusDuctGrid():
         return newGridObj
     
     def ShowGrid(self, formatFig=(10,6)):
-        # inlet_set = (self.grid.)
+        """
+        Show a scatter plots of the grid, with different colors for the different patches
+        """
         mark = np.empty((self.nAxialNodes, self.nRadialNodes), dtype=str)
         for ii in range(0,self.nAxialNodes):
             for jj in range(0,self.nRadialNodes):
@@ -178,22 +184,17 @@ class AnnulusDuctGrid():
                     mark[ii,jj] = "s"
                 else:
                     mark[ii,jj] = ''
-
         plt.figure(figsize=formatFig)
-        condition = mark == 'i'  # Define a boolean condition
+        condition = mark == 'i'  # plot only the inlet points
         plt.scatter(self.z_grid[condition], self.r_grid[condition], label='inlet')
-        condition = mark == 'o'  # Define a boolean condition
+        condition = mark == 'o'  # plot only the outlet points
         plt.scatter(self.z_grid[condition], self.r_grid[condition], label='outlet')
-        condition = mark == 'h'  # Define a boolean condition
+        condition = mark == 'h'  # plot only the hub
         plt.scatter(self.z_grid[condition], self.r_grid[condition], label='hub')
-        condition = mark == 's'  # Define a boolean condition
+        condition = mark == 's'  # plot only shroud
         plt.scatter(self.z_grid[condition], self.r_grid[condition], label='shroud')
-        condition = mark == ''  # Define a boolean condition
+        condition = mark == ''  # plot all the remaining internal points
         plt.scatter(self.z_grid[condition], self.r_grid[condition], c='black')
-        
-        
-        plt.xlabel(r'$Z$')
-        plt.ylabel(r'$R$')
         plt.legend()
         
     

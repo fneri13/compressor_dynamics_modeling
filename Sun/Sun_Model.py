@@ -180,10 +180,14 @@ class SunModel:
     def ShowPhysicalGrid(self):
         self.data.ShowGrid()
         plt.title('physical grid')
+        plt.xlabel(r'$Z$')
+        plt.ylabel(r'$R$')
     
     def ShowSpectralGrid(self):
         self.dataSpectral.ShowGrid()
         plt.title('spectral grid')
+        plt.xlabel(r'$\xi$')
+        plt.ylabel(r'$\eta$')
     
     def ComputeGridTransformationLaw(self):
         """
@@ -324,11 +328,33 @@ class SunModel:
         cb = plt.colorbar()
         plt.title(r'$\frac{\partial \eta}{\partial r}$')
         cb.set_label(r'$\frac{\partial \eta}{\partial r}$')
-
-                        
-
         
-
+    
+    def ComputeModifiedMatrices(self):
+        Bhat = np.zeros(self.B.shape) #physical B
+        Ehat = np.zeros(self.B.shape) #physical E
+        Ni = Bhat.shape[0]
+        Nj = Bhat.shape[1]
+        nBlocks = Ni//5
+        
+        #flatten the gradients to be used later in the matrix multiplications (check the order of unroll, but it should be first z and then r, which is the same used for the matrices)
+        dxdz, dxdr, dydz, dydr = self.dxdz.flatten(), self.dxdr.flatten(), self.dydz.flatten(), self.dydr.flatten() 
+        if nBlocks!=self.nPoints:
+            raise ValueError('Error in Compute Modified B matrix method')    
+        for blockIt in range(0,nBlocks):
+            Bhat[(blockIt*5):(blockIt+1)*5,(blockIt*5):(blockIt+1)*5] = self.B[(blockIt*5):(blockIt+1)*5,(blockIt*5):(blockIt+1)*5]*dxdr[blockIt] \
+                                                                        + self.E[(blockIt*5):(blockIt+1)*5,(blockIt*5):(blockIt+1)*5]*dxdz[blockIt]
+            Ehat[(blockIt*5):(blockIt+1)*5,(blockIt*5):(blockIt+1)*5] = self.B[(blockIt*5):(blockIt+1)*5,(blockIt*5):(blockIt+1)*5]*dydr[blockIt] \
+                                                                        + self.E[(blockIt*5):(blockIt+1)*5,(blockIt*5):(blockIt+1)*5]*dydz[blockIt]
+        self.Bhat = Bhat
+        self.Ehat = Ehat
+    
+    def ComputeSVD(self):
+        #to be implemented correctly
+        Q = self.A+self.B+self.C+self.E+self.R+self.S
+        U,S,V = np.linalg.svd(Q)
+        return S
+        
 
 
 

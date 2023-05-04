@@ -136,8 +136,8 @@ rho = p/(R*T)
 a = np.sqrt(gmma*p/rho)
 
 #debug
-Nz = 25
-Nr = 15
+Nz = 50
+Nr = 20
 duct = AnnulusDuctGrid(0, L, r1, r2, Nz, Nr)
 
 #implement a constant uniform flow in the annulus duct
@@ -158,44 +158,29 @@ for ii in range(0,Nz):
 duct.AddDensityField(density)
 duct.AddVelocityField(axialVel, radialVel, tangentialVel)
 duct.AddPressureField(pressure)
+duct.ContourPlotDensity()
+duct.ContourPlotVelocity(1)
+duct.ContourPlotVelocity(2)
+duct.ContourPlotVelocity(3)
+duct.ContourPlotPressure()
+
 
 sunObj = SunModel(duct)
-sunObj.CreateAllMatrices()
 sunObj.ShowPhysicalGrid()
 sunObj.ComputeSpectralGrid()
 sunObj.ShowSpectralGrid()
 sunObj.ComputeGridTransformationLaw()
 sunObj.ShowJacobianPhysicalAxis()
 sunObj.ShowJacobianSpectralAxis()
+sunObj.CreateAllMatrices()
+sunObj.ComputeModifiedMatrices()
 
-
-#%% test complex geometry
-
-Nz = 20 #number of streamwise nodes
-Nr = 10 #number of spanwise nodes
-z1 = np.linspace(0,1,Nz) #z-cordinate
-r1 = z1**2 #hub line
-r2 = 1+z1**2 #shroud line
-
-#physical grid (Z,R)
-Z = z1
-R = r1
-for n in range(1,Nr):
-    Z = np.concatenate((Z, z1))
-    R = np.concatenate((R, r1+(n/Nr)*(r2-r1)))
-
-Z = np.reshape(Z,(Nz,Nr))
-R = np.reshape(R,(Nz,Nr))
-
-plt.figure()
-plt.scatter(Z,R)
-
-duct = Grid(Z,R)
-
-
-
-
-
+#%%
+import time
+start_time = time.time()
+S = sunObj.ComputeSVD()
+end_time = time.time()
+print('time %.2f s' %(end_time-start_time))
 
 
 
