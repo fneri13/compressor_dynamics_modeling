@@ -215,6 +215,11 @@ class SunModel:
         X = self.dataSpectral.zGrid
         Y = self.dataSpectral.rGrid
         self.dxdz, self.dxdr, self.dydz, self.dydr = JacobianTransform(X,Y,Z,R)
+        for ii in range(0,self.data.nAxialNodes):
+            for jj in range(0,self.data.nRadialNodes):
+                #add the gradients information to every node
+                self.data.dataSet[ii,jj].AddJacobianGradients(self.dxdz[ii,jj], self.dxdr[ii,jj], self.dydz[ii,jj], self.dydr[ii,jj])
+        
     
     def ComputeJacobianPhysical(self):
         """
@@ -365,8 +370,108 @@ class SunModel:
     #             marker = print(self.data.grid[ii,jj].marker) #get the type of node
     #             self.data.grid[ii,jj].AddMatrixA()
                 
-            
+    def AddAMatrixToNodes(self):
+        #for every grid node, add the A matrix
+        for ii in range(0,self.data.nAxialNodes):
+            for jj in range(0,self.data.nRadialNodes):
+                A = np.eye(5)
+                self.data.dataSet[ii,jj].AddAMatrix(A)
+                
+    def AddBMatrixToNodes(self):
+        #for every grid node, add the B matrix
+        for ii in range(0,self.data.nAxialNodes):
+            for jj in range(0,self.data.nRadialNodes):
+                B = np.zeros((5,5))
+                
+                B[0,0] = self.data.dataSet[ii,jj].GetRadialVelocity()
+                B[1,1] = self.data.dataSet[ii,jj].GetRadialVelocity()
+                B[2,2] = self.data.dataSet[ii,jj].GetRadialVelocity()
+                B[3,3] = self.data.dataSet[ii,jj].GetRadialVelocity()
+                B[4,4] = self.data.dataSet[ii,jj].GetRadialVelocity()
+                
+                B[0,1] = self.data.dataSet[ii,jj].GetDensity()
+                B[1,4] = 1/self.data.dataSet[ii,jj].GetDensity()
+                B[4,1] = self.data.dataSet[ii,jj].GetPressure()*self.gmma
+                
+                self.data.dataSet[ii,jj].AddBMatrix(B)
+    
+    def AddCMatrixToNodes(self):
+        #for every grid node, add the C matrix
+        for ii in range(0,self.data.nAxialNodes):
+            for jj in range(0,self.data.nRadialNodes):
+                C = np.zeros((5,5))
+                
+                C[0,0] = self.data.dataSet[ii,jj].GetTangentialVelocity()
+                C[1,1] = self.data.dataSet[ii,jj].GetTangentialVelocity()
+                C[2,2] = self.data.dataSet[ii,jj].GetTangentialVelocity()
+                C[3,3] = self.data.dataSet[ii,jj].GetTangentialVelocity()
+                C[4,4] = self.data.dataSet[ii,jj].GetTangentialVelocity()
+                
+                C[0,2] = self.data.dataSet[ii,jj].GetDensity()
+                C[2,4] = 1/self.data.dataSet[ii,jj].GetDensity()
+                C[4,2] = self.data.dataSet[ii,jj].GetPressure()*self.gmma
+                
+                self.data.dataSet[ii,jj].AddCMatrix(C)
+    
+    def AddEMatrixToNodes(self):
+        #for every grid node, add the E matrix
+        for ii in range(0,self.data.nAxialNodes):
+            for jj in range(0,self.data.nRadialNodes):
+                E = np.zeros((5,5))
+                
+                E[0,0] = self.data.dataSet[ii,jj].GetAxialVelocity()
+                E[1,1] = self.data.dataSet[ii,jj].GetAxialVelocity()
+                E[2,2] = self.data.dataSet[ii,jj].GetAxialVelocity()
+                E[3,3] = self.data.dataSet[ii,jj].GetAxialVelocity()
+                E[4,4] = self.data.dataSet[ii,jj].GetAxialVelocity()
+                
+                E[0,3] = self.data.dataSet[ii,jj].GetDensity()
+                E[3,4] = 1/self.data.dataSet[ii,jj].GetDensity()
+                E[4,3] = self.data.dataSet[ii,jj].GetPressure()*self.gmma
+                
+                self.data.dataSet[ii,jj].AddEMatrix(E)
+                
+    def AddRMatrixToNodes(self):
+        #for every grid node, add the R matrix. This is still to be implemented with the correct gradients, and non-zero values in other cases
+        for ii in range(0,self.data.nAxialNodes):
+            for jj in range(0,self.data.nRadialNodes):
+                R = np.zeros((5,5))
+                
+                R[0,0] = self.data.dataSet[ii,jj].GetRadialVelocity()/self.data.dataSet[ii,jj].r
+                R[0,1] = self.data.dataSet[ii,jj].GetDensity()/self.data.dataSet[ii,jj].r
+                R[0,2] = 0
+                R[0,3] = 0 
+                R[0,4] = 0 
+                R[1,0] = 0
+                R[1,1] = 0
+                R[1,2] = 0
+                R[1,3] = 0
+                R[1,4] = 0
+                R[2,0] = 0
+                R[2,1] = 0 
+                R[2,2] = self.data.dataSet[ii,jj].GetRadialVelocity()/self.data.dataSet[ii,jj].r
+                R[2,3] = 0
+                R[2,4] = 0
+                R[3,:] = [0,0,0,0,0]
+                R[4,0] = 0
+                R[4,1] = self.data.dataSet[ii,jj].GetPressure()*self.gmma/self.data.dataSet[ii,jj].r
+                R[4,2] = 0
+                R[4,3] = 0
+                R[4,4] = self.gmma*self.data.dataSet[ii,jj].GetRadialVelocity()/self.data.dataSet[ii,jj].r
+                
+                self.data.dataSet[ii,jj].AddRMatrix(R)
         
+    def AddHatMatricesToNodes(self):
+        #for every grid node, add the R matrix. This is still to be implemented with the correct gradients, and non-zero values in other cases
+        for ii in range(0,self.data.nAxialNodes):
+            for jj in range(0,self.data.nRadialNodes):
+                
+                Bhat = self.data.dataSet[ii,jj].B * self.data.dataSet[ii,jj].dxdr + \
+                        self.data.dataSet[ii,jj].E * self.data.dataSet[ii,jj].dxdz 
+                Ehat = self.data.dataSet[ii,jj].B * self.data.dataSet[ii,jj].dydr + \
+                        self.data.dataSet[ii,jj].E * self.data.dataSet[ii,jj].dydz
+                        
+                self.data.dataSet[ii,jj].AddHatMatrices(Bhat, Ehat)
         
                 
                 

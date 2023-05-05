@@ -13,7 +13,7 @@ class Node:
     """
     Class of Nodes, contaning cordinates, fluid dynamics field, and marker for BCs understanding
     """
-    def __init__(self, z, r, rho, vz, vr, vt, p, marker):
+    def __init__(self, z, r, rho, vz, vr, vt, p, marker, nodeCounter):
         self.z = z #axial cordinate
         self.r = r #radial cordinate
         self.marker = marker
@@ -22,6 +22,7 @@ class Node:
         self.radialVelocity = vr
         self.tangentialVelocity = vt
         self.pressure = p
+        self.nodeCounter = nodeCounter #identifier of the node
     
     def GetAxialCordinate(self):
         return self.z
@@ -60,11 +61,31 @@ class Node:
                 print('r: %.2f' %(self.r), file=f)
                 print('z: %.2f' %(self.z), file=f)
                 print('-----------------------------------------------', file=f)
+    
+    def AddAMatrix(self,A):
+        self.A = A
+    
+    def AddBMatrix(self,B):
+        self.B = B
         
+    def AddCMatrix(self,C):
+        self.C = C
+    
+    def AddEMatrix(self,E):
+        self.E = E
+    
+    def AddRMatrix(self,R):
+        self.R = R
         
-
-
-
+    def AddSMatrix(self,S):
+        self.S = S
+        
+    def AddJacobianGradients(self, dxdz, dxdr, dydz, dydr):
+        self.dxdz,  self.dxdr, self.dydz, self.dydr = dxdz, dxdr, dydz, dydr
+    
+    def AddHatMatrices(self,Bhat,Ehat):
+        self.Bhat, self.Ehat = Bhat, Ehat
+        
 
 ################################################################################################################################
 ################################################################################################################################
@@ -100,20 +121,22 @@ class DataGrid():
         self.rGrid, self.zGrid = np.meshgrid(self.r,self.z)
         
         self.dataSet = np.empty((Nz,Nr), dtype=Node) #an array of Node elements
+        counter = 0
         for ii in range(0,Nz):
             for jj in range(0,Nr):
                 if ii==0:
-                    self.dataSet[ii,jj] = Node(self.z[ii],self.r[jj],rho[ii,jj], vz[ii,jj], vr[ii,jj], vt[ii,jj], p[ii,jj],'inlet')
+                    self.dataSet[ii,jj] = Node(self.z[ii],self.r[jj],rho[ii,jj], vz[ii,jj], vr[ii,jj], vt[ii,jj], p[ii,jj],'inlet', counter)
                 elif ii==Nz-1:
-                    self.dataSet[ii,jj] = Node(self.z[ii],self.r[jj],rho[ii,jj], vz[ii,jj], vr[ii,jj], vt[ii,jj], p[ii,jj],'outlet')
+                    self.dataSet[ii,jj] = Node(self.z[ii],self.r[jj],rho[ii,jj], vz[ii,jj], vr[ii,jj], vt[ii,jj], p[ii,jj],'outlet', counter)
                 elif jj==0 and ii!=0 and ii!=Nz-1:
-                    self.dataSet[ii,jj] = Node(self.z[ii],self.r[jj],rho[ii,jj], vz[ii,jj], vr[ii,jj], vt[ii,jj], p[ii,jj],'hub')
+                    self.dataSet[ii,jj] = Node(self.z[ii],self.r[jj],rho[ii,jj], vz[ii,jj], vr[ii,jj], vt[ii,jj], p[ii,jj],'hub', counter)
                 elif jj==Nr-1 and ii!=0 and ii!=Nz-1:
-                    self.dataSet[ii,jj] = Node(self.z[ii],self.r[jj],rho[ii,jj], vz[ii,jj], vr[ii,jj], vt[ii,jj], p[ii,jj],'shroud')
+                    self.dataSet[ii,jj] = Node(self.z[ii],self.r[jj],rho[ii,jj], vz[ii,jj], vr[ii,jj], vt[ii,jj], p[ii,jj],'shroud', counter)
                 elif ii!=0 and ii!=Nz-1 and jj!=0 and jj!=Nr-1:
-                    self.dataSet[ii,jj] = Node(self.z[ii],self.r[jj],rho[ii,jj], vz[ii,jj], vr[ii,jj], vt[ii,jj], p[ii,jj],'')
+                    self.dataSet[ii,jj] = Node(self.z[ii],self.r[jj],rho[ii,jj], vz[ii,jj], vr[ii,jj], vt[ii,jj], p[ii,jj],'', counter)
                 else:
                     raise ValueError("The constructor of the grid has some problems")
+                counter = counter + 1
         
         #also construct matrices, for easy plotting
         self.density = rho

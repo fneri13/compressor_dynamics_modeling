@@ -175,19 +175,29 @@ sunObj.ComputeJacobianPhysical()
 
 sunObj.ShowJacobianPhysicalAxis()
 sunObj.ShowJacobianSpectralAxis()
-sunObj.CreateAllPhysicalMatrices()
-sunObj.ComputeHatMatrices()
+# sunObj.CreateAllPhysicalMatrices()
+# sunObj.ComputeHatMatrices()
 # sunObj.CreateAMatrixCoefficients()
+sunObj.AddAMatrixToNodes()
+sunObj.AddBMatrixToNodes()
+sunObj.AddCMatrixToNodes()
+sunObj.AddEMatrixToNodes()
+sunObj.AddRMatrixToNodes()
+sunObj.AddHatMatricesToNodes()
+
+
+
+
 
 #%% time prediction for SVD computation
-import time
-from SunModel import SunModel
+# import time
+# from SunModel import SunModel
 
-start_time = time.time()
-sunObj.ComputeSVD(omega_domain=[-10,10,-10,10], grid_omega=[50,50])
-end_time = time.time()
-print('time %.2f s' %(end_time-start_time))
-sunObj.PlotInverseConditionNumber()
+# start_time = time.time()
+# sunObj.ComputeSVD(omega_domain=[-10,10,-10,10], grid_omega=[50,50])
+# end_time = time.time()
+# print('time %.2f s' %(end_time-start_time))
+# sunObj.PlotInverseConditionNumber()
 
 
 
