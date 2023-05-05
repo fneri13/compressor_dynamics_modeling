@@ -154,7 +154,7 @@ class SunModel:
                 self.R[(nBlock*5):(nBlock+1)*5, (nBlock*5):(nBlock+1)*5] = R
                 nBlock = nBlock+1
     
-    def CreateAllMatrices(self):
+    def CreateAllPhysicalMatrices(self):
         """
         Compute all the matrices together. The boundaries points will need to be treated later, modifying the corresponding equations
         """
@@ -189,18 +189,20 @@ class SunModel:
         plt.xlabel(r'$\xi$')
         plt.ylabel(r'$\eta$')
     
-    def ComputeGridTransformationLaw(self):
+    def ComputeJacobianSpectral(self):
         """
-        The jacobian transform is implemented here. if you need, just drag it out and use it how you want
+        The Jacobian for the spectral grid as a function of the physical grid cordinates is implemented here. It computes the derivatives
+        needed to obtain the matrices in the spectral space.
+        if you need, just drag it out and use it how you want
         """
-        physicalGridObj = self.data
-        spectralGridObj = self.dataSpectral
         
         #grids
-        Z = physicalGridObj.z_grid
-        R = physicalGridObj.r_grid
-        X = spectralGridObj.z_grid
-        Y = spectralGridObj.r_grid
+        Z = self.data.z_grid
+        R = self.data.r_grid
+        X = self.dataSpectral.z_grid
+        Y = self.dataSpectral.r_grid
+        
+        
         
         Nz = self.data.nAxialNodes
         Nr = self.data.nRadialNodes

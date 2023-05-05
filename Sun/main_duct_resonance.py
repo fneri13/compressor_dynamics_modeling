@@ -175,12 +175,12 @@ sunObj.ShowJacobianSpectralAxis()
 sunObj.CreateAllMatrices()
 sunObj.ComputeModifiedMatrices()
 
-#%%
-import time
-start_time = time.time()
-S = sunObj.ComputeSVD()
-end_time = time.time()
-print('time %.2f s' %(end_time-start_time))
+#%% time prediction for SVD computation
+# import time
+# start_time = time.time()
+# S = sunObj.ComputeSVD()
+# end_time = time.time()
+# print('time %.2f s' %(end_time-start_time))
 
 
 
