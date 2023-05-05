@@ -10,6 +10,11 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from Grid import Node, AnnulusDuctGrid
 
+plt.rc('text')      
+plt.rc('xtick',labelsize=10)
+plt.rc('ytick',labelsize=10)
+plt.rcParams['font.size'] = 14
+
 
 class SunModel:
     """
@@ -40,13 +45,14 @@ class SunModel:
         self.E = np.zeros((self.nPoints*5, self.nPoints*5))
         self.R = np.zeros((self.nPoints*5, self.nPoints*5))
         self.S = np.zeros((self.nPoints*5, self.nPoints*5)) 
-        self.gmma = 1.4
+        self.gmma = 1.4 #cp/cv for standard air for the moment
     
     def CreateAMatrix(self):
         """
         Diagonal matrix
         """
         self.A = np.eye(self.nPoints*5) #A is the diagonal matrix
+        #probably it is a better to create a 2D array of matrices, where for evere point we have 1 set of equations
     
     def CreateBMatrix(self):
         """
@@ -170,6 +176,7 @@ class SunModel:
         self.CreateCMatrix()
         self.CreateEMatrix()
         self.CreateRMatrix()
+        self.CreateSMatrix()
     
     # def GlobalStabilityMatrix(self, omega):
     #     """
@@ -313,13 +320,56 @@ class SunModel:
         self.Bhat = Bhat
         self.Ehat = Ehat
     
-    def ComputeSVD(self):
-        #to be implemented correctly
-        Q = self.A+self.B+self.C+self.E+self.R+self.S
-        U,S,V = np.linalg.svd(Q)
-        return S
+    def ComputeSVD(self, omega_domain=[-1,1,-1,1], grid_omega=[10,10]):
+        omR_min = omega_domain[0]
+        omR_max = omega_domain[1]
+        omI_min = omega_domain[2]
+        omI_max = omega_domain[3]
+        nR = grid_omega[0]
+        nI = grid_omega[1]
+        omR = np.linspace(omR_min, omR_max, nR)
+        omI = np.linspace(omI_min, omI_max, nI)
+        self.omegaR, self.omegaI = np.meshgrid(omR, omI)
+        self.chi = np.zeros((nR,nI))
+        for ii in range(0,nR):
+            for jj in range(0,nI):
+                omega = omR[ii]+1j*omI[jj]
+                
+                #to be implemented correctly later
+                Q = 1j*omega*self.A+self.B+self.C+self.E+self.R+self.S
+
+                U,S,V = np.linalg.svd(Q)
+                self.chi[ii,jj] = np.min(S)/np.max(S)\
+    
+    
+    def PlotInverseConditionNumber(self, formatFig=(10,6)):
+        x = np.linspace(np.min(self.omegaR), np.max(self.omegaR))
+        critical_line = np.zeros(len(x))
         
-  
+        
+        plt.figure(figsize=formatFig)
+        plt.contourf(self.omegaR, self.omegaI, self.chi)
+        plt.plot(x, critical_line, '--r')
+        plt.xlabel(r'$\omega_{R}$')
+        plt.ylabel(r'$\omega_{I}$')
+        plt.title(r'$\chi$ locus')
+        cb = plt.colorbar()
+        cb.set_label(r'$\chi$')
+    
+    # def CreateAMatrixCoefficients(self):
+    #     #second version of the coefficients
+    #     Nz = self.data.nAxialNodes
+    #     Nr = self.data.nAxialNodes
+    #     for ii in range(0,Nz):
+    #         for jj in range(0,Nr):
+    #             marker = print(self.data.grid[ii,jj].marker) #get the type of node
+    #             self.data.grid[ii,jj].AddMatrixA()
+                
+            
+        
+        
+                
+                
     
   
     

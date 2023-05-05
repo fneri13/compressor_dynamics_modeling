@@ -137,8 +137,8 @@ rho = p/(R*T)
 a = np.sqrt(gmma*p/rho)
 
 #debug
-Nz = 20
-Nr = 20
+Nz = 5
+Nr = 5
 duct = AnnulusDuctGrid(0, L, r1, r2, Nz, Nr)
 
 #implement a constant uniform flow in the annulus duct
@@ -177,22 +177,17 @@ sunObj.ShowJacobianPhysicalAxis()
 # sunObj.ShowJacobianSpectralAxis()
 sunObj.CreateAllPhysicalMatrices()
 sunObj.ComputeHatMatrices()
+sunObj.CreateAMatrixCoefficients()
 
 #%% time prediction for SVD computation
 # import time
+# from SunModel import SunModel
+
 # start_time = time.time()
-# S = sunObj.ComputeSVD()
+# sunObj.ComputeSVD(omega_domain=[-10,10,-10,10], grid_omega=[50,50])
 # end_time = time.time()
 # print('time %.2f s' %(end_time-start_time))
-
-
-
-
-
-a = np.array([[1,2,3],[4,5,6]])
-a.flatten()
-
-
+# sunObj.PlotInverseConditionNumber()
 
 
 
