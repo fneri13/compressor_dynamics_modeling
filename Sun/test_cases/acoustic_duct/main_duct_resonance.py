@@ -138,7 +138,7 @@ a = np.sqrt(gmma*p/rho)
 
 #debug
 Nz = 5
-Nr = 5
+Nr = 7
 
 #implement a constant uniform flow in the annulus duct
 density = np.random.rand(Nz, Nr)
@@ -184,7 +184,7 @@ sunObj.AddCMatrixToNodes()
 sunObj.AddEMatrixToNodes()
 sunObj.AddRMatrixToNodes()
 sunObj.AddHatMatricesToNodes()
-
+check = sunObj.CheckGradients() #this should return always true for a good implemented gradient method
 
 
 

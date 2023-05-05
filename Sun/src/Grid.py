@@ -14,15 +14,15 @@ class Node:
     Class of Nodes, contaning cordinates, fluid dynamics field, and marker for BCs understanding
     """
     def __init__(self, z, r, rho, vz, vr, vt, p, marker, nodeCounter):
-        self.z = z #axial cordinate
-        self.r = r #radial cordinate
-        self.marker = marker
-        self.density = rho
-        self.axialVelocity = vz
-        self.radialVelocity = vr
-        self.tangentialVelocity = vt
-        self.pressure = p
-        self.nodeCounter = nodeCounter #identifier of the node
+        self.z = z                          #axial cordinate
+        self.r = r                          #radial cordinate
+        self.marker = marker                #type of node if belonging to boundaries
+        self.density = rho                  #density
+        self.axialVelocity = vz             #axial velocity (z-axis)
+        self.radialVelocity = vr            #radial velocity
+        self.tangentialVelocity = vt        #tangential velocity
+        self.pressure = p                   #pressure
+        self.nodeCounter = nodeCounter      #identifier of the node
     
     def GetAxialCordinate(self):
         return self.z
@@ -82,6 +82,9 @@ class Node:
         
     def AddJacobianGradients(self, dxdz, dxdr, dydz, dydr):
         self.dxdz,  self.dxdr, self.dydz, self.dydr = dxdz, dxdr, dydz, dydr
+    
+    def AddInverseJacobianGradients(self, dzdx, dzdy, drdx, drdy):
+        self.dzdx,  self.dzdy, self.drdx, self.drdy = dzdx, dzdy, drdx, drdy
     
     def AddHatMatrices(self,Bhat,Ehat):
         self.Bhat, self.Ehat = Bhat, Ehat

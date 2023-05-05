@@ -233,7 +233,11 @@ class SunModel:
         X = self.dataSpectral.zGrid
         Y = self.dataSpectral.rGrid
         self.dzdx, self.dzdy, self.drdx, self.drdy = JacobianTransform(Z,R,X,Y)
-        print('you should check that the derivatives are indeed opposites')
+        for ii in range(0,self.data.nAxialNodes):
+            for jj in range(0,self.data.nRadialNodes):
+                #add the inverse gradients information to every node
+                self.data.dataSet[ii,jj].AddInverseJacobianGradients(self.dzdx[ii,jj], self.dzdy[ii,jj], self.drdx[ii,jj], self.drdy[ii,jj])
+        
         
     
     def ShowJacobianSpectralAxis(self, formatFig=(10,6)):
@@ -472,22 +476,48 @@ class SunModel:
                         self.data.dataSet[ii,jj].E * self.data.dataSet[ii,jj].dydz
                         
                 self.data.dataSet[ii,jj].AddHatMatrices(Bhat, Ehat)
+    
+    def CheckGradients(self):
+        test1 = True
+        for ii in range(0,self.data.nAxialNodes):
+            for jj in range(0,self.data.nRadialNodes):
+                if (self.data.dataSet[ii,jj].dxdz * self.data.dataSet[ii,jj].dzdx < 0.99 and \
+                    self.data.dataSet[ii,jj].dxdz * self.data.dataSet[ii,jj].dzdx > 0.01):
+                    test1 = False
+        
+        test2 = True
+        for ii in range(0,self.data.nAxialNodes):
+            for jj in range(0,self.data.nRadialNodes):
+                if (self.data.dataSet[ii,jj].dxdr * self.data.dataSet[ii,jj].drdx < 0.99 and \
+                    self.data.dataSet[ii,jj].dxdr * self.data.dataSet[ii,jj].drdx > 0.01):
+                    test2 = False
+        
+        test3 = True
+        for ii in range(0,self.data.nAxialNodes):
+            for jj in range(0,self.data.nRadialNodes):
+                if (self.data.dataSet[ii,jj].dydr * self.data.dataSet[ii,jj].drdy < 0.99 and \
+                    self.data.dataSet[ii,jj].dydr * self.data.dataSet[ii,jj].drdy > 0.01):
+                    test3 = False
+                    
+        test4 = True
+        for ii in range(0,self.data.nAxialNodes):
+            for jj in range(0,self.data.nRadialNodes):
+                if (self.data.dataSet[ii,jj].dydz * self.data.dataSet[ii,jj].dzdy < 0.99 and \
+                    self.data.dataSet[ii,jj].dydz * self.data.dataSet[ii,jj].dzdy > 0.01):
+                    test4 = False
+        
+        return [test1, test2, test3, test4]
+        
         
                 
                 
+################################################################################################################################
+################################################################################################################################
+################################################################################################################################
     
   
     
   
-    
-  
-    
-  
-    
-  
-    
-  
-    
   
     
 # GENERAL FUNCTIONS USED IN THE CODE. THEY CAN BE ACCESSED ALSO FROM OUTSIDE, NOT EXCLUSIVELY BY CLASS MEMBERS  
@@ -525,29 +555,29 @@ def JacobianTransform(X,Y,Z,R):
                 dydr[ii,jj] = (Y[ii,jj]-Y[ii,jj-1])/(1*(R[ii,jj]-R[ii,jj-1]))
             elif (ii==0): #left side
                 dxdz[ii,jj] = (X[ii+1,jj]-X[ii,jj])/(1*(Z[ii+1,jj]-Z[ii,jj]))
-                dxdr[ii,jj] = (X[ii,jj+1]-X[ii,jj-1])/(2*(R[ii,jj+1]-R[ii,jj-1]))
+                dxdr[ii,jj] = (X[ii,jj+1]-X[ii,jj-1])/((R[ii,jj+1]-R[ii,jj-1]))
                 dydz[ii,jj] = (Y[ii+1,jj]-Y[ii,jj])/(1*(Z[ii+1,jj]-Z[ii,jj]))
-                dydr[ii,jj] = (Y[ii,jj+1]-Y[ii,jj-1])/(2*(R[ii,jj+1]-R[ii,jj-1]))
+                dydr[ii,jj] = (Y[ii,jj+1]-Y[ii,jj-1])/((R[ii,jj+1]-R[ii,jj-1]))
             elif (ii==Nz-1): #right side
                 dxdz[ii,jj] = (X[ii,jj]-X[ii-1,jj])/(1*(Z[ii,jj]-Z[ii-1,jj]))
-                dxdr[ii,jj] = (X[ii,jj+1]-X[ii,jj-1])/(2*(R[ii,jj+1]-R[ii,jj-1]))
+                dxdr[ii,jj] = (X[ii,jj+1]-X[ii,jj-1])/((R[ii,jj+1]-R[ii,jj-1]))
                 dydz[ii,jj] = (Y[ii,jj]-Y[ii-1,jj])/(1*(Z[ii,jj]-Z[ii-1,jj]))
-                dydr[ii,jj] = (Y[ii,jj+1]-Y[ii,jj-1])/(2*(R[ii,jj+1]-R[ii,jj-1]))
+                dydr[ii,jj] = (Y[ii,jj+1]-Y[ii,jj-1])/((R[ii,jj+1]-R[ii,jj-1]))
             elif (jj==0): #lower side
-                dxdz[ii,jj] = (X[ii+1,jj]-X[ii-1,jj])/(2*(Z[ii+1,jj]-Z[ii-1,jj]))
+                dxdz[ii,jj] = (X[ii+1,jj]-X[ii-1,jj])/(1*(Z[ii+1,jj]-Z[ii-1,jj]))
                 dxdr[ii,jj] = (X[ii,jj+1]-X[ii,jj])/(1*(R[ii,jj+1]-R[ii,jj]))
-                dydz[ii,jj] = (Y[ii+1,jj]-Y[ii-1,jj])/(2*(Z[ii+1,jj]-Z[ii-1,jj]))
+                dydz[ii,jj] = (Y[ii+1,jj]-Y[ii-1,jj])/(1*(Z[ii+1,jj]-Z[ii-1,jj]))
                 dydr[ii,jj] = (Y[ii,jj+1]-Y[ii,jj])/(1*(R[ii,jj+1]-R[ii,jj]))
             elif (jj==Nr-1): #upper side
-                dxdz[ii,jj] = (X[ii+1,jj]-X[ii-1,jj])/(2*(Z[ii+1,jj]-Z[ii-1,jj]))
+                dxdz[ii,jj] = (X[ii+1,jj]-X[ii-1,jj])/(1*(Z[ii+1,jj]-Z[ii-1,jj]))
                 dxdr[ii,jj] = (X[ii,jj]-X[ii,jj-1])/(1*(R[ii,jj]-R[ii,jj-1]))
-                dydz[ii,jj] = (Y[ii+1,jj]-Y[ii-1,jj])/(2*(Z[ii+1,jj]-Z[ii-1,jj]))
+                dydz[ii,jj] = (Y[ii+1,jj]-Y[ii-1,jj])/(1*(Z[ii+1,jj]-Z[ii-1,jj]))
                 dydr[ii,jj] = (Y[ii,jj]-Y[ii,jj-1])/(1*(R[ii,jj]-R[ii,jj-1]))
             else: #internal points
-                dxdz[ii,jj] = (X[ii+1,jj]-X[ii-1,jj])/(2*(Z[ii+1,jj]-Z[ii-1,jj]))
-                dxdr[ii,jj] = (X[ii,jj+1]-X[ii,jj-1])/(2*(R[ii,jj+1]-R[ii,jj-1]))
-                dydz[ii,jj] = (Y[ii+1,jj]-Y[ii-1,jj])/(2*(Z[ii+1,jj]-Z[ii-1,jj]))
-                dydr[ii,jj] = (Y[ii,jj+1]-Y[ii,jj-1])/(2*(R[ii,jj+1]-R[ii,jj-1]))
+                dxdz[ii,jj] = (X[ii+1,jj]-X[ii-1,jj])/(1*(Z[ii+1,jj]-Z[ii-1,jj]))
+                dxdr[ii,jj] = (X[ii,jj+1]-X[ii,jj-1])/(1*(R[ii,jj+1]-R[ii,jj-1]))
+                dydz[ii,jj] = (Y[ii+1,jj]-Y[ii-1,jj])/(1*(Z[ii+1,jj]-Z[ii-1,jj]))
+                dydr[ii,jj] = (Y[ii,jj+1]-Y[ii,jj-1])/(1*(R[ii,jj+1]-R[ii,jj-1]))
     
     return dxdz, dxdr, dydz, dydr
 
