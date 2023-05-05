@@ -55,7 +55,8 @@ class SunModel:
         nBlock = 0
         for IterZ in range(0,self.data.nAxialNodes):
             for IterR in range(0,self.data.nRadialNodes):
-                #for every point on the grid, construct a matrix B, and then stack them along the diagonal
+                #for every point on the grid, construct a matrix B, and then stack them along the diagonal. Remember than the blocks are taken going along the j (radial direction) axis and i axis later (axial direction).
+                #this decides the flatten() method for the gradients used in ComputeHatMatrices
                 B = np.zeros((5,5))
                 
                 B[0,0] = self.data.radialVelocity[IterZ,IterR]
@@ -154,6 +155,12 @@ class SunModel:
                 self.R[(nBlock*5):(nBlock+1)*5, (nBlock*5):(nBlock+1)*5] = R
                 nBlock = nBlock+1
     
+    def CreateSMatrix(self):
+        """
+        Coefficient matrix related to the body force terms. To be implemented yet
+        """
+        self.S = np.ones((self.nPoints*5, self.nPoints*5)) #A is the diagonal matrix
+    
     def CreateAllPhysicalMatrices(self):
         """
         Compute all the matrices together. The boundaries points will need to be treated later, modifying the corresponding equations
@@ -195,76 +202,28 @@ class SunModel:
         needed to obtain the matrices in the spectral space.
         if you need, just drag it out and use it how you want
         """
-        
         #grids
         Z = self.data.z_grid
         R = self.data.r_grid
         X = self.dataSpectral.z_grid
         Y = self.dataSpectral.r_grid
-        
-        
-        
-        Nz = self.data.nAxialNodes
-        Nr = self.data.nRadialNodes
-        
-        #instantiate matrices
-        dxdr = np.zeros((Nz, Nr))
-        dxdz = np.zeros((Nz, Nr))
-        dydr = np.zeros((Nz, Nr))
-        dydz = np.zeros((Nz, Nr))
-        
-        #2nd order central difference for the grid. First take care of the corners, then of the edges, and then of the central points
-        for ii in range(0,Nz):
-            for jj in range(0,Nr):
-                if (ii==0 and jj==0): #lower-left corner
-                    dxdz[ii,jj] = (X[ii+1,jj]-X[ii,jj])/(1*(Z[ii+1,jj]-Z[ii,jj]))
-                    dxdr[ii,jj] = (X[ii,jj+1]-X[ii,jj])/(1*(R[ii,jj+1]-R[ii,jj]))
-                    dydz[ii,jj] = (Y[ii+1,jj]-Y[ii,jj])/(1*(Z[ii+1,jj]-Z[ii,jj]))
-                    dydr[ii,jj] = (Y[ii,jj+1]-Y[ii,jj])/(1*(R[ii,jj+1]-R[ii,jj]))
-                elif (ii==Nz-1 and jj==0): #lower-right corner
-                    dxdz[ii,jj] = (X[ii,jj]-X[ii-1,jj])/(1*(Z[ii,jj]-Z[ii-1,jj]))
-                    dxdr[ii,jj] = (X[ii,jj+1]-X[ii,jj])/(1*(R[ii,jj+1]-R[ii,jj]))
-                    dydz[ii,jj] = (Y[ii,jj]-Y[ii-1,jj])/(1*(Z[ii,jj]-Z[ii-1,jj]))
-                    dydr[ii,jj] = (Y[ii,jj+1]-Y[ii,jj])/(1*(R[ii,jj+1]-R[ii,jj]))
-                elif (ii==0 and jj==Nr-1): #upper-left corner
-                    dxdz[ii,jj] = (X[ii+1,jj]-X[ii,jj])/(1*(Z[ii+1,jj]-Z[ii,jj]))
-                    dxdr[ii,jj] = (X[ii,jj]-X[ii,jj-1])/(1*(R[ii,jj]-R[ii,jj-1]))
-                    dydz[ii,jj] = (Y[ii+1,jj]-Y[ii,jj])/(1*(Z[ii+1,jj]-Z[ii,jj]))
-                    dydr[ii,jj] = (Y[ii,jj]-Y[ii,jj-1])/(1*(R[ii,jj]-R[ii,jj-1]))
-                elif (ii==Nz-1 and jj==Nr-1): #upper-right corner
-                    dxdz[ii,jj] = (X[ii,jj]-X[ii-1,jj])/(1*(Z[ii,jj]-Z[ii-1,jj]))
-                    dxdr[ii,jj] = (X[ii,jj]-X[ii,jj-1])/(1*(R[ii,jj]-R[ii,jj-1]))
-                    dydz[ii,jj] = (Y[ii,jj]-Y[ii-1,jj])/(1*(Z[ii,jj]-Z[ii-1,jj]))
-                    dydr[ii,jj] = (Y[ii,jj]-Y[ii,jj-1])/(1*(R[ii,jj]-R[ii,jj-1]))
-                elif (ii==0): #left side
-                    dxdz[ii,jj] = (X[ii+1,jj]-X[ii,jj])/(1*(Z[ii+1,jj]-Z[ii,jj]))
-                    dxdr[ii,jj] = (X[ii,jj+1]-X[ii,jj-1])/(2*(R[ii,jj+1]-R[ii,jj-1]))
-                    dydz[ii,jj] = (Y[ii+1,jj]-Y[ii,jj])/(1*(Z[ii+1,jj]-Z[ii,jj]))
-                    dydr[ii,jj] = (Y[ii,jj+1]-Y[ii,jj-1])/(2*(R[ii,jj+1]-R[ii,jj-1]))
-                elif (ii==Nz-1): #right side
-                    dxdz[ii,jj] = (X[ii,jj]-X[ii-1,jj])/(1*(Z[ii,jj]-Z[ii-1,jj]))
-                    dxdr[ii,jj] = (X[ii,jj+1]-X[ii,jj-1])/(2*(R[ii,jj+1]-R[ii,jj-1]))
-                    dydz[ii,jj] = (Y[ii,jj]-Y[ii-1,jj])/(1*(Z[ii,jj]-Z[ii-1,jj]))
-                    dydr[ii,jj] = (Y[ii,jj+1]-Y[ii,jj-1])/(2*(R[ii,jj+1]-R[ii,jj-1]))
-                elif (jj==0): #lower side
-                    dxdz[ii,jj] = (X[ii+1,jj]-X[ii-1,jj])/(2*(Z[ii+1,jj]-Z[ii-1,jj]))
-                    dxdr[ii,jj] = (X[ii,jj+1]-X[ii,jj])/(1*(R[ii,jj+1]-R[ii,jj]))
-                    dydz[ii,jj] = (Y[ii+1,jj]-Y[ii-1,jj])/(2*(Z[ii+1,jj]-Z[ii-1,jj]))
-                    dydr[ii,jj] = (Y[ii,jj+1]-Y[ii,jj])/(1*(R[ii,jj+1]-R[ii,jj]))
-                elif (jj==Nr-1): #upper side
-                    dxdz[ii,jj] = (X[ii+1,jj]-X[ii-1,jj])/(2*(Z[ii+1,jj]-Z[ii-1,jj]))
-                    dxdr[ii,jj] = (X[ii,jj]-X[ii,jj-1])/(1*(R[ii,jj]-R[ii,jj-1]))
-                    dydz[ii,jj] = (Y[ii+1,jj]-Y[ii-1,jj])/(2*(Z[ii+1,jj]-Z[ii-1,jj]))
-                    dydr[ii,jj] = (Y[ii,jj]-Y[ii,jj-1])/(1*(R[ii,jj]-R[ii,jj-1]))
-                else: #internal points
-                    dxdz[ii,jj] = (X[ii+1,jj]-X[ii-1,jj])/(2*(Z[ii+1,jj]-Z[ii-1,jj]))
-                    dxdr[ii,jj] = (X[ii,jj+1]-X[ii,jj-1])/(2*(R[ii,jj+1]-R[ii,jj-1]))
-                    dydz[ii,jj] = (Y[ii+1,jj]-Y[ii-1,jj])/(2*(Z[ii+1,jj]-Z[ii-1,jj]))
-                    dydr[ii,jj] = (Y[ii,jj+1]-Y[ii,jj-1])/(2*(R[ii,jj+1]-R[ii,jj-1]))
-  
-        self.dxdz, self.dxdr, self.dydz, self.dydr = dxdz, dxdr, dydz, dydr
+        self.dxdz, self.dxdr, self.dydz, self.dydr = JacobianTransform(X,Y,Z,R)
     
+    def ComputeJacobianPhysical(self):
+        """
+        The Jacobian for the physical grid as a function of the pspectral grid cordinates is implemented here. It computes the derivatives
+        needed to obtain the matrices in the spectral space.
+        if you need, just drag it out and use it how you want
+        """
+        #grids
+        Z = self.data.z_grid
+        R = self.data.r_grid
+        X = self.dataSpectral.z_grid
+        Y = self.dataSpectral.r_grid
+        self.dzdx, self.dzdy, self.drdx, self.drdy = JacobianTransform(Z,R,X,Y)
+        print('you should check that the derivatives are indeed opposites')
         
+    
     def ShowJacobianSpectralAxis(self, formatFig=(10,6)):
         plt.figure(figsize=formatFig)
         plt.scatter(self.dataSpectral.z_grid, self.dataSpectral.r_grid, c=self.dxdz)
@@ -330,19 +289,22 @@ class SunModel:
         cb = plt.colorbar()
         plt.title(r'$\frac{\partial \eta}{\partial r}$')
         cb.set_label(r'$\frac{\partial \eta}{\partial r}$')
-        
+
     
-    def ComputeModifiedMatrices(self):
+    def ComputeHatMatrices(self):
         Bhat = np.zeros(self.B.shape) #physical B
         Ehat = np.zeros(self.B.shape) #physical E
         Ni = Bhat.shape[0]
         Nj = Bhat.shape[1]
         nBlocks = Ni//5
         
-        #flatten the gradients to be used later in the matrix multiplications (check the order of unroll, but it should be first z and then r, which is the same used for the matrices)
-        dxdz, dxdr, dydz, dydr = self.dxdz.flatten(), self.dxdr.flatten(), self.dydz.flatten(), self.dydr.flatten() 
+        #flatten the gradients to be used later in the matrix multiplications. I am unrolling along the column (Fortran style), because the matrices were built going along the j axis before than the i axis.
+        #you should check this in a later stage of the process, during code debugging and testing
+        dxdz, dxdr, dydz, dydr = self.dxdz.flatten(order='F'), self.dxdr.flatten(order='F'), self.dydz.flatten(order='F'), self.dydr.flatten(order='F') 
+        
         if nBlocks!=self.nPoints:
             raise ValueError('Error in Compute Modified B matrix method')    
+            
         for blockIt in range(0,nBlocks):
             Bhat[(blockIt*5):(blockIt+1)*5,(blockIt*5):(blockIt+1)*5] = self.B[(blockIt*5):(blockIt+1)*5,(blockIt*5):(blockIt+1)*5]*dxdr[blockIt] \
                                                                         + self.E[(blockIt*5):(blockIt+1)*5,(blockIt*5):(blockIt+1)*5]*dxdz[blockIt]
@@ -357,7 +319,82 @@ class SunModel:
         U,S,V = np.linalg.svd(Q)
         return S
         
-
+  
+    
+  
+    
+  
+    
+  
+    
+  
+    
+  
+    
+  
+    
+  
+    
+# GENERAL FUNCTIONS USED IN THE CODE. THEY CAN BE ACCESSED ALSO FROM OUTSIDE, NOT EXCLUSIVELY BY CLASS MEMBERS  
+def JacobianTransform(X,Y,Z,R):
+    Nz, Nr = X.shape[0], X.shape[1]
+    
+    #instantiate matrices
+    dxdr = np.zeros((Nz, Nr))
+    dxdz = np.zeros((Nz, Nr))
+    dydr = np.zeros((Nz, Nr))
+    dydz = np.zeros((Nz, Nr))
+    
+    #2nd order central difference for the grid. First take care of the corners, then of the edges, and then of the central points
+    for ii in range(0,Nz):
+        for jj in range(0,Nr):
+            if (ii==0 and jj==0): #lower-left corner
+                dxdz[ii,jj] = (X[ii+1,jj]-X[ii,jj])/(1*(Z[ii+1,jj]-Z[ii,jj]))
+                dxdr[ii,jj] = (X[ii,jj+1]-X[ii,jj])/(1*(R[ii,jj+1]-R[ii,jj]))
+                dydz[ii,jj] = (Y[ii+1,jj]-Y[ii,jj])/(1*(Z[ii+1,jj]-Z[ii,jj]))
+                dydr[ii,jj] = (Y[ii,jj+1]-Y[ii,jj])/(1*(R[ii,jj+1]-R[ii,jj]))
+            elif (ii==Nz-1 and jj==0): #lower-right corner
+                dxdz[ii,jj] = (X[ii,jj]-X[ii-1,jj])/(1*(Z[ii,jj]-Z[ii-1,jj]))
+                dxdr[ii,jj] = (X[ii,jj+1]-X[ii,jj])/(1*(R[ii,jj+1]-R[ii,jj]))
+                dydz[ii,jj] = (Y[ii,jj]-Y[ii-1,jj])/(1*(Z[ii,jj]-Z[ii-1,jj]))
+                dydr[ii,jj] = (Y[ii,jj+1]-Y[ii,jj])/(1*(R[ii,jj+1]-R[ii,jj]))
+            elif (ii==0 and jj==Nr-1): #upper-left corner
+                dxdz[ii,jj] = (X[ii+1,jj]-X[ii,jj])/(1*(Z[ii+1,jj]-Z[ii,jj]))
+                dxdr[ii,jj] = (X[ii,jj]-X[ii,jj-1])/(1*(R[ii,jj]-R[ii,jj-1]))
+                dydz[ii,jj] = (Y[ii+1,jj]-Y[ii,jj])/(1*(Z[ii+1,jj]-Z[ii,jj]))
+                dydr[ii,jj] = (Y[ii,jj]-Y[ii,jj-1])/(1*(R[ii,jj]-R[ii,jj-1]))
+            elif (ii==Nz-1 and jj==Nr-1): #upper-right corner
+                dxdz[ii,jj] = (X[ii,jj]-X[ii-1,jj])/(1*(Z[ii,jj]-Z[ii-1,jj]))
+                dxdr[ii,jj] = (X[ii,jj]-X[ii,jj-1])/(1*(R[ii,jj]-R[ii,jj-1]))
+                dydz[ii,jj] = (Y[ii,jj]-Y[ii-1,jj])/(1*(Z[ii,jj]-Z[ii-1,jj]))
+                dydr[ii,jj] = (Y[ii,jj]-Y[ii,jj-1])/(1*(R[ii,jj]-R[ii,jj-1]))
+            elif (ii==0): #left side
+                dxdz[ii,jj] = (X[ii+1,jj]-X[ii,jj])/(1*(Z[ii+1,jj]-Z[ii,jj]))
+                dxdr[ii,jj] = (X[ii,jj+1]-X[ii,jj-1])/(2*(R[ii,jj+1]-R[ii,jj-1]))
+                dydz[ii,jj] = (Y[ii+1,jj]-Y[ii,jj])/(1*(Z[ii+1,jj]-Z[ii,jj]))
+                dydr[ii,jj] = (Y[ii,jj+1]-Y[ii,jj-1])/(2*(R[ii,jj+1]-R[ii,jj-1]))
+            elif (ii==Nz-1): #right side
+                dxdz[ii,jj] = (X[ii,jj]-X[ii-1,jj])/(1*(Z[ii,jj]-Z[ii-1,jj]))
+                dxdr[ii,jj] = (X[ii,jj+1]-X[ii,jj-1])/(2*(R[ii,jj+1]-R[ii,jj-1]))
+                dydz[ii,jj] = (Y[ii,jj]-Y[ii-1,jj])/(1*(Z[ii,jj]-Z[ii-1,jj]))
+                dydr[ii,jj] = (Y[ii,jj+1]-Y[ii,jj-1])/(2*(R[ii,jj+1]-R[ii,jj-1]))
+            elif (jj==0): #lower side
+                dxdz[ii,jj] = (X[ii+1,jj]-X[ii-1,jj])/(2*(Z[ii+1,jj]-Z[ii-1,jj]))
+                dxdr[ii,jj] = (X[ii,jj+1]-X[ii,jj])/(1*(R[ii,jj+1]-R[ii,jj]))
+                dydz[ii,jj] = (Y[ii+1,jj]-Y[ii-1,jj])/(2*(Z[ii+1,jj]-Z[ii-1,jj]))
+                dydr[ii,jj] = (Y[ii,jj+1]-Y[ii,jj])/(1*(R[ii,jj+1]-R[ii,jj]))
+            elif (jj==Nr-1): #upper side
+                dxdz[ii,jj] = (X[ii+1,jj]-X[ii-1,jj])/(2*(Z[ii+1,jj]-Z[ii-1,jj]))
+                dxdr[ii,jj] = (X[ii,jj]-X[ii,jj-1])/(1*(R[ii,jj]-R[ii,jj-1]))
+                dydz[ii,jj] = (Y[ii+1,jj]-Y[ii-1,jj])/(2*(Z[ii+1,jj]-Z[ii-1,jj]))
+                dydr[ii,jj] = (Y[ii,jj]-Y[ii,jj-1])/(1*(R[ii,jj]-R[ii,jj-1]))
+            else: #internal points
+                dxdz[ii,jj] = (X[ii+1,jj]-X[ii-1,jj])/(2*(Z[ii+1,jj]-Z[ii-1,jj]))
+                dxdr[ii,jj] = (X[ii,jj+1]-X[ii,jj-1])/(2*(R[ii,jj+1]-R[ii,jj-1]))
+                dydz[ii,jj] = (Y[ii+1,jj]-Y[ii-1,jj])/(2*(Z[ii+1,jj]-Z[ii-1,jj]))
+                dydr[ii,jj] = (Y[ii,jj+1]-Y[ii,jj-1])/(2*(R[ii,jj+1]-R[ii,jj-1]))
+    
+    return dxdz, dxdr, dydz, dydr
 
 
 

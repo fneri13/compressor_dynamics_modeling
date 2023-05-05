@@ -11,6 +11,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.linalg import det
 from scipy.special import chebyt
+import sys
+sys.path.insert(1, '../../src/') #to add Classes folder
+
 
 #show the basis functions
 x = np.linspace(-1, 1, 1000)

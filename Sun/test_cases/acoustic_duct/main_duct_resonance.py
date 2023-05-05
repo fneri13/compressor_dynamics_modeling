@@ -8,7 +8,8 @@ Created on Wed May  3 09:29:59 2023
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.special import jv, yv, jvp, yvp
-
+import sys
+sys.path.insert(1, '../../src/') #to add Classes folder
 
 # #input data of the problem
 # r1 = 0.1826
@@ -120,7 +121,7 @@ from scipy.special import jv, yv, jvp, yvp
 #%%
 import matplotlib.pyplot as plt
 import numpy as np
-from Sun_Model import SunModel
+from SunModel import SunModel
 from Grid import AnnulusDuctGrid
 
 #input data
@@ -136,7 +137,7 @@ rho = p/(R*T)
 a = np.sqrt(gmma*p/rho)
 
 #debug
-Nz = 50
+Nz = 20
 Nr = 20
 duct = AnnulusDuctGrid(0, L, r1, r2, Nz, Nr)
 
@@ -169,11 +170,13 @@ sunObj = SunModel(duct)
 sunObj.ShowPhysicalGrid()
 sunObj.ComputeSpectralGrid()
 sunObj.ShowSpectralGrid()
-sunObj.ComputeGridTransformationLaw()
+sunObj.ComputeJacobianSpectral()
+sunObj.ComputeJacobianPhysical()
+
 sunObj.ShowJacobianPhysicalAxis()
-sunObj.ShowJacobianSpectralAxis()
-sunObj.CreateAllMatrices()
-sunObj.ComputeModifiedMatrices()
+# sunObj.ShowJacobianSpectralAxis()
+sunObj.CreateAllPhysicalMatrices()
+sunObj.ComputeHatMatrices()
 
 #%% time prediction for SVD computation
 # import time
@@ -186,7 +189,8 @@ sunObj.ComputeModifiedMatrices()
 
 
 
-
+a = np.array([[1,2,3],[4,5,6]])
+a.flatten()
 
 
 

@@ -9,6 +9,9 @@ read the data from paraview csv output file. Still need to understand how the ge
 #imports
 from Compressor import Compressor
 import matplotlib.pyplot as plt
+import sys
+sys.path.insert(1, '../..src/') #to add Classes folder
+
 
 # # instantiate the compressor
 my_compressor = Compressor('data/eckardt_impeller.csv')
