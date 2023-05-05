@@ -122,7 +122,7 @@ sys.path.insert(1, '../../src/') #to add Classes folder
 import matplotlib.pyplot as plt
 import numpy as np
 from SunModel import SunModel
-from Grid import AnnulusDuctGrid
+from Grid import DataGrid
 
 #input data
 r1 = 0.1826
@@ -139,7 +139,6 @@ a = np.sqrt(gmma*p/rho)
 #debug
 Nz = 5
 Nr = 5
-duct = AnnulusDuctGrid(0, L, r1, r2, Nz, Nr)
 
 #implement a constant uniform flow in the annulus duct
 density = np.random.rand(Nz, Nr)
@@ -154,16 +153,17 @@ for ii in range(0,Nz):
         radialVel[ii,jj] = 0
         tangentialVel[ii,jj] = 0
         pressure[ii,jj] = p
-        
 
-duct.AddDensityField(density)
-duct.AddVelocityField(axialVel, radialVel, tangentialVel)
-duct.AddPressureField(pressure)
-duct.ContourPlotDensity()
-duct.ContourPlotVelocity(1)
-duct.ContourPlotVelocity(2)
-duct.ContourPlotVelocity(3)
-duct.ContourPlotPressure()
+duct = DataGrid(0, L, r1, r2, Nz, Nr, density, axialVel, radialVel, tangentialVel, pressure)
+
+
+
+
+# duct.ContourPlotDensity()
+# duct.ContourPlotVelocity(1)
+# duct.ContourPlotVelocity(2)
+# duct.ContourPlotVelocity(3)
+# duct.ContourPlotPressure()
 
 
 sunObj = SunModel(duct)
@@ -174,20 +174,20 @@ sunObj.ComputeJacobianSpectral()
 sunObj.ComputeJacobianPhysical()
 
 sunObj.ShowJacobianPhysicalAxis()
-# sunObj.ShowJacobianSpectralAxis()
+sunObj.ShowJacobianSpectralAxis()
 sunObj.CreateAllPhysicalMatrices()
 sunObj.ComputeHatMatrices()
-sunObj.CreateAMatrixCoefficients()
+# sunObj.CreateAMatrixCoefficients()
 
 #%% time prediction for SVD computation
-# import time
-# from SunModel import SunModel
+import time
+from SunModel import SunModel
 
-# start_time = time.time()
-# sunObj.ComputeSVD(omega_domain=[-10,10,-10,10], grid_omega=[50,50])
-# end_time = time.time()
-# print('time %.2f s' %(end_time-start_time))
-# sunObj.PlotInverseConditionNumber()
+start_time = time.time()
+sunObj.ComputeSVD(omega_domain=[-10,10,-10,10], grid_omega=[50,50])
+end_time = time.time()
+print('time %.2f s' %(end_time-start_time))
+sunObj.PlotInverseConditionNumber()
 
 
 

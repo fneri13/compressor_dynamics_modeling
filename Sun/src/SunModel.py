@@ -8,7 +8,7 @@ Created on Wed May  3 15:32:43 2023
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from Grid import Node, AnnulusDuctGrid
+from Grid import Node, DataGrid
 
 plt.rc('text')      
 plt.rc('xtick',labelsize=10)
@@ -210,10 +210,10 @@ class SunModel:
         if you need, just drag it out and use it how you want
         """
         #grids
-        Z = self.data.z_grid
-        R = self.data.r_grid
-        X = self.dataSpectral.z_grid
-        Y = self.dataSpectral.r_grid
+        Z = self.data.zGrid
+        R = self.data.rGrid
+        X = self.dataSpectral.zGrid
+        Y = self.dataSpectral.rGrid
         self.dxdz, self.dxdr, self.dydz, self.dydr = JacobianTransform(X,Y,Z,R)
     
     def ComputeJacobianPhysical(self):
@@ -223,17 +223,17 @@ class SunModel:
         if you need, just drag it out and use it how you want
         """
         #grids
-        Z = self.data.z_grid
-        R = self.data.r_grid
-        X = self.dataSpectral.z_grid
-        Y = self.dataSpectral.r_grid
+        Z = self.data.zGrid
+        R = self.data.rGrid
+        X = self.dataSpectral.zGrid
+        Y = self.dataSpectral.rGrid
         self.dzdx, self.dzdy, self.drdx, self.drdy = JacobianTransform(Z,R,X,Y)
         print('you should check that the derivatives are indeed opposites')
         
     
     def ShowJacobianSpectralAxis(self, formatFig=(10,6)):
         plt.figure(figsize=formatFig)
-        plt.scatter(self.dataSpectral.z_grid, self.dataSpectral.r_grid, c=self.dxdz)
+        plt.scatter(self.dataSpectral.zGrid, self.dataSpectral.rGrid, c=self.dxdz)
         plt.xlabel(r'$\xi$')
         plt.ylabel(r'$\eta$')
         plt.title(r'$\frac{\partial \xi}{\partial z}$')
@@ -241,7 +241,7 @@ class SunModel:
         cb.set_label(r'$\frac{\partial \xi}{\partial z}$')
         
         plt.figure(figsize=formatFig)
-        plt.scatter(self.dataSpectral.z_grid, self.dataSpectral.r_grid, c=self.dxdr)
+        plt.scatter(self.dataSpectral.zGrid, self.dataSpectral.rGrid, c=self.dxdr)
         plt.xlabel(r'$\xi$')
         plt.ylabel(r'$\eta$')
         cb = plt.colorbar()
@@ -249,7 +249,7 @@ class SunModel:
         cb.set_label(r'$\frac{\partial \xi}{\partial r}$')
         
         plt.figure(figsize=formatFig)
-        plt.scatter(self.dataSpectral.z_grid, self.dataSpectral.r_grid, c=self.dydz)
+        plt.scatter(self.dataSpectral.zGrid, self.dataSpectral.rGrid, c=self.dydz)
         plt.xlabel(r'$\xi$')
         plt.ylabel(r'$\eta$')
         cb = plt.colorbar()
@@ -257,7 +257,7 @@ class SunModel:
         cb.set_label(r'$\frac{\partial \eta}{\partial z}$')
         
         plt.figure(figsize=formatFig)
-        plt.scatter(self.dataSpectral.z_grid, self.dataSpectral.r_grid, c=self.dydr)
+        plt.scatter(self.dataSpectral.zGrid, self.dataSpectral.rGrid, c=self.dydr)
         plt.xlabel(r'$\xi$')
         plt.ylabel(r'$\eta$')
         cb = plt.colorbar()
@@ -266,7 +266,7 @@ class SunModel:
         
     def ShowJacobianPhysicalAxis(self, formatFig=(10,6)):
         plt.figure(figsize=formatFig)
-        plt.scatter(self.data.z_grid, self.data.r_grid, c=self.dxdz)
+        plt.scatter(self.data.zGrid, self.data.rGrid, c=self.dxdz)
         plt.xlabel(r'$Z$')
         plt.ylabel(r'$R$')
         plt.title(r'$\frac{\partial \xi}{\partial z}$')
@@ -274,7 +274,7 @@ class SunModel:
         cb.set_label(r'$\frac{\partial \xi}{\partial z}$')
         
         plt.figure(figsize=formatFig)
-        plt.scatter(self.data.z_grid, self.data.r_grid, c=self.dxdr)
+        plt.scatter(self.data.zGrid, self.data.rGrid, c=self.dxdr)
         plt.xlabel(r'$Z$')
         plt.ylabel(r'$R$')
         cb = plt.colorbar()
@@ -282,7 +282,7 @@ class SunModel:
         cb.set_label(r'$\frac{\partial \xi}{\partial r}$')
         
         plt.figure(figsize=formatFig)
-        plt.scatter(self.data.z_grid, self.data.r_grid, c=self.dydz)
+        plt.scatter(self.data.zGrid, self.data.rGrid, c=self.dydz)
         plt.xlabel(r'$Z$')
         plt.ylabel(r'$R$')
         cb = plt.colorbar()
@@ -290,7 +290,7 @@ class SunModel:
         cb.set_label(r'$\frac{\partial \eta}{\partial z}$')
         
         plt.figure(figsize=formatFig)
-        plt.scatter(self.data.z_grid, self.data.r_grid, c=self.dydr)
+        plt.scatter(self.data.zGrid, self.data.rGrid, c=self.dydr)
         plt.xlabel(r'$Z$')
         plt.ylabel(r'$R$')
         cb = plt.colorbar()
