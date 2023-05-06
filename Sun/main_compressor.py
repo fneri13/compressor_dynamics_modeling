@@ -7,10 +7,10 @@ Created on Mon Apr 24 14:58:06 2023
 read the data from paraview csv output file. Still need to understand how the geometry works, in order to do circumferential average
 """
 #imports
-from Compressor import Compressor
 import matplotlib.pyplot as plt
-import sys
-sys.path.insert(1, '../..src/') #to add Classes folder
+from src.compressor import Compressor
+from src.grid import DataGrid
+from src.sun_model import SunModel
 
 
 # # instantiate the compressor

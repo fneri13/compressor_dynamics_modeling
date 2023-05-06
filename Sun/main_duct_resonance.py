@@ -8,9 +8,11 @@ Created on Wed May  3 09:29:59 2023
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.special import jv, yv, jvp, yvp
-import sys
-sys.path.insert(1, '../../src/') #to add Classes folder
+from src.compressor import Compressor
+from src.grid import DataGrid
+from src.sun_model import SunModel
 
+# a = Compressor('data/eckardt_impeller.csv')
 # #input data of the problem
 # r1 = 0.1826
 # r2 = 0.2487
@@ -121,8 +123,8 @@ sys.path.insert(1, '../../src/') #to add Classes folder
 #%%
 import matplotlib.pyplot as plt
 import numpy as np
-from SunModel import SunModel
-from Grid import AnnulusDuctGrid
+# from SunModel import SunModel
+# from Grid import DataGrid
 
 #input data
 r1 = 0.1826
@@ -137,9 +139,8 @@ rho = p/(R*T)
 a = np.sqrt(gmma*p/rho)
 
 #debug
-Nz = 5
-Nr = 5
-duct = AnnulusDuctGrid(0, L, r1, r2, Nz, Nr)
+Nz = 50
+Nr = 35
 
 #implement a constant uniform flow in the annulus duct
 density = np.random.rand(Nz, Nr)
@@ -154,16 +155,17 @@ for ii in range(0,Nz):
         radialVel[ii,jj] = 0
         tangentialVel[ii,jj] = 0
         pressure[ii,jj] = p
-        
 
-duct.AddDensityField(density)
-duct.AddVelocityField(axialVel, radialVel, tangentialVel)
-duct.AddPressureField(pressure)
-duct.ContourPlotDensity()
-duct.ContourPlotVelocity(1)
-duct.ContourPlotVelocity(2)
-duct.ContourPlotVelocity(3)
-duct.ContourPlotPressure()
+duct = DataGrid(0, L, r1, r2, Nz, Nr, density, axialVel, radialVel, tangentialVel, pressure)
+
+
+
+
+# duct.ContourPlotDensity()
+# duct.ContourPlotVelocity(1)
+# duct.ContourPlotVelocity(2)
+# duct.ContourPlotVelocity(3)
+# duct.ContourPlotPressure()
 
 
 sunObj = SunModel(duct)
@@ -175,9 +177,19 @@ sunObj.ComputeJacobianPhysical()
 
 sunObj.ShowJacobianPhysicalAxis()
 # sunObj.ShowJacobianSpectralAxis()
-sunObj.CreateAllPhysicalMatrices()
-sunObj.ComputeHatMatrices()
-sunObj.CreateAMatrixCoefficients()
+# sunObj.CreateAllPhysicalMatrices()
+# sunObj.ComputeHatMatrices()
+# sunObj.CreateAMatrixCoefficients()
+sunObj.AddAMatrixToNodes()
+sunObj.AddBMatrixToNodes()
+sunObj.AddCMatrixToNodes()
+sunObj.AddEMatrixToNodes()
+sunObj.AddRMatrixToNodes()
+sunObj.AddHatMatricesToNodes()
+check = sunObj.CheckGradients() #this should return always true for a good implemented gradient method
+
+
+
 
 #%% time prediction for SVD computation
 # import time

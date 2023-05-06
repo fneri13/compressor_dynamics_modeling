@@ -11,8 +11,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.linalg import det
 from scipy.special import chebyt
-import sys
-sys.path.insert(1, '../../src/') #to add Classes folder
+from src.compressor import Compressor
+from src.grid import DataGrid
+from src.sun_model import SunModel
 
 
 # #show the basis functions

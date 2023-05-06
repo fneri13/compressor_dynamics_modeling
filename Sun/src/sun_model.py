@@ -6,9 +6,9 @@ Created on Wed May  3 15:32:43 2023
 """
 
 import numpy as np
-import pandas as pd
 import matplotlib.pyplot as plt
-from Grid import Node, AnnulusDuctGrid
+from src.grid import DataGrid
+from src.general_functions import JacobianTransform
 
 plt.rc('text')      
 plt.rc('xtick',labelsize=10)
@@ -210,11 +210,16 @@ class SunModel:
         if you need, just drag it out and use it how you want
         """
         #grids
-        Z = self.data.z_grid
-        R = self.data.r_grid
-        X = self.dataSpectral.z_grid
-        Y = self.dataSpectral.r_grid
+        Z = self.data.zGrid
+        R = self.data.rGrid
+        X = self.dataSpectral.zGrid
+        Y = self.dataSpectral.rGrid
         self.dxdz, self.dxdr, self.dydz, self.dydr = JacobianTransform(X,Y,Z,R)
+        for ii in range(0,self.data.nAxialNodes):
+            for jj in range(0,self.data.nRadialNodes):
+                #add the gradients information to every node
+                self.data.dataSet[ii,jj].AddJacobianGradients(self.dxdz[ii,jj], self.dxdr[ii,jj], self.dydz[ii,jj], self.dydr[ii,jj])
+        
     
     def ComputeJacobianPhysical(self):
         """
@@ -223,17 +228,21 @@ class SunModel:
         if you need, just drag it out and use it how you want
         """
         #grids
-        Z = self.data.z_grid
-        R = self.data.r_grid
-        X = self.dataSpectral.z_grid
-        Y = self.dataSpectral.r_grid
+        Z = self.data.zGrid
+        R = self.data.rGrid
+        X = self.dataSpectral.zGrid
+        Y = self.dataSpectral.rGrid
         self.dzdx, self.dzdy, self.drdx, self.drdy = JacobianTransform(Z,R,X,Y)
-        print('you should check that the derivatives are indeed opposites')
+        for ii in range(0,self.data.nAxialNodes):
+            for jj in range(0,self.data.nRadialNodes):
+                #add the inverse gradients information to every node
+                self.data.dataSet[ii,jj].AddInverseJacobianGradients(self.dzdx[ii,jj], self.dzdy[ii,jj], self.drdx[ii,jj], self.drdy[ii,jj])
+        
         
     
     def ShowJacobianSpectralAxis(self, formatFig=(10,6)):
         plt.figure(figsize=formatFig)
-        plt.scatter(self.dataSpectral.z_grid, self.dataSpectral.r_grid, c=self.dxdz)
+        plt.scatter(self.dataSpectral.zGrid, self.dataSpectral.rGrid, c=self.dxdz)
         plt.xlabel(r'$\xi$')
         plt.ylabel(r'$\eta$')
         plt.title(r'$\frac{\partial \xi}{\partial z}$')
@@ -241,7 +250,7 @@ class SunModel:
         cb.set_label(r'$\frac{\partial \xi}{\partial z}$')
         
         plt.figure(figsize=formatFig)
-        plt.scatter(self.dataSpectral.z_grid, self.dataSpectral.r_grid, c=self.dxdr)
+        plt.scatter(self.dataSpectral.zGrid, self.dataSpectral.rGrid, c=self.dxdr)
         plt.xlabel(r'$\xi$')
         plt.ylabel(r'$\eta$')
         cb = plt.colorbar()
@@ -249,7 +258,7 @@ class SunModel:
         cb.set_label(r'$\frac{\partial \xi}{\partial r}$')
         
         plt.figure(figsize=formatFig)
-        plt.scatter(self.dataSpectral.z_grid, self.dataSpectral.r_grid, c=self.dydz)
+        plt.scatter(self.dataSpectral.zGrid, self.dataSpectral.rGrid, c=self.dydz)
         plt.xlabel(r'$\xi$')
         plt.ylabel(r'$\eta$')
         cb = plt.colorbar()
@@ -257,7 +266,7 @@ class SunModel:
         cb.set_label(r'$\frac{\partial \eta}{\partial z}$')
         
         plt.figure(figsize=formatFig)
-        plt.scatter(self.dataSpectral.z_grid, self.dataSpectral.r_grid, c=self.dydr)
+        plt.scatter(self.dataSpectral.zGrid, self.dataSpectral.rGrid, c=self.dydr)
         plt.xlabel(r'$\xi$')
         plt.ylabel(r'$\eta$')
         cb = plt.colorbar()
@@ -266,7 +275,7 @@ class SunModel:
         
     def ShowJacobianPhysicalAxis(self, formatFig=(10,6)):
         plt.figure(figsize=formatFig)
-        plt.scatter(self.data.z_grid, self.data.r_grid, c=self.dxdz)
+        plt.scatter(self.data.zGrid, self.data.rGrid, c=self.dxdz)
         plt.xlabel(r'$Z$')
         plt.ylabel(r'$R$')
         plt.title(r'$\frac{\partial \xi}{\partial z}$')
@@ -274,7 +283,7 @@ class SunModel:
         cb.set_label(r'$\frac{\partial \xi}{\partial z}$')
         
         plt.figure(figsize=formatFig)
-        plt.scatter(self.data.z_grid, self.data.r_grid, c=self.dxdr)
+        plt.scatter(self.data.zGrid, self.data.rGrid, c=self.dxdr)
         plt.xlabel(r'$Z$')
         plt.ylabel(r'$R$')
         cb = plt.colorbar()
@@ -282,7 +291,7 @@ class SunModel:
         cb.set_label(r'$\frac{\partial \xi}{\partial r}$')
         
         plt.figure(figsize=formatFig)
-        plt.scatter(self.data.z_grid, self.data.r_grid, c=self.dydz)
+        plt.scatter(self.data.zGrid, self.data.rGrid, c=self.dydz)
         plt.xlabel(r'$Z$')
         plt.ylabel(r'$R$')
         cb = plt.colorbar()
@@ -290,7 +299,7 @@ class SunModel:
         cb.set_label(r'$\frac{\partial \eta}{\partial z}$')
         
         plt.figure(figsize=formatFig)
-        plt.scatter(self.data.z_grid, self.data.r_grid, c=self.dydr)
+        plt.scatter(self.data.zGrid, self.data.rGrid, c=self.dydr)
         plt.xlabel(r'$Z$')
         plt.ylabel(r'$R$')
         cb = plt.colorbar()
@@ -365,86 +374,212 @@ class SunModel:
     #             marker = print(self.data.grid[ii,jj].marker) #get the type of node
     #             self.data.grid[ii,jj].AddMatrixA()
                 
-            
+    def AddAMatrixToNodes(self):
+        #for every grid node, add the A matrix
+        for ii in range(0,self.data.nAxialNodes):
+            for jj in range(0,self.data.nRadialNodes):
+                A = np.eye(5)
+                self.data.dataSet[ii,jj].AddAMatrix(A)
+                
+    def AddBMatrixToNodes(self):
+        #for every grid node, add the B matrix
+        for ii in range(0,self.data.nAxialNodes):
+            for jj in range(0,self.data.nRadialNodes):
+                B = np.zeros((5,5))
+                
+                B[0,0] = self.data.dataSet[ii,jj].GetRadialVelocity()
+                B[1,1] = self.data.dataSet[ii,jj].GetRadialVelocity()
+                B[2,2] = self.data.dataSet[ii,jj].GetRadialVelocity()
+                B[3,3] = self.data.dataSet[ii,jj].GetRadialVelocity()
+                B[4,4] = self.data.dataSet[ii,jj].GetRadialVelocity()
+                
+                B[0,1] = self.data.dataSet[ii,jj].GetDensity()
+                B[1,4] = 1/self.data.dataSet[ii,jj].GetDensity()
+                B[4,1] = self.data.dataSet[ii,jj].GetPressure()*self.gmma
+                
+                self.data.dataSet[ii,jj].AddBMatrix(B)
+    
+    def AddCMatrixToNodes(self):
+        #for every grid node, add the C matrix
+        for ii in range(0,self.data.nAxialNodes):
+            for jj in range(0,self.data.nRadialNodes):
+                C = np.zeros((5,5))
+                
+                C[0,0] = self.data.dataSet[ii,jj].GetTangentialVelocity()
+                C[1,1] = self.data.dataSet[ii,jj].GetTangentialVelocity()
+                C[2,2] = self.data.dataSet[ii,jj].GetTangentialVelocity()
+                C[3,3] = self.data.dataSet[ii,jj].GetTangentialVelocity()
+                C[4,4] = self.data.dataSet[ii,jj].GetTangentialVelocity()
+                
+                C[0,2] = self.data.dataSet[ii,jj].GetDensity()
+                C[2,4] = 1/self.data.dataSet[ii,jj].GetDensity()
+                C[4,2] = self.data.dataSet[ii,jj].GetPressure()*self.gmma
+                
+                self.data.dataSet[ii,jj].AddCMatrix(C)
+    
+    def AddEMatrixToNodes(self):
+        #for every grid node, add the E matrix
+        for ii in range(0,self.data.nAxialNodes):
+            for jj in range(0,self.data.nRadialNodes):
+                E = np.zeros((5,5))
+                
+                E[0,0] = self.data.dataSet[ii,jj].GetAxialVelocity()
+                E[1,1] = self.data.dataSet[ii,jj].GetAxialVelocity()
+                E[2,2] = self.data.dataSet[ii,jj].GetAxialVelocity()
+                E[3,3] = self.data.dataSet[ii,jj].GetAxialVelocity()
+                E[4,4] = self.data.dataSet[ii,jj].GetAxialVelocity()
+                
+                E[0,3] = self.data.dataSet[ii,jj].GetDensity()
+                E[3,4] = 1/self.data.dataSet[ii,jj].GetDensity()
+                E[4,3] = self.data.dataSet[ii,jj].GetPressure()*self.gmma
+                
+                self.data.dataSet[ii,jj].AddEMatrix(E)
+                
+    def AddRMatrixToNodes(self):
+        #for every grid node, add the R matrix. This is still to be implemented with the correct gradients, and non-zero values in other cases
+        for ii in range(0,self.data.nAxialNodes):
+            for jj in range(0,self.data.nRadialNodes):
+                R = np.zeros((5,5))
+                
+                R[0,0] = self.data.dataSet[ii,jj].GetRadialVelocity()/self.data.dataSet[ii,jj].r
+                R[0,1] = self.data.dataSet[ii,jj].GetDensity()/self.data.dataSet[ii,jj].r
+                R[0,2] = 0
+                R[0,3] = 0 
+                R[0,4] = 0 
+                R[1,0] = 0
+                R[1,1] = 0
+                R[1,2] = 0
+                R[1,3] = 0
+                R[1,4] = 0
+                R[2,0] = 0
+                R[2,1] = 0 
+                R[2,2] = self.data.dataSet[ii,jj].GetRadialVelocity()/self.data.dataSet[ii,jj].r
+                R[2,3] = 0
+                R[2,4] = 0
+                R[3,:] = [0,0,0,0,0]
+                R[4,0] = 0
+                R[4,1] = self.data.dataSet[ii,jj].GetPressure()*self.gmma/self.data.dataSet[ii,jj].r
+                R[4,2] = 0
+                R[4,3] = 0
+                R[4,4] = self.gmma*self.data.dataSet[ii,jj].GetRadialVelocity()/self.data.dataSet[ii,jj].r
+                
+                self.data.dataSet[ii,jj].AddRMatrix(R)
+        
+    def AddHatMatricesToNodes(self):
+        #for every grid node, add the R matrix. This is still to be implemented with the correct gradients, and non-zero values in other cases
+        for ii in range(0,self.data.nAxialNodes):
+            for jj in range(0,self.data.nRadialNodes):
+                
+                Bhat = self.data.dataSet[ii,jj].B * self.data.dataSet[ii,jj].dxdr + \
+                        self.data.dataSet[ii,jj].E * self.data.dataSet[ii,jj].dxdz 
+                Ehat = self.data.dataSet[ii,jj].B * self.data.dataSet[ii,jj].dydr + \
+                        self.data.dataSet[ii,jj].E * self.data.dataSet[ii,jj].dydz
+                        
+                self.data.dataSet[ii,jj].AddHatMatrices(Bhat, Ehat)
+    
+    def CheckGradients(self):
+        test1 = True
+        for ii in range(0,self.data.nAxialNodes):
+            for jj in range(0,self.data.nRadialNodes):
+                if (self.data.dataSet[ii,jj].dxdz * self.data.dataSet[ii,jj].dzdx < 0.99 and \
+                    self.data.dataSet[ii,jj].dxdz * self.data.dataSet[ii,jj].dzdx > 0.01):
+                    test1 = False
+        
+        test2 = True
+        for ii in range(0,self.data.nAxialNodes):
+            for jj in range(0,self.data.nRadialNodes):
+                if (self.data.dataSet[ii,jj].dxdr * self.data.dataSet[ii,jj].drdx < 0.99 and \
+                    self.data.dataSet[ii,jj].dxdr * self.data.dataSet[ii,jj].drdx > 0.01):
+                    test2 = False
+        
+        test3 = True
+        for ii in range(0,self.data.nAxialNodes):
+            for jj in range(0,self.data.nRadialNodes):
+                if (self.data.dataSet[ii,jj].dydr * self.data.dataSet[ii,jj].drdy < 0.99 and \
+                    self.data.dataSet[ii,jj].dydr * self.data.dataSet[ii,jj].drdy > 0.01):
+                    test3 = False
+                    
+        test4 = True
+        for ii in range(0,self.data.nAxialNodes):
+            for jj in range(0,self.data.nRadialNodes):
+                if (self.data.dataSet[ii,jj].dydz * self.data.dataSet[ii,jj].dzdy < 0.99 and \
+                    self.data.dataSet[ii,jj].dydz * self.data.dataSet[ii,jj].dzdy > 0.01):
+                    test4 = False
+        
+        return [test1, test2, test3, test4]
         
         
                 
                 
+################################################################################################################################
+################################################################################################################################
+################################################################################################################################
     
   
     
   
-    
   
     
-  
+# # GENERAL FUNCTIONS USED IN THE CODE. THEY CAN BE ACCESSED ALSO FROM OUTSIDE, NOT EXCLUSIVELY BY CLASS MEMBERS  
+# def JacobianTransform(X,Y,Z,R):
+#     Nz, Nr = X.shape[0], X.shape[1]
     
-  
+#     #instantiate matrices
+#     dxdr = np.zeros((Nz, Nr))
+#     dxdz = np.zeros((Nz, Nr))
+#     dydr = np.zeros((Nz, Nr))
+#     dydz = np.zeros((Nz, Nr))
     
-  
+#     #2nd order central difference for the grid. First take care of the corners, then of the edges, and then of the central points
+#     for ii in range(0,Nz):
+#         for jj in range(0,Nr):
+#             if (ii==0 and jj==0): #lower-left corner
+#                 dxdz[ii,jj] = (X[ii+1,jj]-X[ii,jj])/(1*(Z[ii+1,jj]-Z[ii,jj]))
+#                 dxdr[ii,jj] = (X[ii,jj+1]-X[ii,jj])/(1*(R[ii,jj+1]-R[ii,jj]))
+#                 dydz[ii,jj] = (Y[ii+1,jj]-Y[ii,jj])/(1*(Z[ii+1,jj]-Z[ii,jj]))
+#                 dydr[ii,jj] = (Y[ii,jj+1]-Y[ii,jj])/(1*(R[ii,jj+1]-R[ii,jj]))
+#             elif (ii==Nz-1 and jj==0): #lower-right corner
+#                 dxdz[ii,jj] = (X[ii,jj]-X[ii-1,jj])/(1*(Z[ii,jj]-Z[ii-1,jj]))
+#                 dxdr[ii,jj] = (X[ii,jj+1]-X[ii,jj])/(1*(R[ii,jj+1]-R[ii,jj]))
+#                 dydz[ii,jj] = (Y[ii,jj]-Y[ii-1,jj])/(1*(Z[ii,jj]-Z[ii-1,jj]))
+#                 dydr[ii,jj] = (Y[ii,jj+1]-Y[ii,jj])/(1*(R[ii,jj+1]-R[ii,jj]))
+#             elif (ii==0 and jj==Nr-1): #upper-left corner
+#                 dxdz[ii,jj] = (X[ii+1,jj]-X[ii,jj])/(1*(Z[ii+1,jj]-Z[ii,jj]))
+#                 dxdr[ii,jj] = (X[ii,jj]-X[ii,jj-1])/(1*(R[ii,jj]-R[ii,jj-1]))
+#                 dydz[ii,jj] = (Y[ii+1,jj]-Y[ii,jj])/(1*(Z[ii+1,jj]-Z[ii,jj]))
+#                 dydr[ii,jj] = (Y[ii,jj]-Y[ii,jj-1])/(1*(R[ii,jj]-R[ii,jj-1]))
+#             elif (ii==Nz-1 and jj==Nr-1): #upper-right corner
+#                 dxdz[ii,jj] = (X[ii,jj]-X[ii-1,jj])/(1*(Z[ii,jj]-Z[ii-1,jj]))
+#                 dxdr[ii,jj] = (X[ii,jj]-X[ii,jj-1])/(1*(R[ii,jj]-R[ii,jj-1]))
+#                 dydz[ii,jj] = (Y[ii,jj]-Y[ii-1,jj])/(1*(Z[ii,jj]-Z[ii-1,jj]))
+#                 dydr[ii,jj] = (Y[ii,jj]-Y[ii,jj-1])/(1*(R[ii,jj]-R[ii,jj-1]))
+#             elif (ii==0): #left side
+#                 dxdz[ii,jj] = (X[ii+1,jj]-X[ii,jj])/(1*(Z[ii+1,jj]-Z[ii,jj]))
+#                 dxdr[ii,jj] = (X[ii,jj+1]-X[ii,jj-1])/((R[ii,jj+1]-R[ii,jj-1]))
+#                 dydz[ii,jj] = (Y[ii+1,jj]-Y[ii,jj])/(1*(Z[ii+1,jj]-Z[ii,jj]))
+#                 dydr[ii,jj] = (Y[ii,jj+1]-Y[ii,jj-1])/((R[ii,jj+1]-R[ii,jj-1]))
+#             elif (ii==Nz-1): #right side
+#                 dxdz[ii,jj] = (X[ii,jj]-X[ii-1,jj])/(1*(Z[ii,jj]-Z[ii-1,jj]))
+#                 dxdr[ii,jj] = (X[ii,jj+1]-X[ii,jj-1])/((R[ii,jj+1]-R[ii,jj-1]))
+#                 dydz[ii,jj] = (Y[ii,jj]-Y[ii-1,jj])/(1*(Z[ii,jj]-Z[ii-1,jj]))
+#                 dydr[ii,jj] = (Y[ii,jj+1]-Y[ii,jj-1])/((R[ii,jj+1]-R[ii,jj-1]))
+#             elif (jj==0): #lower side
+#                 dxdz[ii,jj] = (X[ii+1,jj]-X[ii-1,jj])/(1*(Z[ii+1,jj]-Z[ii-1,jj]))
+#                 dxdr[ii,jj] = (X[ii,jj+1]-X[ii,jj])/(1*(R[ii,jj+1]-R[ii,jj]))
+#                 dydz[ii,jj] = (Y[ii+1,jj]-Y[ii-1,jj])/(1*(Z[ii+1,jj]-Z[ii-1,jj]))
+#                 dydr[ii,jj] = (Y[ii,jj+1]-Y[ii,jj])/(1*(R[ii,jj+1]-R[ii,jj]))
+#             elif (jj==Nr-1): #upper side
+#                 dxdz[ii,jj] = (X[ii+1,jj]-X[ii-1,jj])/(1*(Z[ii+1,jj]-Z[ii-1,jj]))
+#                 dxdr[ii,jj] = (X[ii,jj]-X[ii,jj-1])/(1*(R[ii,jj]-R[ii,jj-1]))
+#                 dydz[ii,jj] = (Y[ii+1,jj]-Y[ii-1,jj])/(1*(Z[ii+1,jj]-Z[ii-1,jj]))
+#                 dydr[ii,jj] = (Y[ii,jj]-Y[ii,jj-1])/(1*(R[ii,jj]-R[ii,jj-1]))
+#             else: #internal points
+#                 dxdz[ii,jj] = (X[ii+1,jj]-X[ii-1,jj])/(1*(Z[ii+1,jj]-Z[ii-1,jj]))
+#                 dxdr[ii,jj] = (X[ii,jj+1]-X[ii,jj-1])/(1*(R[ii,jj+1]-R[ii,jj-1]))
+#                 dydz[ii,jj] = (Y[ii+1,jj]-Y[ii-1,jj])/(1*(Z[ii+1,jj]-Z[ii-1,jj]))
+#                 dydr[ii,jj] = (Y[ii,jj+1]-Y[ii,jj-1])/(1*(R[ii,jj+1]-R[ii,jj-1]))
     
-  
-    
-# GENERAL FUNCTIONS USED IN THE CODE. THEY CAN BE ACCESSED ALSO FROM OUTSIDE, NOT EXCLUSIVELY BY CLASS MEMBERS  
-def JacobianTransform(X,Y,Z,R):
-    Nz, Nr = X.shape[0], X.shape[1]
-    
-    #instantiate matrices
-    dxdr = np.zeros((Nz, Nr))
-    dxdz = np.zeros((Nz, Nr))
-    dydr = np.zeros((Nz, Nr))
-    dydz = np.zeros((Nz, Nr))
-    
-    #2nd order central difference for the grid. First take care of the corners, then of the edges, and then of the central points
-    for ii in range(0,Nz):
-        for jj in range(0,Nr):
-            if (ii==0 and jj==0): #lower-left corner
-                dxdz[ii,jj] = (X[ii+1,jj]-X[ii,jj])/(1*(Z[ii+1,jj]-Z[ii,jj]))
-                dxdr[ii,jj] = (X[ii,jj+1]-X[ii,jj])/(1*(R[ii,jj+1]-R[ii,jj]))
-                dydz[ii,jj] = (Y[ii+1,jj]-Y[ii,jj])/(1*(Z[ii+1,jj]-Z[ii,jj]))
-                dydr[ii,jj] = (Y[ii,jj+1]-Y[ii,jj])/(1*(R[ii,jj+1]-R[ii,jj]))
-            elif (ii==Nz-1 and jj==0): #lower-right corner
-                dxdz[ii,jj] = (X[ii,jj]-X[ii-1,jj])/(1*(Z[ii,jj]-Z[ii-1,jj]))
-                dxdr[ii,jj] = (X[ii,jj+1]-X[ii,jj])/(1*(R[ii,jj+1]-R[ii,jj]))
-                dydz[ii,jj] = (Y[ii,jj]-Y[ii-1,jj])/(1*(Z[ii,jj]-Z[ii-1,jj]))
-                dydr[ii,jj] = (Y[ii,jj+1]-Y[ii,jj])/(1*(R[ii,jj+1]-R[ii,jj]))
-            elif (ii==0 and jj==Nr-1): #upper-left corner
-                dxdz[ii,jj] = (X[ii+1,jj]-X[ii,jj])/(1*(Z[ii+1,jj]-Z[ii,jj]))
-                dxdr[ii,jj] = (X[ii,jj]-X[ii,jj-1])/(1*(R[ii,jj]-R[ii,jj-1]))
-                dydz[ii,jj] = (Y[ii+1,jj]-Y[ii,jj])/(1*(Z[ii+1,jj]-Z[ii,jj]))
-                dydr[ii,jj] = (Y[ii,jj]-Y[ii,jj-1])/(1*(R[ii,jj]-R[ii,jj-1]))
-            elif (ii==Nz-1 and jj==Nr-1): #upper-right corner
-                dxdz[ii,jj] = (X[ii,jj]-X[ii-1,jj])/(1*(Z[ii,jj]-Z[ii-1,jj]))
-                dxdr[ii,jj] = (X[ii,jj]-X[ii,jj-1])/(1*(R[ii,jj]-R[ii,jj-1]))
-                dydz[ii,jj] = (Y[ii,jj]-Y[ii-1,jj])/(1*(Z[ii,jj]-Z[ii-1,jj]))
-                dydr[ii,jj] = (Y[ii,jj]-Y[ii,jj-1])/(1*(R[ii,jj]-R[ii,jj-1]))
-            elif (ii==0): #left side
-                dxdz[ii,jj] = (X[ii+1,jj]-X[ii,jj])/(1*(Z[ii+1,jj]-Z[ii,jj]))
-                dxdr[ii,jj] = (X[ii,jj+1]-X[ii,jj-1])/(2*(R[ii,jj+1]-R[ii,jj-1]))
-                dydz[ii,jj] = (Y[ii+1,jj]-Y[ii,jj])/(1*(Z[ii+1,jj]-Z[ii,jj]))
-                dydr[ii,jj] = (Y[ii,jj+1]-Y[ii,jj-1])/(2*(R[ii,jj+1]-R[ii,jj-1]))
-            elif (ii==Nz-1): #right side
-                dxdz[ii,jj] = (X[ii,jj]-X[ii-1,jj])/(1*(Z[ii,jj]-Z[ii-1,jj]))
-                dxdr[ii,jj] = (X[ii,jj+1]-X[ii,jj-1])/(2*(R[ii,jj+1]-R[ii,jj-1]))
-                dydz[ii,jj] = (Y[ii,jj]-Y[ii-1,jj])/(1*(Z[ii,jj]-Z[ii-1,jj]))
-                dydr[ii,jj] = (Y[ii,jj+1]-Y[ii,jj-1])/(2*(R[ii,jj+1]-R[ii,jj-1]))
-            elif (jj==0): #lower side
-                dxdz[ii,jj] = (X[ii+1,jj]-X[ii-1,jj])/(2*(Z[ii+1,jj]-Z[ii-1,jj]))
-                dxdr[ii,jj] = (X[ii,jj+1]-X[ii,jj])/(1*(R[ii,jj+1]-R[ii,jj]))
-                dydz[ii,jj] = (Y[ii+1,jj]-Y[ii-1,jj])/(2*(Z[ii+1,jj]-Z[ii-1,jj]))
-                dydr[ii,jj] = (Y[ii,jj+1]-Y[ii,jj])/(1*(R[ii,jj+1]-R[ii,jj]))
-            elif (jj==Nr-1): #upper side
-                dxdz[ii,jj] = (X[ii+1,jj]-X[ii-1,jj])/(2*(Z[ii+1,jj]-Z[ii-1,jj]))
-                dxdr[ii,jj] = (X[ii,jj]-X[ii,jj-1])/(1*(R[ii,jj]-R[ii,jj-1]))
-                dydz[ii,jj] = (Y[ii+1,jj]-Y[ii-1,jj])/(2*(Z[ii+1,jj]-Z[ii-1,jj]))
-                dydr[ii,jj] = (Y[ii,jj]-Y[ii,jj-1])/(1*(R[ii,jj]-R[ii,jj-1]))
-            else: #internal points
-                dxdz[ii,jj] = (X[ii+1,jj]-X[ii-1,jj])/(2*(Z[ii+1,jj]-Z[ii-1,jj]))
-                dxdr[ii,jj] = (X[ii,jj+1]-X[ii,jj-1])/(2*(R[ii,jj+1]-R[ii,jj-1]))
-                dydz[ii,jj] = (Y[ii+1,jj]-Y[ii-1,jj])/(2*(Z[ii+1,jj]-Z[ii-1,jj]))
-                dydr[ii,jj] = (Y[ii,jj+1]-Y[ii,jj-1])/(2*(R[ii,jj+1]-R[ii,jj-1]))
-    
-    return dxdz, dxdr, dydz, dydr
+#     return dxdz, dxdr, dydz, dydr
 
 
 
