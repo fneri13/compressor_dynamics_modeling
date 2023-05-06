@@ -8,9 +8,11 @@ Created on Wed May  3 09:29:59 2023
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.special import jv, yv, jvp, yvp
-import sys
-sys.path.insert(1, '../../src/') #to add Classes folder
+from src.compressor import Compressor
+from src.grid import DataGrid
+from src.sun_model import SunModel
 
+a = Compressor('data/eckardt_impeller.csv')
 # #input data of the problem
 # r1 = 0.1826
 # r2 = 0.2487
@@ -121,8 +123,8 @@ sys.path.insert(1, '../../src/') #to add Classes folder
 #%%
 import matplotlib.pyplot as plt
 import numpy as np
-from SunModel import SunModel
-from Grid import DataGrid
+# from SunModel import SunModel
+# from Grid import DataGrid
 
 #input data
 r1 = 0.1826
@@ -137,8 +139,8 @@ rho = p/(R*T)
 a = np.sqrt(gmma*p/rho)
 
 #debug
-Nz = 5
-Nr = 7
+Nz = 50
+Nr = 35
 
 #implement a constant uniform flow in the annulus duct
 density = np.random.rand(Nz, Nr)
@@ -174,7 +176,7 @@ sunObj.ComputeJacobianSpectral()
 sunObj.ComputeJacobianPhysical()
 
 sunObj.ShowJacobianPhysicalAxis()
-sunObj.ShowJacobianSpectralAxis()
+# sunObj.ShowJacobianSpectralAxis()
 # sunObj.CreateAllPhysicalMatrices()
 # sunObj.ComputeHatMatrices()
 # sunObj.CreateAMatrixCoefficients()
