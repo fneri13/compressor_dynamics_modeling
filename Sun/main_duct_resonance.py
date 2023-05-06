@@ -12,7 +12,7 @@ from src.compressor import Compressor
 from src.grid import DataGrid
 from src.sun_model import SunModel
 
-a = Compressor('data/eckardt_impeller.csv')
+# a = Compressor('data/eckardt_impeller.csv')
 # #input data of the problem
 # r1 = 0.1826
 # r2 = 0.2487
