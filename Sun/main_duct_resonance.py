@@ -12,18 +12,17 @@ from src.compressor import Compressor
 from src.grid import DataGrid
 from src.sun_model import SunModel
 
-# a = Compressor('data/eckardt_impeller.csv')
-# #input data of the problem
-# r1 = 0.1826
-# r2 = 0.2487
-# M = 0.015
-# p = 100e3
-# T = 288
-# L = 0.08
-# R = 287
-# gmma = 1.4
-# rho = p/(R*T)
-# a = np.sqrt(gmma*p/rho)
+#input data of the problem
+r1 = 0.1826
+r2 = 0.2487
+M = 0.015
+p = 100e3
+T = 288
+L = 0.08
+R = 287
+gmma = 1.4
+rho = p/(R*T)
+a = np.sqrt(gmma*p/rho)
 
 # #radial cordinate array span
 # r = np.linspace(r1,r2,250)
@@ -38,12 +37,10 @@ from src.sun_model import SunModel
 # fig, ax = plt.subplots(2,2,figsize=(14,8))
 # ax[0,0].plot(x, J1, 'b')
 # ax[0,0].set_title(r'$J_{1}$')
-# # ax[0,0].set_xlabel(r'$x$')
 # ax[0,0].set_ylabel(r'$J_{1}$')
 # ax[0,0].set_ylim([-1,1])
 # ax[0,1].plot(x, N1, 'r')
 # ax[0,1].set_title(r'$Y_{1}$')
-# # ax[0,1].set_xlabel(r'$x$')
 # ax[0,1].set_ylabel(r'$Y_{1}$')
 # ax[0,1].set_ylim([-1,1])
 # ax[1,0].plot(x, J1d, 'b')
@@ -81,8 +78,8 @@ from src.sun_model import SunModel
 # ax.set_ylabel(r'$\det{A}$')
 # ax.legend()
 
-# #something is not clear
-# omega = a*np.sqrt(((1-M**2)*m*np.pi/L)**2 + (1-M**2)*lambda_mn**2) #alpha is the number of the iegenvalue
+# #this is valid only for the first frequency, then you need to modify omega evaluation
+# omega = a*np.sqrt(((1-M**2)*m*np.pi/L)**2 + (1-M**2)*lambda_mn**2) #alpha is the number of the eigenvalue
 # fig, ax = plt.subplots(figsize=(10,7))
 # ax.plot(omega, np.abs(det))
 # ax.set_title('determinant value')
@@ -91,56 +88,13 @@ from src.sun_model import SunModel
 # ax.set_ylabel(r'$\det{A}$')
 # ax.legend()
 
-# #%%
-# from Grid import Node, AnnulusDuctGrid
-# #debug
-# Nz = 100
-# Nr = 60
-# duct = AnnulusDuctGrid(r1, r2, L, Nz, Nr)
 
-# density = np.random.rand(Nz, Nr)
-# axialVel = np.random.rand(Nz, Nr)
-# radialVel = np.random.rand(Nz, Nr)
-# tangentialVel = np.random.rand(Nz, Nr)
-# pressure = np.random.rand(Nz, Nr)
-# for ii in range(0,Nz):
-#     for jj in range(0,Nr):
-#         density[ii,jj] = rho
-#         axialVel[ii,jj] = M*a
-#         radialVel[ii,jj] = 0
-#         tangentialVel[ii,jj] = 0
-#         pressure[ii,jj] = p
-        
-# duct.AddDensityField(density)
-# duct.AddVelocityField(axialVel, radialVel, tangentialVel)
-# duct.AddPressureField(pressure)
-# duct.ContourPlotDensity()
-# duct.ContourPlotVelocity(1)
-# duct.ContourPlotVelocity(2)
-# duct.ContourPlotVelocity(3)
-# duct.ContourPlotPressure()
 
-#%%
-import matplotlib.pyplot as plt
-import numpy as np
-# from SunModel import SunModel
-# from Grid import DataGrid
+#%%#computational model
 
-#input data
-r1 = 0.1826
-r2 = 0.2487
-M = 0.015
-p = 100e3
-T = 288
-L = 0.08
-R = 287
-gmma = 1.4
-rho = p/(R*T)
-a = np.sqrt(gmma*p/rho)
-
-#debug
-Nz = 50
-Nr = 35
+#number of grid nodes in the computational domain
+Nz = 20
+Nr = 15
 
 #implement a constant uniform flow in the annulus duct
 density = np.random.rand(Nz, Nr)
@@ -191,15 +145,21 @@ check = sunObj.CheckGradients() #this should return always true for a good imple
 
 
 
+
+sunObj.AddBoundaryConditions() #this will be used after spectral differentiation
+
+
+
+
 #%% time prediction for SVD computation
 # import time
-# from SunModel import SunModel
+
 
 # start_time = time.time()
-# sunObj.ComputeSVD(omega_domain=[-10,10,-10,10], grid_omega=[50,50])
+# sunObj.ComputeSVD(omega_domain=[-10,10,-10,10], grid_omega=[5 , 5])
 # end_time = time.time()
 # print('time %.2f s' %(end_time-start_time))
-# sunObj.PlotInverseConditionNumber()
+# sunObj.PlotInverseConditionNumber(save_filename = 'chi_map')
 
 
 

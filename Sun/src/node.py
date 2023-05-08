@@ -89,4 +89,15 @@ class Node:
     def AddHatMatrices(self,Bhat,Ehat):
         self.Bhat, self.Ehat = Bhat, Ehat
         
+    def ApplyInletCondition(self):
+        print('INLET condition virtually applied. (To be implemented when the full stability matrix will be ready)')
+    
+    def ApplyOutletCondition(self):
+        print('OUTLET condition virtually applied. (To be implemented when the full stability matrix will be ready)')
+        
+    def ApplyWallCondition(self, flag='euler'):
+        if flag=='euler':
+            print('EULER WALL condition virtually applied. (To be implemented when the full stability matrix will be ready)')
+        else:
+            raise Exception('Apply a correct wall boundary condition')
 
