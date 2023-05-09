@@ -555,20 +555,33 @@ class SunModel:
         x = self.dataSpectral.z
         y = self.dataSpectral.r
         
-        #compute the spectral Matrices with Bayliss formulation
+        #compute the spectral Matrices for x and y direction with the Bayliss formulation
         Dx = ChebyshevDerivativeMatrixBayliss(x)
         Dy = ChebyshevDerivativeMatrixBayliss(y)
         
-        #now, every node will see its Bhat and Ehat equations modified for the effect of these differentiations
-        #we need to one differentiation for every column:
+        self.Q = np.zeros((self.nPoints*5, self.nPoints*5)) #instantiate the full matrix, that will be filled in blocks
+        for ii in range(0,self.dataSpectral.nAxialNodes):
+            for jj in range(0,self.dataSpectral.nRadialNodes):
+                counter = jj+self.dataSpectral.nAxialNodes*ii
+                B_ij = self.data.dataSet[ii,jj].Bhat #Bhat matrix of the ij node
+                E_ij = self.data.dataSet[ii,jj].Ehat #Ehat matrix of the ij node
+                
+                #it is not correct yet, but the road is this one. for every node ij on the grid, add the relevant terms to the big Q block matrix!
+                for m in range(0,self.dataSpectral.nAxialNodes):
+                    tmp = Dx[m,jj]*B_ij #5x5 matrix to be added to a certain block of Q
+                    row = ii*5
+                    column = m*5
+                    self.AddToQ(tmp, row, column)
+                
+                # for n in range(0,self.dataSpectral.nRadialNodes):
+                #     tmp = Dy[n,jj]*E_ij
+                #     self.AddToQ(tmp,ii,jj)
         
-        B_rho = np.zeros((self.dataSpectral.nAxialNodes, self.dataSpectral.nAxialNodes))
-        rho_vec = np.zeros(self.dataSpectral.nAxialNodes)
-        for jj in range(0,self.dataSpectral.nRadialNodes):
-            for ii in range(0,self.dataSpectral.nAxialNodes):
-                B_rho[ii,ii*5:(ii+1)*5] = self.data.dataSet[ii,jj].Bhat[0,:]
-                rho_vec[ii] = self.data.dataSet[ii,jj].density                
-        
+    def AddToQ(self, block, row, column):
+        """
+        add elements to the stability matrix
+        """
+        self.Q[row:row+5, column:column+5] += block
             
         
     def AddBoundaryConditions(self):

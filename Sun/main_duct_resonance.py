@@ -123,13 +123,13 @@ duct = DataGrid(0, L, r1, r2, Nz, Nr, density, axialVel, radialVel, tangentialVe
 
 
 sunObj = SunModel(duct)
-sunObj.ShowPhysicalGrid()
+# sunObj.ShowPhysicalGrid()
 sunObj.ComputeSpectralGrid()
-sunObj.ShowSpectralGrid()
+# sunObj.ShowSpectralGrid()
 sunObj.ComputeJacobianSpectral()
 sunObj.ComputeJacobianPhysical()
 
-sunObj.ShowJacobianPhysicalAxis()
+# sunObj.ShowJacobianPhysicalAxis()
 # sunObj.ShowJacobianSpectralAxis()
 # sunObj.CreateAllPhysicalMatrices()
 # sunObj.ComputeHatMatrices()
@@ -142,7 +142,7 @@ sunObj.AddEMatrixToNodes()
 sunObj.AddRMatrixToNodes()
 sunObj.AddHatMatricesToNodes()
 check = sunObj.CheckGradients() #this should return always true for a good implemented gradient method
-# sunObj.ApplySpectralDifferentiation()
+sunObj.ApplySpectralDifferentiation()
 # sunObj.AddBoundaryConditions() #this will be used after spectral differentiation
 
 
