@@ -134,19 +134,16 @@ sunObj.ShowJacobianPhysicalAxis()
 # sunObj.CreateAllPhysicalMatrices()
 # sunObj.ComputeHatMatrices()
 # sunObj.CreateAMatrixCoefficients()
-sunObj.AddAMatrixToNodes()
+omega = 1+1j
+sunObj.AddAMatrixToNodes(omega)
 sunObj.AddBMatrixToNodes()
 sunObj.AddCMatrixToNodes()
 sunObj.AddEMatrixToNodes()
 sunObj.AddRMatrixToNodes()
 sunObj.AddHatMatricesToNodes()
 check = sunObj.CheckGradients() #this should return always true for a good implemented gradient method
-
-
-
-
-
-sunObj.AddBoundaryConditions() #this will be used after spectral differentiation
+# sunObj.ApplySpectralDifferentiation()
+# sunObj.AddBoundaryConditions() #this will be used after spectral differentiation
 
 
 
@@ -160,9 +157,6 @@ sunObj.AddBoundaryConditions() #this will be used after spectral differentiation
 # end_time = time.time()
 # print('time %.2f s' %(end_time-start_time))
 # sunObj.PlotInverseConditionNumber(save_filename = 'chi_map')
-
-
-
 
 
 
