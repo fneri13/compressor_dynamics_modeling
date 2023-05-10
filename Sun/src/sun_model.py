@@ -561,6 +561,7 @@ class SunModel:
         
         self.Q = np.zeros((self.nPoints*5, self.nPoints*5), dtype=complex) #instantiate the full matrix, that will be filled in blocks
         node_counter = 0
+        #be careful to the direction m-j. maybe it is worth to just translate everything
         for ii in range(0,self.dataSpectral.nAxialNodes):
             for jj in range(0,self.dataSpectral.nRadialNodes):
                 # node_counter = jj+self.dataSpectral.nAxialNodes*ii
@@ -576,13 +577,13 @@ class SunModel:
                 
                 #apply the same in the other direction
                 for n in range(0,self.dataSpectral.nAxialNodes):
-                    tmp = Dy[ii,n]*E_ij #5x5 matrix to be added to a certain block of Q
+                    tmp = Dx[ii,n]*E_ij #5x5 matrix to be added to a certain block of Q
                     row = node_counter
                     column = (ii*self.dataSpectral.nRadialNodes+n)*5
                     self.AddToQ(tmp, row, column)
                 
                 #add all the remaining terms on the diagonal
-                diag_block_ij = self.data.dataSet[ii,jj].A + self.data.dataSet[ii,jj].A + self.data.dataSet[ii,jj].C + self.data.dataSet[ii,jj].R
+                diag_block_ij = self.data.dataSet[ii,jj].A + self.data.dataSet[ii,jj].C + self.data.dataSet[ii,jj].R + self.data.dataSet[ii,jj].S
                 row = node_counter
                 column = node_counter
                 self.AddToQ(diag_block_ij, row, column)

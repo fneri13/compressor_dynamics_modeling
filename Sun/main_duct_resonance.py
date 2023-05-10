@@ -93,8 +93,8 @@ a = np.sqrt(gmma*p/rho)
 #%%#computational model
 
 #number of grid nodes in the computational domain
-Nz = 30
-Nr = 30
+Nz = 3
+Nr = 2
 
 #implement a constant uniform flow in the annulus duct
 density = np.random.rand(Nz, Nr)
