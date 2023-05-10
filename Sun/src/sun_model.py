@@ -556,47 +556,51 @@ class SunModel:
         y = self.dataSpectral.r
         
         #compute the spectral Matrices for x and y direction with the Bayliss formulation
-        Dx = ChebyshevDerivativeMatrixBayliss(x)
-        Dy = ChebyshevDerivativeMatrixBayliss(y)
+        Dx = ChebyshevDerivativeMatrixBayliss(x) #derivative operator in xi, transformed by z
+        Dy = ChebyshevDerivativeMatrixBayliss(y) #derivative operator in eta, transformed by r
         
         self.Q = np.zeros((self.nPoints*5, self.nPoints*5), dtype=complex) #instantiate the full matrix, that will be filled in blocks
         node_counter = 0
+        
         #be careful to the direction m-j. maybe it is worth to just translate everything
         for ii in range(0,self.dataSpectral.nAxialNodes):
             for jj in range(0,self.dataSpectral.nRadialNodes):
-                # node_counter = jj+self.dataSpectral.nAxialNodes*ii
-                B_ij = self.data.dataSet[ii,jj].Bhat #Bhat matrix of the ij node
-                E_ij = self.data.dataSet[ii,jj].Ehat #Ehat matrix of the ij node
+                B_ij = self.data.dataSet[ii,jj].Bhat #Bhat matrix of the ij node, where i is axial position, j is radial position
+                E_ij = self.data.dataSet[ii,jj].Ehat #Ehat matrix of the ij node, where i is axial position, j is radial position
                 
-                #it may be correct.
-                for m in range(0,self.dataSpectral.nRadialNodes):
-                    tmp = Dy[m,jj]*B_ij #5x5 matrix to be added to a certain block of Q
+                #first summation. Consider that in this code, m is in the range of axial nodes, first axis of the matrix (grid)
+                for m in range(0,self.dataSpectral.nAxialNodes):
+                    tmp = Dx[m,0]*B_ij #5x5 matrix to be added to a certain block of Q
                     row = node_counter
-                    column = (m*self.dataSpectral.nRadialNodes+jj)*5
+                    column = (m*self.dataSpectral.nRadialNodes + jj)*5 #this is the important point
+                    print('Node [i,j] = (%.1d,%.1d)' %(ii,jj))
+                    print('Element along i [m,j] = (%.1d,%.1d)' %(m,jj))
+                    print('[row,col] = (%.1d,%.1d)' %(row,column))
                     self.AddToQ(tmp, row, column)
+                    #this block should be correct, except for the derivative coefficients
                 
-                #apply the same in the other direction
-                for n in range(0,self.dataSpectral.nAxialNodes):
-                    tmp = Dx[ii,n]*E_ij #5x5 matrix to be added to a certain block of Q
+                #first summation. Consider that in this code, n is in the range of radial nodes, second axis of the matrix (grid)
+                for n in range(0,self.dataSpectral.nRadialNodes):
+                    tmp = Dy[0,n]*E_ij #5x5 matrix to be added to a certain block of Q
                     row = node_counter
-                    column = (ii*self.dataSpectral.nRadialNodes+n)*5
+                    column = (ii*self.dataSpectral.nRadialNodes + n)*5 #this is the important point
+                    print('Node [i,j] = (%.1d,%.1d)' %(ii,jj))
+                    print('Element along j [i,n] = (%.1d,%.1d)' %(ii,n))
+                    print('[row,col] = (%.1d,%.1d)' %(row,column))
                     self.AddToQ(tmp, row, column)
                 
                 #add all the remaining terms on the diagonal
-                diag_block_ij = self.data.dataSet[ii,jj].A + self.data.dataSet[ii,jj].C + self.data.dataSet[ii,jj].R + self.data.dataSet[ii,jj].S
+                diag_block_ij = self.data.dataSet[ii,jj].A + self.data.dataSet[ii,jj].C + self.data.dataSet[ii,jj].R 
                 row = node_counter
                 column = node_counter
                 self.AddToQ(diag_block_ij, row, column)
                 
-                node_counter += 5
+                node_counter += 5 #every node, shifts of 5 position in the row selection
                 
-                # for n in range(0,self.dataSpectral.nRadialNodes):
-                #     tmp = Dy[n,jj]*E_ij
-                #     self.AddToQ(tmp,ii,jj)
         
     def AddToQ(self, block, row, column):
         """
-        add elements to the stability matrix
+        add elements to the stability matrix specifying the first top-left element location
         """
         self.Q[row:row+5, column:column+5] += block
             

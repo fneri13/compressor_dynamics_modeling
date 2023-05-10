@@ -93,8 +93,8 @@ a = np.sqrt(gmma*p/rho)
 #%%#computational model
 
 #number of grid nodes in the computational domain
-Nz = 3
-Nr = 2
+Nz = 15
+Nr = 10
 
 #implement a constant uniform flow in the annulus duct
 density = np.random.rand(Nz, Nr)
@@ -123,17 +123,13 @@ duct = DataGrid(0, L, r1, r2, Nz, Nr, density, axialVel, radialVel, tangentialVe
 
 
 sunObj = SunModel(duct)
-# sunObj.ShowPhysicalGrid()
+sunObj.ShowPhysicalGrid()
 sunObj.ComputeSpectralGrid()
-# sunObj.ShowSpectralGrid()
+sunObj.ShowSpectralGrid()
 sunObj.ComputeJacobianSpectral()
 sunObj.ComputeJacobianPhysical()
 
-# sunObj.ShowJacobianPhysicalAxis()
-# sunObj.ShowJacobianSpectralAxis()
-# sunObj.CreateAllPhysicalMatrices()
-# sunObj.ComputeHatMatrices()
-# sunObj.CreateAMatrixCoefficients()
+sunObj.ShowJacobianPhysicalAxis()
 omega = 1+1j
 sunObj.AddAMatrixToNodes(omega)
 sunObj.AddBMatrixToNodes()
@@ -142,9 +138,9 @@ sunObj.AddEMatrixToNodes()
 sunObj.AddRMatrixToNodes()
 sunObj.AddHatMatricesToNodes()
 check = sunObj.CheckGradients() #this should return always true for a good implemented gradient method
-sunObj.ApplySpectralDifferentiation()
+# sunObj.ApplySpectralDifferentiation()
 # sunObj.AddBoundaryConditions() #this will be used after spectral differentiation
-u,s,v = np.linalg.svd(sunObj.Q)
+# u,s,v = np.linalg.svd(sunObj.Q)
 
 
 
@@ -158,9 +154,6 @@ u,s,v = np.linalg.svd(sunObj.Q)
 # end_time = time.time()
 # print('time %.2f s' %(end_time-start_time))
 # sunObj.PlotInverseConditionNumber(save_filename = 'chi_map')
-
-
-
 
 
 
