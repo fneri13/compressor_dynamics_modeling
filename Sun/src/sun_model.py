@@ -559,19 +559,35 @@ class SunModel:
         Dx = ChebyshevDerivativeMatrixBayliss(x)
         Dy = ChebyshevDerivativeMatrixBayliss(y)
         
-        self.Q = np.zeros((self.nPoints*5, self.nPoints*5)) #instantiate the full matrix, that will be filled in blocks
+        self.Q = np.zeros((self.nPoints*5, self.nPoints*5), dtype=complex) #instantiate the full matrix, that will be filled in blocks
+        node_counter = 0
         for ii in range(0,self.dataSpectral.nAxialNodes):
             for jj in range(0,self.dataSpectral.nRadialNodes):
-                counter = jj+self.dataSpectral.nAxialNodes*ii
+                # node_counter = jj+self.dataSpectral.nAxialNodes*ii
                 B_ij = self.data.dataSet[ii,jj].Bhat #Bhat matrix of the ij node
                 E_ij = self.data.dataSet[ii,jj].Ehat #Ehat matrix of the ij node
                 
-                #it is not correct yet, but the road is this one. for every node ij on the grid, add the relevant terms to the big Q block matrix!
-                for m in range(0,self.dataSpectral.nAxialNodes):
-                    tmp = Dx[m,jj]*B_ij #5x5 matrix to be added to a certain block of Q
-                    row = ii*5
-                    column = m*5
+                #it may be correct.
+                for m in range(0,self.dataSpectral.nRadialNodes):
+                    tmp = Dy[m,jj]*B_ij #5x5 matrix to be added to a certain block of Q
+                    row = node_counter
+                    column = (m*self.dataSpectral.nRadialNodes+jj)*5
                     self.AddToQ(tmp, row, column)
+                
+                #apply the same in the other direction
+                for n in range(0,self.dataSpectral.nAxialNodes):
+                    tmp = Dy[ii,n]*E_ij #5x5 matrix to be added to a certain block of Q
+                    row = node_counter
+                    column = (ii*self.dataSpectral.nRadialNodes+n)*5
+                    self.AddToQ(tmp, row, column)
+                
+                #add all the remaining terms on the diagonal
+                diag_block_ij = self.data.dataSet[ii,jj].A + self.data.dataSet[ii,jj].A + self.data.dataSet[ii,jj].C + self.data.dataSet[ii,jj].R
+                row = node_counter
+                column = node_counter
+                self.AddToQ(diag_block_ij, row, column)
+                
+                node_counter += 5
                 
                 # for n in range(0,self.dataSpectral.nRadialNodes):
                 #     tmp = Dy[n,jj]*E_ij

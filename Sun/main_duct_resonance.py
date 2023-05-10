@@ -93,8 +93,8 @@ a = np.sqrt(gmma*p/rho)
 #%%#computational model
 
 #number of grid nodes in the computational domain
-Nz = 20
-Nr = 15
+Nz = 30
+Nr = 30
 
 #implement a constant uniform flow in the annulus duct
 density = np.random.rand(Nz, Nr)
@@ -144,6 +144,7 @@ sunObj.AddHatMatricesToNodes()
 check = sunObj.CheckGradients() #this should return always true for a good implemented gradient method
 sunObj.ApplySpectralDifferentiation()
 # sunObj.AddBoundaryConditions() #this will be used after spectral differentiation
+u,s,v = np.linalg.svd(sunObj.Q)
 
 
 
