@@ -93,8 +93,8 @@ a = np.sqrt(gmma*p/rho)
 #%%#computational model
 
 #number of grid nodes in the computational domain
-Nz = 15
-Nr = 5
+Nz = 4
+Nr = 4
 
 #implement a constant uniform flow in the annulus duct
 density = np.random.rand(Nz, Nr)
@@ -114,15 +114,15 @@ duct = DataGrid(0, L, r1, r2, Nz, Nr, density, axialVel, radialVel, tangentialVe
 
 
 
-omega_range = np.linspace(5000, 35000, 100)
+omega_range = np.linspace(5000, 35000, 3)
 chi = np.zeros(len(omega_range))
+Q_container =[]
 for kk in range(0,len(omega_range)):
+    print('Round %.1d of %1.d' %(kk+1,len(omega_range)))
     sunObj = SunModel(duct)
     sunObj.ComputeSpectralGrid()
     sunObj.ComputeJacobianSpectral()
-    sunObj.ComputeJacobianPhysical()
     omega = omega_range[kk]
-    print(omega)
     sunObj.AddAMatrixToNodes(omega)
     sunObj.AddBMatrixToNodes()
     sunObj.AddCMatrixToNodes()
@@ -130,10 +130,24 @@ for kk in range(0,len(omega_range)):
     sunObj.AddRMatrixToNodes()
     sunObj.AddHatMatricesToNodes()
     sunObj.ApplySpectralDifferentiation()
+    
     sunObj.AddRemainingMatrices()
+    
     sunObj.ApplyBoundaryConditions() #this will be used after spectral differentiation
+    Q_container.append(sunObj.Q)
     u,s,v = np.linalg.svd(sunObj.Q)
     chi[kk] = np.min(s)/np.max(s)
+    
+
+#debug
+for s in range(0,len(Q_container)):
+    fig, ax = plt.subplots(1, 2, figsize=(16, 8))
+    image1 = ax[0].imshow(Q_container[s].real)
+    ax[0].set_title('Q.real, omega: %.1d' % (omega_range[s]))
+    colorbar1 = fig.colorbar(image1, ax=ax[0])
+    image2 = ax[1].imshow(Q_container[s].imag)
+    ax[1].set_title('Q.imag, omega: %.1d' % (omega_range[s]))
+    colorbar2 = fig.colorbar(image2, ax=ax[1])
     
 
 

@@ -87,11 +87,11 @@ class Node:
                 print('z: %.2f' %(self.z), file=f)
                 print('-----------------------------------------------', file=f)
     
-    def AddAMatrix(self, A, omega):
+    def AddAMatrix(self, A):
         """
         It add the A matrix, already multiplied by omega and j at the node level
         """
-        self.A = 1j*omega*A
+        self.A = A
     
     def AddBMatrix(self,B):
         """
@@ -99,11 +99,11 @@ class Node:
         """
         self.B = B
         
-    def AddCMatrix(self, C, m):
+    def AddCMatrix(self, C):
         """
         It add the C matrix, already multiplied by m and j at the node level
         """
-        self.C = C*1j*m/self.r
+        self.C = C
     
     def AddEMatrix(self,E):
         """

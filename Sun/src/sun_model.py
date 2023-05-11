@@ -37,12 +37,6 @@ class SunModel:
         self.data = gridObject
         self.nPoints = (gridObject.nAxialNodes)*(gridObject.nRadialNodes)
         self.nInternalPoints = (gridObject.nAxialNodes-2)*(gridObject.nRadialNodes-2)
-        self.A = np.zeros((self.nPoints*5, self.nPoints*5))
-        self.B = np.zeros((self.nPoints*5, self.nPoints*5))
-        self.C = np.zeros((self.nPoints*5, self.nPoints*5))
-        self.E = np.zeros((self.nPoints*5, self.nPoints*5))
-        self.R = np.zeros((self.nPoints*5, self.nPoints*5))
-        self.S = np.zeros((self.nPoints*5, self.nPoints*5)) 
         self.gmma = 1.4 #cp/cv for standard air for the moment
     
     # def CreateAMatrix(self):
@@ -402,8 +396,8 @@ class SunModel:
         """
         for ii in range(0,self.data.nAxialNodes):
             for jj in range(0,self.data.nRadialNodes):
-                A = np.eye(5)
-                self.data.dataSet[ii,jj].AddAMatrix(A, omega)
+                A = np.eye(5, dtype=complex)*1j*omega
+                self.data.dataSet[ii,jj].AddAMatrix(A)
                 
     def AddBMatrixToNodes(self):
         """
@@ -411,7 +405,7 @@ class SunModel:
         """
         for ii in range(0,self.data.nAxialNodes):
             for jj in range(0,self.data.nRadialNodes):
-                B = np.zeros((5,5))
+                B = np.zeros((5,5), dtype=complex)
                 
                 B[0,0] = self.data.dataSet[ii,jj].GetRadialVelocity()
                 B[1,1] = self.data.dataSet[ii,jj].GetRadialVelocity()
@@ -431,7 +425,7 @@ class SunModel:
         """
         for ii in range(0,self.data.nAxialNodes):
             for jj in range(0,self.data.nRadialNodes):
-                C = np.zeros((5,5))
+                C = np.zeros((5,5), dtype=complex)
                 
                 C[0,0] = self.data.dataSet[ii,jj].GetTangentialVelocity()
                 C[1,1] = self.data.dataSet[ii,jj].GetTangentialVelocity()
@@ -443,7 +437,9 @@ class SunModel:
                 C[2,4] = 1/self.data.dataSet[ii,jj].GetDensity()
                 C[4,2] = self.data.dataSet[ii,jj].GetPressure()*self.gmma
                 
-                self.data.dataSet[ii,jj].AddCMatrix(C, m)
+                C = C*1j*m/self.data.dataSet[ii,jj].r
+                
+                self.data.dataSet[ii,jj].AddCMatrix(C)
     
     def AddEMatrixToNodes(self):
         """
@@ -451,7 +447,7 @@ class SunModel:
         """
         for ii in range(0,self.data.nAxialNodes):
             for jj in range(0,self.data.nRadialNodes):
-                E = np.zeros((5,5))
+                E = np.zeros((5,5), dtype=complex)
                 
                 E[0,0] = self.data.dataSet[ii,jj].GetAxialVelocity()
                 E[1,1] = self.data.dataSet[ii,jj].GetAxialVelocity()
@@ -471,7 +467,7 @@ class SunModel:
         """
         for ii in range(0,self.data.nAxialNodes):
             for jj in range(0,self.data.nRadialNodes):
-                R = np.zeros((5,5))
+                R = np.zeros((5,5), dtype=complex)
                 
                 R[0,0] = self.data.dataSet[ii,jj].GetRadialVelocity()/self.data.dataSet[ii,jj].r
                 R[0,1] = self.data.dataSet[ii,jj].GetDensity()/self.data.dataSet[ii,jj].r
@@ -642,19 +638,19 @@ class SunModel:
     
     def ApplyInletCondition(self, row):
         #the five equations pertaning to the boundary perturbation values are zero
-        self.Q[row:row+5,:] = np.zeros(self.Q[row:row+5,:].shape) #make it zero
-        self.Q[row:row+5,row:row+5] = np.eye(5)
+        self.Q[row:row+5,:] = np.zeros(self.Q[row:row+5,:].shape, dtype=complex) #make it zero
+        self.Q[row:row+5,row:row+5] = np.eye(5, dtype=complex)
         
     
     def ApplyOutletCondition(self, row):
         #the pressure equation pertaning to the boundary perturbation values is zero
-        self.Q[row+4,:] = np.zeros(self.Q[row+4,:].shape) #make it zero
+        self.Q[row+4,:] = np.zeros(self.Q[row+4,:].shape, dtype=complex) #make it zero
         self.Q[row+4,row+4] = 1
         
     def ApplyWallCondition(self, row):
         #the radial velocity must be zero. this is hardcoded for the duct, but it should be extended using the wall normal vector
         normal_wall = [1, 0, 0] #for this case specifically
-        self.Q[row+1,:] = np.zeros(self.Q[row+1,:].shape) #make it zero
+        self.Q[row+1,:] = np.zeros(self.Q[row+1,:].shape, dtype=complex) #make it zero
         self.Q[row+1,row:row+5] = [0, 1, 0, 0, 0]
         
 
