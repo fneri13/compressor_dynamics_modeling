@@ -95,8 +95,8 @@ a = np.sqrt(gmma*p/rho)                 #ideal speed of sound [m/s]
 #%%COMPUTATIONAL PART
 
 #number of grid nodes in the computational domain
-Nz = 25
-Nr = 25
+Nz = 15
+Nr = 5
 
 #implement a constant uniform flow in the annulus duct
 density = np.random.rand(Nz, Nr)
@@ -121,33 +121,33 @@ duct = DataGrid(0, L, r1, r2, Nz, Nr, density, axialVel, radialVel, tangentialVe
 
 
 
-omega_range = np.linspace(10000, 35000, 150) #domain of interest, omega on
-chi = np.zeros(len(omega_range))
-Q_container =[]
-for kk in range(0,len(omega_range)):
-    print('Round %.1d of %1.d' %(kk+1,len(omega_range)))
-    sunObj = SunModel(duct)
-    if kk==0:
-        sunObj.ShowPhysicalGrid(save_filename='physical_grid_%1.d_%1.d' %(Nz,Nr))
-    sunObj.ComputeSpectralGrid()
-    if kk==0:
-        sunObj.ShowSpectralGrid(save_filename='spectral_grid_%1.d_%1.d' %(Nz,Nr))
-    sunObj.ComputeJacobianSpectral()
-    if kk==0:
-        sunObj.ShowJacobianPhysicalAxis(save_filename='spectral_jacobian_%1.d_%1.d' %(Nz,Nr))
-    omega = omega_range[kk]
-    sunObj.AddAMatrixToNodes(omega)
-    sunObj.AddBMatrixToNodes()
-    sunObj.AddCMatrixToNodes()
-    sunObj.AddEMatrixToNodes()
-    sunObj.AddRMatrixToNodes()
-    sunObj.AddHatMatricesToNodes()
-    sunObj.ApplySpectralDifferentiation()
-    sunObj.AddRemainingMatrices()
-    sunObj.ApplyBoundaryConditions() 
-    # Q_container.append(sunObj.Q)
-    u,s,v = np.linalg.svd(sunObj.Q)
-    chi[kk] = np.min(s)/np.max(s)
+# omega_range = np.linspace(10000, 35000, 150) #domain of interest, omega on
+# chi = np.zeros(len(omega_range))
+# Q_container =[]
+# for kk in range(0,len(omega_range)):
+#     print('SVD %.1d of %1.d' %(kk+1,len(omega_range)))
+#     sunObj = SunModel(duct)
+#     if kk==0:
+#         sunObj.ShowPhysicalGrid(save_filename='physical_grid_%1.d_%1.d' %(Nz,Nr))
+#     sunObj.ComputeSpectralGrid()
+#     if kk==0:
+#         sunObj.ShowSpectralGrid(save_filename='spectral_grid_%1.d_%1.d' %(Nz,Nr))
+#     sunObj.ComputeJacobianSpectral()
+#     if kk==0:
+#         sunObj.ShowJacobianPhysicalAxis(save_filename='spectral_jacobian_%1.d_%1.d' %(Nz,Nr))
+#     omega = omega_range[kk]
+#     sunObj.AddAMatrixToNodes(omega)
+#     sunObj.AddBMatrixToNodes()
+#     sunObj.AddCMatrixToNodes()
+#     sunObj.AddEMatrixToNodes()
+#     sunObj.AddRMatrixToNodes()
+#     sunObj.AddHatMatricesToNodes()
+#     sunObj.ApplySpectralDifferentiation()
+#     sunObj.AddRemainingMatrices()
+#     sunObj.ApplyBoundaryConditions() 
+#     # Q_container.append(sunObj.Q)
+#     u,s,v = np.linalg.svd(sunObj.Q)
+#     chi[kk] = np.min(s)/np.max(s)
     
 
 #debug
@@ -160,22 +160,46 @@ for kk in range(0,len(omega_range)):
 #     ax[1].set_title('Q.imag, omega: %.1d' % (omega_range[s]))
 #     colorbar2 = fig.colorbar(image2, ax=ax[1])
     
+# plt.figure(figsize=(10,6))
+# plt.plot(omega_range,chi)
+# plt.ylabel(r'$\chi$')
+# plt.xlabel(r'$\omega \ [rad/s]$')
+# plt.savefig('pictures/chi_map_%1.d_%1.d.pdf' %(Nz,Nr),bbox_inches='tight')
+
+#%% 2D OMEGA DOMAIN
+omega_range_r = np.linspace(10000, 35000, 50) #domain of interest, omega on
+omega_range_i = np.linspace(-8000, 8000, 20) #domain of interest, omega on
+chi = np.zeros((len(omega_range_r),(len(omega_range_i))))
+for ii in range(0,len(omega_range_r)):
+    for jj in range(0,len(omega_range_i)):
+        print('SVD %.1d of %1.d' %(ii*len(omega_range_i)+1+jj,len(omega_range_r)*len(omega_range_i)))
+        sunObj = SunModel(duct)
+        if (ii==0 and jj==0):
+            sunObj.ShowPhysicalGrid(save_filename='physical_grid_%1.d_%1.d' %(Nz,Nr))
+        sunObj.ComputeSpectralGrid()
+        if (ii==0 and jj==0):
+            sunObj.ShowSpectralGrid(save_filename='spectral_grid_%1.d_%1.d' %(Nz,Nr))
+        sunObj.ComputeJacobianSpectral()
+        if (ii==0 and jj==0):
+            sunObj.ShowJacobianPhysicalAxis(save_filename='spectral_jacobian_%1.d_%1.d' %(Nz,Nr))
+        omega = omega_range_r[ii]+1j*omega_range_i[jj]
+        sunObj.AddAMatrixToNodes(omega)
+        sunObj.AddBMatrixToNodes()
+        sunObj.AddCMatrixToNodes()
+        sunObj.AddEMatrixToNodes()
+        sunObj.AddRMatrixToNodes()
+        sunObj.AddHatMatricesToNodes()
+        sunObj.ApplySpectralDifferentiation()
+        sunObj.AddRemainingMatrices()
+        sunObj.ApplyBoundaryConditions() 
+        u,s,v = np.linalg.svd(sunObj.Q)
+        chi[ii,jj] = np.min(s)/np.max(s)
+
+OM_I, OM_R = np.meshgrid(omega_range_i, omega_range_r)
 plt.figure(figsize=(10,6))
-plt.plot(omega_range,chi)
-plt.ylabel(r'$\chi$')
-plt.xlabel(r'$\omega \ [rad/s]$')
-plt.savefig('pictures/chi_map_%1.d_%1.d' %(Nz,Nr),bbox_inches='tight')
-
-
-#%% time prediction for SVD computation
-# import time
-
-
-# start_time = time.time()
-# sunObj.ComputeSVD(omega_domain=[-10,10,-10,10], grid_omega=[5 , 5])
-# end_time = time.time()
-# print('time %.2f s' %(end_time-start_time))
-# sunObj.PlotInverseConditionNumber(save_filename = 'chi_map')
-
-
-
+plt.contourf(OM_R,OM_I,chi)
+plt.ylabel(r'$\omega_{i}$')
+plt.xlabel(r'$\omega_{r}$')
+plt.colorbar()
+plt.savefig('pictures/chi_2D_map_%1.d_%1.d.pdf' %(Nz,Nr),bbox_inches='tight')
+ 
