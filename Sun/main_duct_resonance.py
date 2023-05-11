@@ -94,7 +94,7 @@ a = np.sqrt(gmma*p/rho)
 
 #number of grid nodes in the computational domain
 Nz = 15
-Nr = 10
+Nr = 5
 
 #implement a constant uniform flow in the annulus duct
 density = np.random.rand(Nz, Nr)
@@ -114,34 +114,27 @@ duct = DataGrid(0, L, r1, r2, Nz, Nr, density, axialVel, radialVel, tangentialVe
 
 
 
-
-# duct.ContourPlotDensity()
-# duct.ContourPlotVelocity(1)
-# duct.ContourPlotVelocity(2)
-# duct.ContourPlotVelocity(3)
-# duct.ContourPlotPressure()
-
-
-sunObj = SunModel(duct)
-sunObj.ShowPhysicalGrid()
-sunObj.ComputeSpectralGrid()
-sunObj.ShowSpectralGrid()
-sunObj.ComputeJacobianSpectral()
-sunObj.ComputeJacobianPhysical()
-
-sunObj.ShowJacobianPhysicalAxis()
-omega = 1+1j
-sunObj.AddAMatrixToNodes(omega)
-sunObj.AddBMatrixToNodes()
-sunObj.AddCMatrixToNodes()
-sunObj.AddEMatrixToNodes()
-sunObj.AddRMatrixToNodes()
-sunObj.AddHatMatricesToNodes()
-check = sunObj.CheckGradients() #this should return always true for a good implemented gradient method
-# sunObj.ApplySpectralDifferentiation()
-# sunObj.AddBoundaryConditions() #this will be used after spectral differentiation
-# u,s,v = np.linalg.svd(sunObj.Q)
-
+omega_range = np.linspace(5000, 35000, 100)
+chi = np.zeros(len(omega_range))
+for kk in range(0,len(omega_range)):
+    sunObj = SunModel(duct)
+    sunObj.ComputeSpectralGrid()
+    sunObj.ComputeJacobianSpectral()
+    sunObj.ComputeJacobianPhysical()
+    omega = omega_range[kk]
+    print(omega)
+    sunObj.AddAMatrixToNodes(omega)
+    sunObj.AddBMatrixToNodes()
+    sunObj.AddCMatrixToNodes()
+    sunObj.AddEMatrixToNodes()
+    sunObj.AddRMatrixToNodes()
+    sunObj.AddHatMatricesToNodes()
+    sunObj.ApplySpectralDifferentiation()
+    sunObj.AddRemainingMatrices()
+    sunObj.ApplyBoundaryConditions() #this will be used after spectral differentiation
+    u,s,v = np.linalg.svd(sunObj.Q)
+    chi[kk] = np.min(s)/np.max(s)
+    
 
 
 

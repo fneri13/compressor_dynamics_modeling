@@ -548,7 +548,7 @@ class SunModel:
         
         return [test1, test2, test3, test4]
         
-    def ApplySpectralDifferentiation(self):
+    def ApplySpectralDifferentiation(self, verbose=False):
         #we need now to apply spectral differentiation, modifying all the matrices. 
        
         #the cordinates on the spectral grid determines the spectral matrix D
@@ -570,30 +570,35 @@ class SunModel:
                 
                 #first summation. Consider that in this code, m is in the range of axial nodes, first axis of the matrix (grid)
                 for m in range(0,self.dataSpectral.nAxialNodes):
-                    tmp = Dx[m,0]*B_ij #5x5 matrix to be added to a certain block of Q
+                    tmp = Dx[ii,m]*B_ij #5x5 matrix to be added to a certain block of Q
                     row = node_counter
                     column = (m*self.dataSpectral.nRadialNodes + jj)*5 #this is the important point
-                    print('Node [i,j] = (%.1d,%.1d)' %(ii,jj))
-                    print('Element along i [m,j] = (%.1d,%.1d)' %(m,jj))
-                    print('[row,col] = (%.1d,%.1d)' %(row,column))
+                    if verbose:
+                        print('Node [i,j] = (%.1d,%.1d)' %(ii,jj))
+                        print('Element along i [m,j] = (%.1d,%.1d)' %(m,jj))
+                        print('Derivative element [ii,m] = (%.1d,%.1d)' %(ii,m))
+                        print('[row,col] = (%.1d,%.1d)' %(row,column))
                     self.AddToQ(tmp, row, column)
-                    #this block should be correct, except for the derivative coefficients
+                    #this block should be correct
                 
                 #first summation. Consider that in this code, n is in the range of radial nodes, second axis of the matrix (grid)
                 for n in range(0,self.dataSpectral.nRadialNodes):
-                    tmp = Dy[0,n]*E_ij #5x5 matrix to be added to a certain block of Q
+                    tmp = Dy[jj,n]*E_ij #5x5 matrix to be added to a certain block of Q
                     row = node_counter
                     column = (ii*self.dataSpectral.nRadialNodes + n)*5 #this is the important point
-                    print('Node [i,j] = (%.1d,%.1d)' %(ii,jj))
-                    print('Element along j [i,n] = (%.1d,%.1d)' %(ii,n))
-                    print('[row,col] = (%.1d,%.1d)' %(row,column))
+                    if verbose:
+                        print('Node [i,j] = (%.1d,%.1d)' %(ii,jj))
+                        print('Element along j [i,n] = (%.1d,%.1d)' %(jj,n))
+                        print('Derivative element [jj,n] = (%.1d,%.1d)' %(jj,n))
+                        print('[row,col] = (%.1d,%.1d)' %(row,column))
                     self.AddToQ(tmp, row, column)
+                    #this block should be correct
                 
                 #add all the remaining terms on the diagonal
-                diag_block_ij = self.data.dataSet[ii,jj].A + self.data.dataSet[ii,jj].C + self.data.dataSet[ii,jj].R 
-                row = node_counter
-                column = node_counter
-                self.AddToQ(diag_block_ij, row, column)
+                # diag_block_ij = self.data.dataSet[ii,jj].A + self.data.dataSet[ii,jj].C + self.data.dataSet[ii,jj].R 
+                # row = node_counter
+                # column = node_counter
+                # self.AddToQ(diag_block_ij, row, column)
                 
                 node_counter += 5 #every node, shifts of 5 position in the row selection
                 
@@ -605,7 +610,7 @@ class SunModel:
         self.Q[row:row+5, column:column+5] += block
             
         
-    def AddBoundaryConditions(self):
+    def ApplyBoundaryConditions(self):
         """
         it applies the correct set of boundary conditions to all the points marked with a boundary marker. 
         The boundary conditions can be modified in a different method
@@ -613,12 +618,45 @@ class SunModel:
         for ii in range(0,self.data.nAxialNodes):
             for jj in range(0,self.data.nRadialNodes):
                 marker = self.data.dataSet[ii,jj].marker
+                counter = self.data.dataSet[ii,jj].nodeCounter
+                row = counter*5
                 if marker == 'inlet':
-                    self.data.dataSet[ii,jj].ApplyInletCondition()
-                if marker == 'outlet':
-                    self.data.dataSet[ii,jj].ApplyOutletCondition()
-                if (marker == 'hub' or marker == 'shroud'):
-                    self.data.dataSet[ii,jj].ApplyWallCondition('euler')
+                    self.ApplyInletCondition(row) #remove the rows from counter to counter +5
+                elif marker == 'outlet':
+                    self.ApplyOutletCondition(row) #remove the pressure equation from the outlet node
+                elif (marker == 'hub' or marker == 'shroud'):
+                    self.ApplyWallCondition(row) #remove the pressure equation from the outlet node
+                elif (marker != ''):
+                    raise Exception('Marker not recognized. Check the grid!')
+                    
+    def AddRemainingMatrices(self):
+        node_counter = 0
+        for ii in range(0,self.dataSpectral.nAxialNodes):
+            for jj in range(0,self.dataSpectral.nRadialNodes):
+        
+                #add all the remaining terms on the diagonal
+                diag_block_ij = self.data.dataSet[ii,jj].A + self.data.dataSet[ii,jj].C + self.data.dataSet[ii,jj].R 
+                row = node_counter
+                column = node_counter
+                self.AddToQ(diag_block_ij, row*5, column*5)
+    
+    def ApplyInletCondition(self, row):
+        #the five equations pertaning to the boundary perturbation values are zero
+        self.Q[row:row+5,:] = np.zeros(self.Q[row:row+5,:].shape) #make it zero
+        self.Q[row:row+5,row:row+5] = np.eye(5)
+        
+    
+    def ApplyOutletCondition(self, row):
+        #the pressure equation pertaning to the boundary perturbation values is zero
+        self.Q[row+4,:] = np.zeros(self.Q[row+4,:].shape) #make it zero
+        self.Q[row+4,row+4] = 1
+        
+    def ApplyWallCondition(self, row):
+        #the radial velocity must be zero. this is hardcoded for the duct, but it should be extended using the wall normal vector
+        normal_wall = [1, 0, 0] #for this case specifically
+        self.Q[row+1,:] = np.zeros(self.Q[row+1,:].shape) #make it zero
+        self.Q[row+1,row:row+5] = [0, 1, 0, 0, 0]
+        
 
         
         
