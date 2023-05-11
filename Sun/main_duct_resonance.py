@@ -93,8 +93,8 @@ a = np.sqrt(gmma*p/rho)
 #%%#computational model
 
 #number of grid nodes in the computational domain
-Nz = 20
-Nr = 15
+Nz = 4
+Nr = 4
 
 #implement a constant uniform flow in the annulus duct
 density = np.random.rand(Nz, Nr)
@@ -114,40 +114,41 @@ duct = DataGrid(0, L, r1, r2, Nz, Nr, density, axialVel, radialVel, tangentialVe
 
 
 
+omega_range = np.linspace(5000, 35000, 3)
+chi = np.zeros(len(omega_range))
+Q_container =[]
+for kk in range(0,len(omega_range)):
+    print('Round %.1d of %1.d' %(kk+1,len(omega_range)))
+    sunObj = SunModel(duct)
+    sunObj.ComputeSpectralGrid()
+    sunObj.ComputeJacobianSpectral()
+    omega = omega_range[kk]
+    sunObj.AddAMatrixToNodes(omega)
+    sunObj.AddBMatrixToNodes()
+    sunObj.AddCMatrixToNodes()
+    sunObj.AddEMatrixToNodes()
+    sunObj.AddRMatrixToNodes()
+    sunObj.AddHatMatricesToNodes()
+    sunObj.ApplySpectralDifferentiation()
+    
+    sunObj.AddRemainingMatrices()
+    
+    sunObj.ApplyBoundaryConditions() #this will be used after spectral differentiation
+    Q_container.append(sunObj.Q)
+    u,s,v = np.linalg.svd(sunObj.Q)
+    chi[kk] = np.min(s)/np.max(s)
+    
 
-# duct.ContourPlotDensity()
-# duct.ContourPlotVelocity(1)
-# duct.ContourPlotVelocity(2)
-# duct.ContourPlotVelocity(3)
-# duct.ContourPlotPressure()
-
-
-sunObj = SunModel(duct)
-sunObj.ShowPhysicalGrid()
-sunObj.ComputeSpectralGrid()
-sunObj.ShowSpectralGrid()
-sunObj.ComputeJacobianSpectral()
-sunObj.ComputeJacobianPhysical()
-
-sunObj.ShowJacobianPhysicalAxis()
-# sunObj.ShowJacobianSpectralAxis()
-# sunObj.CreateAllPhysicalMatrices()
-# sunObj.ComputeHatMatrices()
-# sunObj.CreateAMatrixCoefficients()
-sunObj.AddAMatrixToNodes()
-sunObj.AddBMatrixToNodes()
-sunObj.AddCMatrixToNodes()
-sunObj.AddEMatrixToNodes()
-sunObj.AddRMatrixToNodes()
-sunObj.AddHatMatricesToNodes()
-check = sunObj.CheckGradients() #this should return always true for a good implemented gradient method
-
-
-
-
-
-sunObj.AddBoundaryConditions() #this will be used after spectral differentiation
-
+#debug
+for s in range(0,len(Q_container)):
+    fig, ax = plt.subplots(1, 2, figsize=(16, 8))
+    image1 = ax[0].imshow(Q_container[s].real)
+    ax[0].set_title('Q.real, omega: %.1d' % (omega_range[s]))
+    colorbar1 = fig.colorbar(image1, ax=ax[0])
+    image2 = ax[1].imshow(Q_container[s].imag)
+    ax[1].set_title('Q.imag, omega: %.1d' % (omega_range[s]))
+    colorbar2 = fig.colorbar(image2, ax=ax[1])
+    
 
 
 
@@ -160,12 +161,6 @@ sunObj.AddBoundaryConditions() #this will be used after spectral differentiation
 # end_time = time.time()
 # print('time %.2f s' %(end_time-start_time))
 # sunObj.PlotInverseConditionNumber(save_filename = 'chi_map')
-
-
-
-
-
-
 
 
 

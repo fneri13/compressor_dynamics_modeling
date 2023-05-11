@@ -8,11 +8,17 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from src.node import Node
+from src.styles import *
+
+import os
+
+folder_name = 'pictures/'
+if not os.path.exists(folder_name):
+    os.makedirs(folder_name)
 
 class DataGrid():
     """
-    Class of Grid. It contains a grid of Node objects, on which every node has the properties that we need. Conserving the 
-    structured grid, so it will be easier to differentiate
+    Class of Grid. It contains a grid of Node objects, on which every node has the properties that we need.
     """
     def __init__(self, zmin, zmax, rmin, rmax, Nz, Nr, rho, vz, vr, vt, p, mode='default'):
         self.nAxialNodes = Nz
@@ -21,8 +27,7 @@ class DataGrid():
         if mode == 'default':
             self.z = np.linspace(zmin, zmax, Nz)
             self.r = np.linspace(rmin, rmax, Nr)
-        elif mode == 'gauss-lobatto':
-            #construct a gauss-lobatto grid for the spectral dataset
+        elif mode == 'gauss-lobatto': #construct a gauss-lobatto grid for the spectral dataset
             x = np.array(()) #xi direction
             y = np.array(()) #eta direction
             for i in range(0,self.nAxialNodes):
@@ -41,15 +46,15 @@ class DataGrid():
         for ii in range(0,Nz):
             for jj in range(0,Nr):
                 if ii==0:
-                    self.dataSet[ii,jj] = Node(self.z[ii],self.r[jj],rho[ii,jj], vz[ii,jj], vr[ii,jj], vt[ii,jj], p[ii,jj],'inlet', counter)
+                    self.dataSet[ii,jj] = Node(self.z[ii],self.r[jj],rho[ii,jj], vz[ii,jj], vr[ii,jj], vt[ii,jj], p[ii,jj],'inlet', counter, (ii,jj))
                 elif ii==Nz-1:
-                    self.dataSet[ii,jj] = Node(self.z[ii],self.r[jj],rho[ii,jj], vz[ii,jj], vr[ii,jj], vt[ii,jj], p[ii,jj],'outlet', counter)
+                    self.dataSet[ii,jj] = Node(self.z[ii],self.r[jj],rho[ii,jj], vz[ii,jj], vr[ii,jj], vt[ii,jj], p[ii,jj],'outlet', counter, (ii,jj))
                 elif jj==0 and ii!=0 and ii!=Nz-1:
-                    self.dataSet[ii,jj] = Node(self.z[ii],self.r[jj],rho[ii,jj], vz[ii,jj], vr[ii,jj], vt[ii,jj], p[ii,jj],'hub', counter)
+                    self.dataSet[ii,jj] = Node(self.z[ii],self.r[jj],rho[ii,jj], vz[ii,jj], vr[ii,jj], vt[ii,jj], p[ii,jj],'hub', counter, (ii,jj))
                 elif jj==Nr-1 and ii!=0 and ii!=Nz-1:
-                    self.dataSet[ii,jj] = Node(self.z[ii],self.r[jj],rho[ii,jj], vz[ii,jj], vr[ii,jj], vt[ii,jj], p[ii,jj],'shroud', counter)
+                    self.dataSet[ii,jj] = Node(self.z[ii],self.r[jj],rho[ii,jj], vz[ii,jj], vr[ii,jj], vt[ii,jj], p[ii,jj],'shroud', counter, (ii,jj))
                 elif ii!=0 and ii!=Nz-1 and jj!=0 and jj!=Nr-1:
-                    self.dataSet[ii,jj] = Node(self.z[ii],self.r[jj],rho[ii,jj], vz[ii,jj], vr[ii,jj], vt[ii,jj], p[ii,jj],'', counter)
+                    self.dataSet[ii,jj] = Node(self.z[ii],self.r[jj],rho[ii,jj], vz[ii,jj], vr[ii,jj], vt[ii,jj], p[ii,jj],'', counter, (ii,jj))
                 else:
                     raise ValueError("The constructor of the grid has some problems")
                 counter = counter + 1
@@ -63,26 +68,39 @@ class DataGrid():
 
         
     def PrintInfo(self, datafile='terminal'):
+        """
+        print information about the nodes
+        """
         for ii in range(0,self.nAxialNodes):
             for jj in range(0,self.nRadialNodes):
                 self.grid[ii,jj].PrintInfo(datafile)
     
     def AddDensityField(self, rho):
-        #structured density field to be added
+        """
+        add/overwrite the density field of the grid
+        """
         if (len(rho)!=self.nPoints):
             raise Exception('Error of length')
         self.density = rho
     
     def AddVelocityField(self, vz, vr, vtheta):
+        """
+        add/overwrite the velocity field of the grid
+        """
         self.axialVelocity = vz
         self.radialVelocity = vr
         self.tangentialVelocity = vtheta
     
     def AddPressureField(self, p):
-        #structured pressure field to be added
+        """
+        add/overwrite the pressure field of the grid
+        """
         self.pressure = p
     
-    def ContourPlotDensity(self, formatFig=(10,6)):
+    def ContourPlotDensity(self, formatFig=(10,6), save_filename=None):
+        """
+        contourf plot of the density
+        """
         plt.figure(figsize=formatFig)
         plt.contourf(self.zGrid, self.rGrid, self.density)
         plt.xlabel(r'$Z$')
@@ -90,10 +108,13 @@ class DataGrid():
         plt.title('Density')
         cb = plt.colorbar()
         cb.set_label(r'$\rho \ \ [-]$')
+        if save_filename !=None: plt.savefig(folder_name + save_filename + '.pdf' ,bbox_inches='tight')
         
-    def ContourPlotVelocity(self, direction=1,formatFig=(10,6)):
+    def ContourPlotVelocity(self, direction=1,formatFig=(10,6), save_filename=None):
+        """
+        contourf plot of the velocity. Direction variable select one of the velocity components
+        """
         if direction==1:
-            
             plt.figure(figsize=formatFig)
             plt.contourf(self.zGrid, self.rGrid, self.axialVelocity)
             plt.xlabel(r'$Z$')
@@ -101,8 +122,8 @@ class DataGrid():
             plt.title('Axial Velocity')
             cb = plt.colorbar()
             cb.set_label(r'$u_{z} \ \ [-]$')
+            if save_filename !=None: plt.savefig(folder_name + save_filename + '_01.pdf' ,bbox_inches='tight')
         elif direction==2:
-            
             plt.figure(figsize=formatFig)
             plt.contourf(self.zGrid, self.rGrid, self.radialVelocity)
             plt.xlabel(r'$Z$')
@@ -110,8 +131,8 @@ class DataGrid():
             plt.title('Radial Velocity')
             cb = plt.colorbar()
             cb.set_label(r'$u_{r} \ \ [-]$')
+            if save_filename !=None: plt.savefig(folder_name + save_filename + '_02.pdf' ,bbox_inches='tight')
         elif direction==3:
-            
             plt.figure(figsize=formatFig)
             plt.contourf(self.zGrid, self.rGrid, self.tangentialVelocity)
             plt.xlabel(r'$Z$')
@@ -119,10 +140,14 @@ class DataGrid():
             plt.title('Tangential Velocity')
             cb = plt.colorbar()
             cb.set_label(r'$u_{\theta} \ \ [-]$')
+            if save_filename !=None: plt.savefig(folder_name + save_filename + '_03.pdf' ,bbox_inches='tight')
         else:
-            raise ValueError('Insert a number from 1 to 3 to select the velocity component!')
+            raise ValueError('Insert a number from 1 to 3 to select a velocity component')
     
-    def ContourPlotPressure(self, formatFig=(10,6)):
+    def ContourPlotPressure(self, formatFig=(10,6), save_filename=None):
+        """
+        contourf plot of the pressure
+        """
         plt.figure(figsize=formatFig)
         plt.contourf(self.zGrid, self.rGrid, self.pressure)
         plt.xlabel(r'$Z$')
@@ -130,11 +155,12 @@ class DataGrid():
         plt.title('Pressure')
         cb = plt.colorbar()
         cb.set_label(r'$p \ \ [-]$')
+        if save_filename !=None: plt.savefig(folder_name + save_filename + '.pdf' ,bbox_inches='tight')
     
     def PhysicalToSpectralData(self):
         """
-        it returns a new object with the same data of the original one, but mapped to a spectral system of cordinates, on the gauss-lobatto 
-        cordinates between [-1,1] 
+        it returns a new Grid object with the same data of the original one, but with spectral cordinates, located on the gauss-lobatto 
+        points between -1 and 1 in both the directions. It conserves the same amount of grid nodes
         """
         x = np.array(()) #synonim for xi direction = corresponding to streamwise direction
         y = np.array(()) #synonim for eta direction = corresponding to spanwise direction
@@ -150,9 +176,9 @@ class DataGrid():
                               self.radialVelocity, self.tangentialVelocity, self.pressure, mode='gauss-lobatto')
         return newGridObj
     
-    def ShowGrid(self, formatFig=(10,6)):
+    def ShowGrid(self, formatFig=(10,6), save_filename=None):
         """
-        Show a scatter plots of the grid, with different colors for the different patches
+        Show a scatter plots of the grid, with different colors for the different zones
         """
         mark = np.empty((self.nAxialNodes, self.nRadialNodes), dtype=str)
         for ii in range(0,self.nAxialNodes):
@@ -179,12 +205,38 @@ class DataGrid():
         condition = mark == ''  # plot all the remaining internal points
         plt.scatter(self.zGrid[condition], self.rGrid[condition], c='black')
         plt.legend()
+        if save_filename !=None: plt.savefig(folder_name + save_filename + '.pdf' ,bbox_inches='tight')
+        
+    def GetDensity(self):
+        """
+        it returns the density 2D array corresponding to the nodes grid values
+        """
+        return self.density
+    
+    def GetAxialVelocity(self):
+        """
+        it returns the z-velocity 2D array corresponding to the nodes grid values
+        """
+        return self.axialVelocity
+    
+    def GetRadialVelocity(self):
+        """
+        it returns the r-velocity 2D array corresponding to the nodes grid values
+        """
+        return self.radialVelocity
+    
+    def GetTangentialVelocity(self):
+        """
+        it returns the theta-velocity 2D array corresponding to the nodes grid values
+        """
+        return self.tangentialVelocity
+    
+    def GetPressure(self):
+        """
+        it returns the pressure 2D array corresponding to the nodes grid values
+        """
+        return self.pressure
+        
+        
         
     
-    
-
-################################################################################################################################
-################################################################################################################################
-################################################################################################################################
-
-
