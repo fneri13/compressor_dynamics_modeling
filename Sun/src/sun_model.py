@@ -567,8 +567,8 @@ class SunModel:
                 #first summation. Consider that in this code, m is in the range of axial nodes, first axis of the matrix (grid)
                 for m in range(0,self.dataSpectral.nAxialNodes):
                     tmp = Dx[ii,m]*B_ij #5x5 matrix to be added to a certain block of Q
-                    row = node_counter
-                    column = (m*self.dataSpectral.nRadialNodes + jj)*5 #this is the important point
+                    row = node_counter #this selects the correct block along i
+                    column = (m*self.dataSpectral.nRadialNodes + jj)*5 #this is the important point, it selects the correct block along j
                     if verbose:
                         print('Node [i,j] = (%.1d,%.1d)' %(ii,jj))
                         print('Element along i [m,j] = (%.1d,%.1d)' %(m,jj))
@@ -632,9 +632,10 @@ class SunModel:
         
                 #add all the remaining terms on the diagonal
                 diag_block_ij = self.data.dataSet[ii,jj].A + self.data.dataSet[ii,jj].C + self.data.dataSet[ii,jj].R 
-                row = node_counter
-                column = node_counter
-                self.AddToQ(diag_block_ij, row*5, column*5)
+                row = node_counter*5
+                column = node_counter*5
+                self.AddToQ(diag_block_ij, row, column)
+                node_counter+=1
     
     def ApplyInletCondition(self, row):
         #the five equations pertaning to the boundary perturbation values are zero

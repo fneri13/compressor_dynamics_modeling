@@ -13,16 +13,18 @@ from src.grid import DataGrid
 from src.sun_model import SunModel
 
 #input data of the problem
-r1 = 0.1826
-r2 = 0.2487
-M = 0.015
-p = 100e3
-T = 288
-L = 0.08
-R = 287
-gmma = 1.4
-rho = p/(R*T)
-a = np.sqrt(gmma*p/rho)
+r1 = 0.1826                             #inner radius [m]
+r2 = 0.2487                             #outer radius [m]
+M = 0.015                               #Mach number
+p = 100e3                               #pressure [Pa]
+T = 288                                 #temperature [K]
+L = 0.08                                #length [m]
+R = 287                                 #air gas constant [kJ/kgK]
+gmma = 1.4                              #cp/cv ratio of air
+rho = p/(R*T)                           #density [kg/m3]
+a = np.sqrt(gmma*p/rho)                 #ideal speed of sound [m/s]
+
+#%% ANALYTICAL PART 
 
 # #radial cordinate array span
 # r = np.linspace(r1,r2,250)
@@ -90,11 +92,11 @@ a = np.sqrt(gmma*p/rho)
 
 
 
-#%%#computational model
+#%%COMPUTATIONAL PART
 
 #number of grid nodes in the computational domain
-Nz = 4
-Nr = 4
+Nz = 25
+Nr = 25
 
 #implement a constant uniform flow in the annulus duct
 density = np.random.rand(Nz, Nr)
@@ -104,24 +106,35 @@ tangentialVel = np.random.rand(Nz, Nr)
 pressure = np.random.rand(Nz, Nr)
 for ii in range(0,Nz):
     for jj in range(0,Nr):
+        #there could be a need for normalizing the data? (or normalizing the NS equations directly)
         density[ii,jj] = rho
+        # density[ii,jj] = 1
         axialVel[ii,jj] = M*a  
+        # axialVel[ii,jj] = 1  
         radialVel[ii,jj] = 0
         tangentialVel[ii,jj] = 0
         pressure[ii,jj] = p
+        # pressure[ii,jj] = 1
 
+#build a grid object
 duct = DataGrid(0, L, r1, r2, Nz, Nr, density, axialVel, radialVel, tangentialVel, pressure)
 
 
 
-omega_range = np.linspace(5000, 35000, 3)
+omega_range = np.linspace(10000, 35000, 150) #domain of interest, omega on
 chi = np.zeros(len(omega_range))
 Q_container =[]
 for kk in range(0,len(omega_range)):
     print('Round %.1d of %1.d' %(kk+1,len(omega_range)))
     sunObj = SunModel(duct)
+    if kk==0:
+        sunObj.ShowPhysicalGrid(save_filename='physical_grid_%1.d_%1.d' %(Nz,Nr))
     sunObj.ComputeSpectralGrid()
+    if kk==0:
+        sunObj.ShowSpectralGrid(save_filename='spectral_grid_%1.d_%1.d' %(Nz,Nr))
     sunObj.ComputeJacobianSpectral()
+    if kk==0:
+        sunObj.ShowJacobianPhysicalAxis(save_filename='spectral_jacobian_%1.d_%1.d' %(Nz,Nr))
     omega = omega_range[kk]
     sunObj.AddAMatrixToNodes(omega)
     sunObj.AddBMatrixToNodes()
@@ -130,26 +143,28 @@ for kk in range(0,len(omega_range)):
     sunObj.AddRMatrixToNodes()
     sunObj.AddHatMatricesToNodes()
     sunObj.ApplySpectralDifferentiation()
-    
     sunObj.AddRemainingMatrices()
-    
-    sunObj.ApplyBoundaryConditions() #this will be used after spectral differentiation
-    Q_container.append(sunObj.Q)
+    sunObj.ApplyBoundaryConditions() 
+    # Q_container.append(sunObj.Q)
     u,s,v = np.linalg.svd(sunObj.Q)
     chi[kk] = np.min(s)/np.max(s)
     
 
 #debug
-for s in range(0,len(Q_container)):
-    fig, ax = plt.subplots(1, 2, figsize=(16, 8))
-    image1 = ax[0].imshow(Q_container[s].real)
-    ax[0].set_title('Q.real, omega: %.1d' % (omega_range[s]))
-    colorbar1 = fig.colorbar(image1, ax=ax[0])
-    image2 = ax[1].imshow(Q_container[s].imag)
-    ax[1].set_title('Q.imag, omega: %.1d' % (omega_range[s]))
-    colorbar2 = fig.colorbar(image2, ax=ax[1])
+# for s in range(0,len(Q_container)):
+#     fig, ax = plt.subplots(1, 2, figsize=(16, 8))
+#     image1 = ax[0].imshow(Q_container[s].real)
+#     ax[0].set_title('Q.real, omega: %.1d' % (omega_range[s]))
+#     colorbar1 = fig.colorbar(image1, ax=ax[0])
+#     image2 = ax[1].imshow(Q_container[s].imag)
+#     ax[1].set_title('Q.imag, omega: %.1d' % (omega_range[s]))
+#     colorbar2 = fig.colorbar(image2, ax=ax[1])
     
-
+plt.figure(figsize=(10,6))
+plt.plot(omega_range,chi)
+plt.ylabel(r'$\chi$')
+plt.xlabel(r'$\omega \ [rad/s]$')
+plt.savefig('pictures/chi_map_%1.d_%1.d' %(Nz,Nr),bbox_inches='tight')
 
 
 #%% time prediction for SVD computation
