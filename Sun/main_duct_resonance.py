@@ -95,8 +95,8 @@ a = np.sqrt(gmma*p/rho)                 #ideal speed of sound [m/s]
 #%%COMPUTATIONAL PART
 
 #number of grid nodes in the computational domain
-Nz = 5
-Nr = 15
+Nz = 20
+Nr = 20
 
 #implement a constant uniform flow in the annulus duct
 density = np.random.rand(Nz, Nr)
@@ -167,8 +167,10 @@ duct = DataGrid(0, L, r1, r2, Nz, Nr, density, axialVel, radialVel, tangentialVe
 # plt.savefig('pictures/chi_map_%1.d_%1.d.pdf' %(Nz,Nr),bbox_inches='tight')
 
 #%% 2D OMEGA DOMAIN
-omega_range_r = np.linspace(10000, 35000, 100) #domain of interest, omega on
-omega_range_i = np.linspace(-8000, 8000, 50) #domain of interest, omega on
+omega_range_r = np.linspace(10000, 35000, 50) #domain of interest, omega on
+# omega_range_i = np.linspace(-8000, 8000, 50) #domain of interest, omega on
+omega_range_i = np.linspace(-10, 10, 3) #domain of interest, omega on
+
 chi = np.zeros((len(omega_range_r),(len(omega_range_i))))
 for ii in range(0,len(omega_range_r)):
     for jj in range(0,len(omega_range_i)):
