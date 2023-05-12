@@ -39,147 +39,6 @@ class SunModel:
         self.nInternalPoints = (gridObject.nAxialNodes-2)*(gridObject.nRadialNodes-2)
         self.gmma = 1.4 #cp/cv for standard air for the moment
     
-    # def CreateAMatrix(self):
-    #     """
-    #     Create the diagonal A matrix
-    #     """
-    #     self.A = np.eye(self.nPoints*5) #A is the diagonal matrix
-    #     #probably it is a better to create a 2D array of matrices, where for evere point we have 1 set of equations
-    
-    # def CreateBMatrix(self):
-    #     """
-    #     Coefficient Matrix related to radial derivatives
-    #     """
-    #     nBlock = 0
-    #     for IterZ in range(0,self.data.nAxialNodes):
-    #         for IterR in range(0,self.data.nRadialNodes):
-    #             #for every point on the grid, construct a matrix B, and then stack them along the diagonal. Remember than the blocks are taken going along the j (radial direction) axis and i axis later (axial direction).
-    #             #this decides the flatten() method for the gradients used in ComputeHatMatrices
-    #             B = np.zeros((5,5))
-                
-    #             B[0,0] = self.data.radialVelocity[IterZ,IterR]
-    #             B[1,1] = self.data.radialVelocity[IterZ,IterR]
-    #             B[2,2] = self.data.radialVelocity[IterZ,IterR]
-    #             B[3,3] = self.data.radialVelocity[IterZ,IterR]
-    #             B[4,4] = self.data.radialVelocity[IterZ,IterR]
-                
-    #             B[0,1] = self.data.density[IterZ,IterR]
-    #             B[1,4] = 1/self.data.density[IterZ,IterR]
-    #             B[4,1] = self.data.pressure[IterZ,IterR]*self.gmma
-                
-    #             self.B[(nBlock*5):(nBlock+1)*5, (nBlock*5):(nBlock+1)*5] = B
-    #             nBlock = nBlock+1
-    
-    # def CreateCMatrix(self):
-    #     """
-    #     Coefficient Matrix related to tangential derivatives
-    #     """
-    #     nBlock = 0
-    #     for IterZ in range(0,self.data.nAxialNodes):
-    #         for IterR in range(0,self.data.nRadialNodes):
-    #             #for every point on the grid, construct a matrix C, and then stack them along the diagonal
-    #             C = np.zeros((5,5))
-                
-    #             C[0,0] = self.data.tangentialVelocity[IterZ,IterR]
-    #             C[1,1] = self.data.tangentialVelocity[IterZ,IterR]
-    #             C[2,2] = self.data.tangentialVelocity[IterZ,IterR]
-    #             C[3,3] = self.data.tangentialVelocity[IterZ,IterR]
-    #             C[4,4] = self.data.tangentialVelocity[IterZ,IterR]
-                
-    #             C[0,2] = self.data.density[IterZ,IterR]
-    #             C[2,4] = 1/self.data.density[IterZ,IterR]
-    #             C[4,2] = self.data.pressure[IterZ,IterR]*self.gmma
-                
-    #             self.C[(nBlock*5):(nBlock+1)*5, (nBlock*5):(nBlock+1)*5] = C
-    #             nBlock = nBlock+1
-    
-    # def CreateEMatrix(self):
-    #     """
-    #     Coefficient Matrix related to axial derivatives
-    #     """
-    #     nBlock = 0
-    #     for IterZ in range(0,self.data.nAxialNodes):
-    #         for IterR in range(0,self.data.nRadialNodes):
-    #             #for every point on the grid, construct a matrix E, and then stack them along the diagonal
-    #             E = np.zeros((5,5))
-                
-    #             E[0,0] = self.data.axialVelocity[IterZ,IterR]
-    #             E[1,1] = self.data.axialVelocity[IterZ,IterR]
-    #             E[2,2] = self.data.axialVelocity[IterZ,IterR]
-    #             E[3,3] = self.data.axialVelocity[IterZ,IterR]
-    #             E[4,4] = self.data.axialVelocity[IterZ,IterR]
-                
-    #             E[0,3] = self.data.density[IterZ,IterR]
-    #             E[3,4] = 1/self.data.density[IterZ,IterR]
-    #             E[4,3] = self.data.pressure[IterZ,IterR]*self.gmma
-                
-    #             self.E[(nBlock*5):(nBlock+1)*5, (nBlock*5):(nBlock+1)*5] = E
-    #             nBlock = nBlock+1
-    
-    # def CreateRMatrix(self):
-    #     """
-    #     Coefficient matrix related to the mean flow known terms. To be implemented correctly in the general case. Now it is hardcoded
-    #     for the uniform acoustic duct.
-    #     """
-    #     # print('attention because in this matrix, for the real case there are the gradients of the mean flow, that for the moment are not implemented, since the acoustic duct is a uniform flow. the zeros are hardcoded, so remember to implement the correct thing')
-    #     nBlock = 0
-    #     for IterZ in range(0,self.data.nAxialNodes):
-    #         for IterR in range(0,self.data.nRadialNodes):
-    #             #for every point on the grid, construct a matrix R, and then stack them along the diagonal
-    #             R = np.zeros((5,5))
-                
-    #             R[0,0] = self.data.radialVelocity[IterZ,IterR]/self.data.r[IterR]
-    #             R[0,1] = self.data.density[IterZ,IterR]/self.data.r[IterR] + 0
-    #             R[0,2] = 0
-    #             R[0,3] = 0 
-    #             R[0,4] = 0 
-    #             R[1,0] = -1/(self.data.density[IterZ,IterR]**2)*0
-    #             R[1,1] = 0
-    #             R[1,2] = -2*self.data.tangentialVelocity[IterZ,IterR]*0
-    #             R[1,3] = 0
-    #             R[1,4] = 0
-    #             R[2,0] = 0
-    #             R[2,1] = 0 
-    #             R[2,2] = self.data.radialVelocity[IterZ,IterR]/self.data.r[IterR]
-    #             R[2,3] = 0
-    #             R[2,4] = 0
-    #             R[3,:] = [0,0,0,0,0]
-    #             R[4,0] = 0
-    #             R[4,1] = self.data.pressure[IterZ,IterR]*self.gmma/self.data.r[IterR]
-    #             R[4,2] = 0
-    #             R[4,3] = 0
-    #             R[4,4] = self.gmma*(0+0+self.data.radialVelocity[IterZ,IterR]/self.data.r[IterR])
-                
-    #             self.R[(nBlock*5):(nBlock+1)*5, (nBlock*5):(nBlock+1)*5] = R
-    #             nBlock = nBlock+1
-    
-    # def CreateSMatrix(self):
-    #     """
-    #     Coefficient matrix related to the body force terms. To be implemented yet
-    #     """
-    #     self.S = np.ones((self.nPoints*5, self.nPoints*5)) #A is the diagonal matrix
-    
-    # def CreateAllPhysicalMatrices(self):
-    #     """
-    #     Compute all the matrices together. The boundaries points will need to be treated later, modifying the corresponding equations
-    #     """
-    #     self.CreateAMatrix()
-    #     self.CreateBMatrix()
-    #     self.CreateCMatrix()
-    #     self.CreateEMatrix()
-    #     self.CreateRMatrix()
-    #     self.CreateSMatrix()
-    
-    # def GlobalStabilityMatrix(self, omega):
-    #     """
-    #     Giving a complex eigenfrequency, it returns the global instability matrix (for the moment without caring about the boundary nodes)
-    #     radialDiff and axialDiff will give the elements of radial and axial differentiations using chebyshev gauss-lobatto method.
-        
-    #     It needs to be implemented
-    #     """
-    #     #Q = 1j*omega*self.A + radialDiff(self.B) + 1j*m*self.Cr + axialDiff(E) + self.R + self.S
-    #     # return Q
-    
     def ComputeSpectralGrid(self):
         """
         it creates a new grid object inside the Sun Model Object, which has the same info of the original grid, but stored 
@@ -223,7 +82,7 @@ class SunModel:
         self.dxdz, self.dxdr, self.dydz, self.dydr = JacobianTransform(X,Y,Z,R)
         for ii in range(0,self.data.nAxialNodes):
             for jj in range(0,self.data.nRadialNodes):
-                #add the gradients information to every node
+                #add the gradients at every node object
                 self.data.dataSet[ii,jj].AddJacobianGradients(self.dxdz[ii,jj], self.dxdr[ii,jj], self.dydz[ii,jj], self.dydr[ii,jj])
         
     
@@ -245,7 +104,6 @@ class SunModel:
             for jj in range(0,self.data.nRadialNodes):
                 #add the inverse gradients information to every node
                 self.data.dataSet[ii,jj].AddInverseJacobianGradients(self.dzdx[ii,jj], self.dzdy[ii,jj], self.drdx[ii,jj], self.drdy[ii,jj])
-        
         
     
     def ShowJacobianSpectralAxis(self, formatFig=(10,6)):
@@ -327,68 +185,42 @@ class SunModel:
         cb.set_label(r'$\frac{\partial \eta}{\partial r}$')
         if save_filename!=None:
             plt.savefig(folder_name + save_filename+'_4.pdf',bbox_inches='tight')
-
     
-    # def ComputeHatMatrices(self):
-    #     """
-    #     compute and store at the node level the matrices \hat{B}, \hat{E}.
-    #     """
-    #     Bhat = np.zeros(self.B.shape) #physical B
-    #     Ehat = np.zeros(self.B.shape) #physical E
-    #     Ni = Bhat.shape[0]
-    #     Nj = Bhat.shape[1]
-    #     nBlocks = Ni//5
-        
-    #     #flatten the gradients to be used later in the matrix multiplications. I am unrolling along the column (Fortran style), because the matrices were built going along the j axis before than the i axis.
-    #     #you should check this in a later stage of the process, during code debugging and testing
-    #     dxdz, dxdr, dydz, dydr = self.dxdz.flatten(order='F'), self.dxdr.flatten(order='F'), self.dydz.flatten(order='F'), self.dydr.flatten(order='F') 
-        
-    #     if nBlocks!=self.nPoints:
-    #         raise ValueError('Error in Compute Modified B matrix method')    
-            
-    #     for blockIt in range(0,nBlocks):
-    #         Bhat[(blockIt*5):(blockIt+1)*5,(blockIt*5):(blockIt+1)*5] = self.B[(blockIt*5):(blockIt+1)*5,(blockIt*5):(blockIt+1)*5]*dxdr[blockIt] \
-    #                                                                     + self.E[(blockIt*5):(blockIt+1)*5,(blockIt*5):(blockIt+1)*5]*dxdz[blockIt]
-    #         Ehat[(blockIt*5):(blockIt+1)*5,(blockIt*5):(blockIt+1)*5] = self.B[(blockIt*5):(blockIt+1)*5,(blockIt*5):(blockIt+1)*5]*dydr[blockIt] \
-    #                                                                     + self.E[(blockIt*5):(blockIt+1)*5,(blockIt*5):(blockIt+1)*5]*dydz[blockIt]
-    #     self.Bhat = Bhat
-    #     self.Ehat = Ehat
-    
-    def ComputeSVD(self, omega_domain=[-1,1,-1,1], grid_omega=[10,10]):
-        omR_min = omega_domain[0]
-        omR_max = omega_domain[1]
-        omI_min = omega_domain[2]
-        omI_max = omega_domain[3]
-        nR = grid_omega[0]
-        nI = grid_omega[1]
-        omR = np.linspace(omR_min, omR_max, nR)
-        omI = np.linspace(omI_min, omI_max, nI)
-        self.omegaR, self.omegaI = np.meshgrid(omR, omI)
-        self.chi = np.zeros((nR,nI))
-        for ii in range(0,nR):
-            for jj in range(0,nI):
-                omega = omR[ii]+1j*omI[jj]
+    # def ComputeSVD(self, omega_domain=[-1,1,-1,1], grid_omega=[10,10]):
+    #     omR_min = omega_domain[0]
+    #     omR_max = omega_domain[1]
+    #     omI_min = omega_domain[2]
+    #     omI_max = omega_domain[3]
+    #     nR = grid_omega[0]
+    #     nI = grid_omega[1]
+    #     omR = np.linspace(omR_min, omR_max, nR)
+    #     omI = np.linspace(omI_min, omI_max, nI)
+    #     self.omegaR, self.omegaI = np.meshgrid(omR, omI)
+    #     self.chi = np.zeros((nR,nI))
+    #     for ii in range(0,nR):
+    #         for jj in range(0,nI):
+    #             omega = omR[ii]+1j*omI[jj]
                 
-                #to be implemented correctly later
-                Q = 1j*omega*self.A+self.B+self.C+self.E+self.R+self.S
+    #             #to be implemented correctly later
+    #             Q = 1j*omega*self.A+self.B+self.C+self.E+self.R+self.S
 
-                U,S,V = np.linalg.svd(Q)
-                self.chi[ii,jj] = np.min(S)/np.max(S)
+    #             U,S,V = np.linalg.svd(Q)
+    #             self.chi[ii,jj] = np.min(S)/np.max(S)
     
     
-    def PlotInverseConditionNumber(self, save_filename=None, formatFig=(10,6)):
-        x = np.linspace(np.min(self.omegaR), np.max(self.omegaR))
-        critical_line = np.zeros(len(x))
-        plt.figure(figsize=formatFig)
-        plt.contourf(self.omegaR, self.omegaI, self.chi)
-        plt.plot(x, critical_line, '--r')
-        plt.xlabel(r'$\omega_{R}$')
-        plt.ylabel(r'$\omega_{I}$')
-        plt.title(r'$\chi$ locus')
-        cb = plt.colorbar()
-        cb.set_label(r'$\chi$')
-        if save_filename!=None:
-            plt.savefig(folder_name + save_filename +'.pdf' ,bbox_inches='tight')
+    # def PlotInverseConditionNumber(self, save_filename=None, formatFig=(10,6)):
+    #     x = np.linspace(np.min(self.omegaR), np.max(self.omegaR))
+    #     critical_line = np.zeros(len(x))
+    #     plt.figure(figsize=formatFig)
+    #     plt.contourf(self.omegaR, self.omegaI, self.chi)
+    #     plt.plot(x, critical_line, '--r')
+    #     plt.xlabel(r'$\omega_{R}$')
+    #     plt.ylabel(r'$\omega_{I}$')
+    #     plt.title(r'$\chi$ locus')
+    #     cb = plt.colorbar()
+    #     cb.set_label(r'$\chi$')
+    #     if save_filename!=None:
+    #         plt.savefig(folder_name + save_filename +'.pdf' ,bbox_inches='tight')
                 
     def AddAMatrixToNodes(self, omega):
         """
@@ -492,6 +324,17 @@ class SunModel:
                 R[4,4] = self.gmma*self.data.dataSet[ii,jj].GetRadialVelocity()/self.data.dataSet[ii,jj].r
                 
                 self.data.dataSet[ii,jj].AddRMatrix(R)
+                
+    def AddSMatrixToNodes(self, BFM=None):
+        """
+        compute and store at the node level the S matrix, ready to be used in the final system of eqs. The matrix formulation
+        depends on the selected body-force model
+        """
+        for ii in range(0,self.data.nAxialNodes):
+            for jj in range(0,self.data.nRadialNodes):
+                if BFM==None:
+                    S = np.zeros((5,5), dtype=complex)
+                self.data.dataSet[ii,jj].AddSMatrix(S)
         
     def AddHatMatricesToNodes(self):
         """
@@ -511,7 +354,8 @@ class SunModel:
     def CheckGradients(self):
         """
         check if the direct and inverse transformation gives the same results. 
-        NOTE: correct only if both the grids are cartesian
+        NOTE: it is correct only if both the grids are cartesian, otherwise we cannot compute the gradients on a
+        curvilinear grid by means of finite differences.
         """
         
         test1 = True
@@ -545,42 +389,45 @@ class SunModel:
         return [test1, test2, test3, test4]
         
     def ApplySpectralDifferentiation(self, verbose=False):
-        #we need now to apply spectral differentiation, modifying all the matrices. 
-       
-        #the cordinates on the spectral grid determines the spectral matrix D
-        x = self.dataSpectral.z
-        y = self.dataSpectral.r
+       """
+       This method applies Chebyshev-Gauss-Lobatto differentiation method, to express the perturbation derivatives as a function
+       of the perturbation at the other nodes. It saves a new matrix Q, which is the global stability matrix (nPoints*5 X nPoints*5)
+       """
         
-        #compute the spectral Matrices for x and y direction with the Bayliss formulation
-        Dx = ChebyshevDerivativeMatrixBayliss(x) #derivative operator in xi, transformed by z
-        Dy = ChebyshevDerivativeMatrixBayliss(y) #derivative operator in eta, transformed by r
+       #the cordinates on the spectral grid directions the spectral matrix Dx and Dy
+       x = self.dataSpectral.z
+       y = self.dataSpectral.r
         
-        self.Q = np.zeros((self.nPoints*5, self.nPoints*5), dtype=complex) #instantiate the full matrix, that will be filled in blocks
-        node_counter = 0
+       #compute the spectral Matrices for x and y direction with the Bayliss formulation
+       Dx = ChebyshevDerivativeMatrixBayliss(x) #derivative operator in xi, Bayliss formulation
+       Dy = ChebyshevDerivativeMatrixBayliss(y) #derivative operator in eta, Bayliss formulation
         
-        #be careful to the direction m-j. maybe it is worth to just translate everything
-        for ii in range(0,self.dataSpectral.nAxialNodes):
+       self.Q = np.zeros((self.nPoints*5, self.nPoints*5), dtype=complex) #instantiate the full stability matrix, that will be filled block by block
+        
+       #differentiation of a general perturbation vector (for the node i,j) along xi  and eta
+       for ii in range(0,self.dataSpectral.nAxialNodes):
             for jj in range(0,self.dataSpectral.nRadialNodes):
-                B_ij = self.data.dataSet[ii,jj].Bhat #Bhat matrix of the ij node, where i is axial position, j is radial position
-                E_ij = self.data.dataSet[ii,jj].Ehat #Ehat matrix of the ij node, where i is axial position, j is radial position
+                B_ij = self.data.dataSet[ii,jj].Bhat #Bhat matrix of the ij node
+                E_ij = self.data.dataSet[ii,jj].Ehat #Ehat matrix of the ij node
+                node_counter = self.data.dataSet[ii,jj].nodeCounter #needed to keep track of the row in the stability equations. every new node, increase the row number by 5
                 
-                #first summation. Consider that in this code, m is in the range of axial nodes, first axis of the matrix (grid)
+                #xi differentiation. m is in the range of axial nodes, first axis of the matrix
                 for m in range(0,self.dataSpectral.nAxialNodes):
                     tmp = Dx[ii,m]*B_ij #5x5 matrix to be added to a certain block of Q
-                    row = node_counter #this selects the correct block along i
-                    column = (m*self.dataSpectral.nRadialNodes + jj)*5 #this is the important point, it selects the correct block along j
+                    row = node_counter*5 #this selects the correct block along i of Q
+                    column = (m*self.dataSpectral.nRadialNodes + jj)*5 #it selects the correct block along the second axis the matrix
                     if verbose:
                         print('Node [i,j] = (%.1d,%.1d)' %(ii,jj))
                         print('Element along i [m,j] = (%.1d,%.1d)' %(m,jj))
                         print('Derivative element [ii,m] = (%.1d,%.1d)' %(ii,m))
                         print('[row,col] = (%.1d,%.1d)' %(row,column))
                     self.AddToQ(tmp, row, column)
-                    #this block should be correct
+                    
                 
-                #first summation. Consider that in this code, n is in the range of radial nodes, second axis of the matrix (grid)
+                #xi differentiation. n is in the range of radial nodes, second axis of the matrix
                 for n in range(0,self.dataSpectral.nRadialNodes):
                     tmp = Dy[jj,n]*E_ij #5x5 matrix to be added to a certain block of Q
-                    row = node_counter
+                    row = node_counter*5 #this selects the correct block along i of Q
                     column = (ii*self.dataSpectral.nRadialNodes + n)*5 #this is the important point
                     if verbose:
                         print('Node [i,j] = (%.1d,%.1d)' %(ii,jj))
@@ -588,15 +435,7 @@ class SunModel:
                         print('Derivative element [jj,n] = (%.1d,%.1d)' %(jj,n))
                         print('[row,col] = (%.1d,%.1d)' %(row,column))
                     self.AddToQ(tmp, row, column)
-                    #this block should be correct
                 
-                #add all the remaining terms on the diagonal
-                # diag_block_ij = self.data.dataSet[ii,jj].A + self.data.dataSet[ii,jj].C + self.data.dataSet[ii,jj].R 
-                # row = node_counter
-                # column = node_counter
-                # self.AddToQ(diag_block_ij, row, column)
-                
-                node_counter += 5 #every node, shifts of 5 position in the row selection
                 
         
     def AddToQ(self, block, row, column):
@@ -609,7 +448,8 @@ class SunModel:
     def ApplyBoundaryConditions(self):
         """
         it applies the correct set of boundary conditions to all the points marked with a boundary marker. 
-        The boundary conditions can be modified in a different method
+        Every BC will modify the 5 equations for the respective node. For the moment only standard BC are implemented,
+        but they can be extended quite easily
         """
         for ii in range(0,self.data.nAxialNodes):
             for jj in range(0,self.data.nRadialNodes):
@@ -617,42 +457,50 @@ class SunModel:
                 counter = self.data.dataSet[ii,jj].nodeCounter
                 row = counter*5
                 if marker == 'inlet':
-                    self.ApplyInletCondition(row) #remove the rows from counter to counter +5
+                    self.ApplyInletCondition(row) #apply zero perturbation conditions
                 elif marker == 'outlet':
-                    self.ApplyOutletCondition(row) #remove the pressure equation from the outlet node
+                    self.ApplyOutletCondition(row) #apply zero pressure condition
                 elif (marker == 'hub' or marker == 'shroud'):
-                    self.ApplyWallCondition(row) #remove the pressure equation from the outlet node
+                    self.ApplyWallCondition(row) #apply non-penetration condition
                 elif (marker != ''):
-                    raise Exception('Marker not recognized. Check the grid!')
+                    raise Exception('Boundary condition unknown. Check the grid markers!')
                     
     def AddRemainingMatrices(self):
-        node_counter = 0
+        """
+        it adds the remaning block matrices to the full Q, on the diagonal blocks.
+        """
         for ii in range(0,self.dataSpectral.nAxialNodes):
             for jj in range(0,self.dataSpectral.nRadialNodes):
-        
                 #add all the remaining terms on the diagonal
-                diag_block_ij = self.data.dataSet[ii,jj].A + self.data.dataSet[ii,jj].C + self.data.dataSet[ii,jj].R 
+                diag_block_ij = self.data.dataSet[ii,jj].A + self.data.dataSet[ii,jj].C + self.data.dataSet[ii,jj].R + self.data.dataSet[ii,jj].S
+                
+                node_counter = self.data.dataSet[ii,jj].nodeCounter
                 row = node_counter*5
                 column = node_counter*5
                 self.AddToQ(diag_block_ij, row, column)
-                node_counter+=1
     
     def ApplyInletCondition(self, row):
-        #the five equations pertaning to the boundary perturbation values are zero
-        self.Q[row:row+5,:] = np.zeros(self.Q[row:row+5,:].shape, dtype=complex) #make it zero
-        self.Q[row:row+5,row:row+5] = np.eye(5, dtype=complex)
+        """
+        for the considered grid node, it substitutes the 5 equations with a zero perturbation condition
+        """
+        self.Q[row:row+5,:] = np.zeros(self.Q[row:row+5,:].shape, dtype=complex) #make it zero first
+        self.Q[row:row+5,row:row+5] = np.eye(5, dtype=complex) #zero perturbation condition for every flow variable
         
     
     def ApplyOutletCondition(self, row):
-        #the pressure equation pertaning to the boundary perturbation values is zero
-        self.Q[row+4,:] = np.zeros(self.Q[row+4,:].shape, dtype=complex) #make it zero
-        self.Q[row+4,row+4] = 1
+        """
+        for the considered grid node, it substitutes the pressure equation with a zero pressure condition
+        """
+        self.Q[row+4,:] = np.zeros(self.Q[row+4,:].shape, dtype=complex) #make first the pressure equation coefficients zero
+        self.Q[row+4,row+4] = 1 #apply zero pressure condition
         
-    def ApplyWallCondition(self, row):
-        #the radial velocity must be zero. this is hardcoded for the duct, but it should be extended using the wall normal vector
+    def ApplyWallCondition(self, row, wall_normal = [1, 0, 0]):
+        """
+        for the considered grid node, it substitutes one of the velocity equation with a non-penetration condition
+        """
         normal_wall = [1, 0, 0] #for this case specifically
-        self.Q[row+1,:] = np.zeros(self.Q[row+1,:].shape, dtype=complex) #make it zero
-        self.Q[row+1,row:row+5] = [0, 1, 0, 0, 0]
+        self.Q[row+1,:] = np.zeros(self.Q[row+1,:].shape, dtype=complex) #first make zero the radial velocity equation
+        self.Q[row+1,row+1:row+4] = wall_normal #impose non-penetration (u*nr + v*nt + w*nz)
         
 
         

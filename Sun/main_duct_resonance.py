@@ -95,7 +95,7 @@ a = np.sqrt(gmma*p/rho)                 #ideal speed of sound [m/s]
 #%%COMPUTATIONAL PART
 
 #number of grid nodes in the computational domain
-Nz = 25
+Nz = 5
 Nr = 15
 
 #implement a constant uniform flow in the annulus duct
@@ -188,6 +188,7 @@ for ii in range(0,len(omega_range_r)):
         sunObj.AddCMatrixToNodes()
         sunObj.AddEMatrixToNodes()
         sunObj.AddRMatrixToNodes()
+        sunObj.AddSMatrixToNodes()
         sunObj.AddHatMatricesToNodes()
         sunObj.ApplySpectralDifferentiation()
         sunObj.AddRemainingMatrices()

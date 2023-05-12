@@ -13,7 +13,7 @@ class Node:
     """
     Class of Nodes, contaning cordinates, fluid dynamics field, markers for BCs understanding and gric cordinates of the node
     """
-    def __init__(self, z, r, rho, vz, vr, vt, p, marker, nodeCounter, gridCordinates):
+    def __init__(self, z, r, rho, vz, vr, vt, p, marker, nodeCounter):
         self.z = z                                  #axial cordinate
         self.r = r                                  #radial cordinate
         self.marker = marker                        #type of node if belonging to boundaries
@@ -23,7 +23,6 @@ class Node:
         self.tangentialVelocity = vt                #tangential velocity
         self.pressure = p                           #pressure
         self.nodeCounter = nodeCounter              #identifier of the node
-        self.gridCordinates = gridCordinates        #location of the node on the grid. needed to know neighbours
     
     def GetAxialCordinate(self):
         """
@@ -135,21 +134,9 @@ class Node:
         """
         self.dzdx,  self.dzdy, self.drdx, self.drdy = dzdx, dzdy, drdx, drdy
     
-    def AddHatMatrices(self,Bhat,Ehat):
+    def AddHatMatrices(self, Bhat, Ehat):
         """
         It add the \hat{B}, \hat{E} matrix at the node level
         """
         self.Bhat, self.Ehat = Bhat, Ehat
-        
-    def ApplyInletCondition(self):
-        print('INLET condition virtually applied. (To be implemented when the full stability matrix will be ready)')
-    
-    def ApplyOutletCondition(self):
-        print('OUTLET condition virtually applied. (To be implemented when the full stability matrix will be ready)')
-        
-    def ApplyWallCondition(self, flag='euler'):
-        if flag=='euler':
-            print('EULER WALL condition virtually applied. (To be implemented when the full stability matrix will be ready)')
-        else:
-            raise Exception('Apply a correct wall boundary condition')
 
