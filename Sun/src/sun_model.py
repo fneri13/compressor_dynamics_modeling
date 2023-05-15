@@ -316,7 +316,11 @@ class SunModel:
                 R[2,2] = self.data.dataSet[ii,jj].GetRadialVelocity()/self.data.dataSet[ii,jj].r
                 R[2,3] = 0
                 R[2,4] = 0
-                R[3,:] = [0,0,0,0,0]
+                R[3,0] = 0
+                R[3,1] = 0
+                R[3,2] = 0
+                R[3,3] = 0
+                R[3,4] = 0
                 R[4,0] = 0
                 R[4,1] = self.data.dataSet[ii,jj].GetPressure()*self.gmma/self.data.dataSet[ii,jj].r
                 R[4,2] = 0
@@ -498,9 +502,8 @@ class SunModel:
         """
         for the considered grid node, it substitutes one of the velocity equation with a non-penetration condition
         """
-        normal_wall = [1, 0, 0] #for this case specifically
         self.Q[row+1,:] = np.zeros(self.Q[row+1,:].shape, dtype=complex) #first make zero the radial velocity equation
-        self.Q[row+1,row+1:row+4] = wall_normal #impose non-penetration (u*nr + v*nt + w*nz)
+        self.Q[row+1,row+1:row+4] = wall_normal #impose non-penetration condition (u*nr + v*nt + w*nz)
         
 
         
