@@ -95,8 +95,8 @@ a = np.sqrt(gmma*p/rho)                 #ideal speed of sound [m/s]
 #%%COMPUTATIONAL PART
 
 #number of grid nodes in the computational domain
-Nz = 25
-Nr = 25
+Nz = 20
+Nr = 20
 
 #implement a constant uniform flow in the annulus duct
 density = np.random.rand(Nz, Nr)
@@ -170,8 +170,8 @@ duct = DataGrid(0, L, r1, r2, Nz, Nr, density, axialVel, radialVel, tangentialVe
 # omega_range_r = np.linspace(10000, 35000, 50) #domain of interest, omega on
 # omega_range_i = np.linspace(-8000, 8000, 50) #domain of interest, omega on
 
-omega_range_r = np.linspace(10000, 35000, 20) #domain of interest, omega on
-omega_range_i = np.linspace(-8000, 8000, 20) #domain of interest, omega on
+omega_range_r = np.linspace(10000, 35000, 25) #domain of interest, omega on
+omega_range_i = np.linspace(-8000, 8000, 25) #domain of interest, omega on
 
 chi = np.zeros((len(omega_range_r),(len(omega_range_i))))
 for ii in range(0,len(omega_range_r)):
@@ -183,8 +183,9 @@ for ii in range(0,len(omega_range_r)):
         sunObj.ComputeSpectralGrid()
         if (ii==0 and jj==0):
             sunObj.ShowSpectralGrid(save_filename='spectral_grid_%1.d_%1.d' %(Nz,Nr))
-        sunObj.ComputeJacobianSpectral()
+        sunObj.ComputeJacobianSpectral(refinement=10)
         if (ii==0 and jj==0):
+            # sunObj.ShowJacobianPhysicalAxisFine(save_filename='spectral_jacobian_fine_%1.d_%1.d' %(Nz,Nr))
             sunObj.ShowJacobianPhysicalAxis(save_filename='spectral_jacobian_%1.d_%1.d' %(Nz,Nr))
         omega = omega_range_r[ii]+1j*omega_range_i[jj]
         sunObj.AddAMatrixToNodes(omega)
@@ -208,4 +209,38 @@ plt.xlabel(r'$\omega_{r}$')
 plt.colorbar()
 plt.title(r'$\chi$')
 plt.savefig('pictures/chi_2D_map_%1.d_%1.d.pdf' %(Nz,Nr),bbox_inches='tight')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
  

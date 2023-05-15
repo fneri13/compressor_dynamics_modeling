@@ -8,7 +8,7 @@ Created on Wed May  3 15:32:43 2023
 import numpy as np
 import matplotlib.pyplot as plt
 from src.grid import DataGrid
-from src.general_functions import JacobianTransform, ChebyshevDerivativeMatrixBayliss
+from src.general_functions import JacobianTransform, ChebyshevDerivativeMatrixBayliss, Refinement, GaussLobattoPoints
 from src.styles import *
 import os
 
@@ -68,33 +68,57 @@ class SunModel:
         if save_filename!=None:
             plt.savefig(folder_name + save_filename+'.pdf',bbox_inches='tight')
     
-    def ComputeJacobianSpectral(self):
+    def ComputeJacobianSpectral(self, refinement=None):
         """
         The Jacobian for the spectral grid as a function of the physical grid cordinates is implemented here. 
         It computes the transformation derivatives for every grid point, and stores the value at the node level.
-        NOTE: it could be needed to do it on a fine mesh, and then using the results on the coarser mesh, since the gradients are obtained 
-        2nd order central finite differences
+        NOTE: the refinement parameter sets the refinement of the grid on which we will calculate the jacobian to increase the accuracy.
         """
-        Z = self.data.zGrid
-        R = self.data.rGrid
-        X = self.dataSpectral.zGrid
-        Y = self.dataSpectral.rGrid
-        self.dxdz, self.dxdr, self.dydz, self.dydr = JacobianTransform(X,Y,Z,R)
-        for ii in range(0,self.data.nAxialNodes):
-            for jj in range(0,self.data.nRadialNodes):
-                #add the gradients at every node object
-                self.data.dataSet[ii,jj].AddJacobianGradients(self.dxdz[ii,jj], self.dxdr[ii,jj], self.dydz[ii,jj], self.dydr[ii,jj])
+        if refinement == None:
+            Z = self.data.zGrid
+            R = self.data.rGrid
+            X = self.dataSpectral.zGrid
+            Y = self.dataSpectral.rGrid
+            self.dxdz, self.dxdr, self.dydz, self.dydr = JacobianTransform(X,Y,Z,R)
+            for ii in range(0,self.data.nAxialNodes):
+                for jj in range(0,self.data.nRadialNodes):
+                    #add the gradients at every node object
+                    self.data.dataSet[ii,jj].AddJacobianGradients(self.dxdz[ii,jj], self.dxdr[ii,jj], self.dydz[ii,jj], self.dydr[ii,jj])
         
+        elif (isinstance(refinement, int) and refinement>0):
+            #refined physical grid
+            ref_points = refinement #refinement coefficient. additional points for every interval
+            r = Refinement(self.data.r, ref_points) #it adds additional ref_points to every interval
+            z = Refinement(self.data.z, ref_points)
+            self.R_fine, self.Z_fine = np.meshgrid(r,z)
+            
+            #refined spectral grid
+            x = GaussLobattoPoints(len(z)) #refined set of gauss lobatto points
+            y = GaussLobattoPoints(len(r))
+            self.Y_fine, self.X_fine = np.meshgrid(y,x)
+            
+            #compute jacobian
+            self.dxdz_fine, self.dxdr_fine, self.dydz_fine, self.dydr_fine = JacobianTransform(self.X_fine,self.Y_fine,self.Z_fine,self.R_fine) #retain the info if necessary
+            
+            #retrieve the jacobian on the coarse grid nodes
+            self.dxdz, self.dxdr, self.dydz, self.dydr = self.dxdz_fine[::ref_points+1,::ref_points+1], self.dxdr_fine[::ref_points+1,::ref_points+1], \
+                                                        self.dydz_fine[::ref_points+1,::ref_points+1], self.dydr_fine[::ref_points+1,::ref_points+1] #now go back to the coarse initial grid
+            for ii in range(0,self.data.nAxialNodes):
+                for jj in range(0,self.data.nRadialNodes):
+                    #add the gradients at every node object
+                    self.data.dataSet[ii,jj].AddJacobianGradients(self.dxdz[ii,jj], self.dxdr[ii,jj], self.dydz[ii,jj], self.dydr[ii,jj])
+    
+        else:
+            raise Exception('Wrong refinement. Select a positive integer!')
     
     def ComputeJacobianPhysical(self):
         """
         The Jacobian for the physical grid as a function of the spectral grid cordinates is implemented here. 
         It computes the transformation derivatives for every grid point, and stores the value at the node level.
-        NOTE: it could be needed to do it on a fine mesh, and then using the results on the coarser mesh, since the gradients are obtained 
-        2nd order central finite differences.
+        NOTE: the refinement parameter sets the refinement of the grid on which we will calculate the jacobian to increase the accuracy.
         NOTE 2: this approach is wrong if the spectral system of cordinates is not cartesian!
         """
-        #grids
+        #grids (original)
         Z = self.data.zGrid
         R = self.data.rGrid
         X = self.dataSpectral.zGrid
@@ -104,6 +128,15 @@ class SunModel:
             for jj in range(0,self.data.nRadialNodes):
                 #add the inverse gradients information to every node
                 self.data.dataSet[ii,jj].AddInverseJacobianGradients(self.dzdx[ii,jj], self.dzdy[ii,jj], self.drdx[ii,jj], self.drdy[ii,jj])
+    
+    
+        
+        
+        
+        
+        
+        
+        
         
     
     def ShowJacobianSpectralAxis(self, formatFig=(10,6)):
@@ -178,6 +211,51 @@ class SunModel:
         
         plt.figure(figsize=formatFig)
         plt.scatter(self.data.zGrid, self.data.rGrid, c=self.dydr)
+        plt.xlabel(r'$Z$')
+        plt.ylabel(r'$R$')
+        cb = plt.colorbar()
+        plt.title(r'$\frac{\partial \eta}{\partial r}$')
+        cb.set_label(r'$\frac{\partial \eta}{\partial r}$')
+        if save_filename!=None:
+            plt.savefig(folder_name + save_filename+'_4.pdf',bbox_inches='tight')
+        
+        
+    def ShowJacobianPhysicalAxisFine(self, save_filename=None, formatFig=(10,6)):
+        """
+        Show the spectral cordinates gradients info as a function of the physical grid cordinates.
+        """
+        plt.figure(figsize=formatFig)
+        plt.scatter(self.Z_fine, self.R_fine, c=self.dxdz_fine)
+        plt.xlabel(r'$Z$')
+        plt.ylabel(r'$R$')
+        plt.title(r'$\frac{\partial \xi}{\partial z}$')
+        cb = plt.colorbar()
+        cb.set_label(r'$\frac{\partial \xi}{\partial z}$')
+        if save_filename!=None:
+            plt.savefig(folder_name + save_filename+'_1.pdf',bbox_inches='tight')
+        
+        plt.figure(figsize=formatFig)
+        plt.scatter(self.Z_fine, self.R_fine, c=self.dxdr_fine)
+        plt.xlabel(r'$Z$')
+        plt.ylabel(r'$R$')
+        cb = plt.colorbar()
+        plt.title(r'$\frac{\partial \xi}{\partial r}$')
+        cb.set_label(r'$\frac{\partial \xi}{\partial r}$')
+        if save_filename!=None:
+            plt.savefig(folder_name + save_filename+'_2.pdf',bbox_inches='tight')
+        
+        plt.figure(figsize=formatFig)
+        plt.scatter(self.Z_fine, self.R_fine, c=self.dydz_fine)
+        plt.xlabel(r'$Z$')
+        plt.ylabel(r'$R$')
+        cb = plt.colorbar()
+        plt.title(r'$\frac{\partial \eta}{\partial z}$')
+        cb.set_label(r'$\frac{\partial \eta}{\partial z}$')
+        if save_filename!=None:
+            plt.savefig(folder_name + save_filename+'_3.pdf',bbox_inches='tight')
+        
+        plt.figure(figsize=formatFig)
+        plt.scatter(self.Z_fine, self.R_fine, c=self.dydr_fine)
         plt.xlabel(r'$Z$')
         plt.ylabel(r'$R$')
         cb = plt.colorbar()

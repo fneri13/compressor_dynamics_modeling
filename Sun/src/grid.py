@@ -9,6 +9,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from src.node import Node
 from src.styles import *
+from src.general_functions import GaussLobattoPoints
 
 import os
 
@@ -28,16 +29,8 @@ class DataGrid():
             self.z = np.linspace(zmin, zmax, Nz)
             self.r = np.linspace(rmin, rmax, Nr)
         elif mode == 'gauss-lobatto': #construct a gauss-lobatto grid for the spectral dataset
-            x = np.array(()) #xi direction
-            y = np.array(()) #eta direction
-            for i in range(0,self.nAxialNodes):
-                xnew = np.cos(i*np.pi/(self.nAxialNodes-1)) #gauss lobatto points
-                x = np.append(x, xnew)
-            for j in range(0,self.nRadialNodes):
-                ynew = np.cos(j*np.pi/(self.nRadialNodes-1)) #gauss lobatto points
-                y = np.append(y, ynew)
-            self.z = np.flip(x)
-            self.r = np.flip(y)
+            self.z = GaussLobattoPoints(self.nAxialNodes)
+            self.r = GaussLobattoPoints(self.nRadialNodes)
         
         self.rGrid, self.zGrid = np.meshgrid(self.r,self.z)
         
