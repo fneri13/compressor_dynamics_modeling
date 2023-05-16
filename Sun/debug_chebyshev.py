@@ -115,7 +115,7 @@ y = nonPeriodicFunction(x) #general oscillating non-periodic function
 
 
 # Define the degree of the Chebyshev series
-N = 20 #order of polynomial. N+1 gauss lobatto points
+N = 30 #order of polynomial. N+1 gauss lobatto points
 
 #obtain the points, and function values at GL points
 x_GL = np.array(())
@@ -232,6 +232,7 @@ ax.set_xlabel(r'$x$')
 # ax.set_ylim([np.min(dydx_an), np.max(dydx_an)])
 ax.set_ylabel(r'$\frac{dy}{dx}$')
 ax.legend()
+plt.savefig('chebyshev_derivatives.pdf' ,bbox_inches='tight')
 
 
 

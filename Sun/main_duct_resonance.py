@@ -112,8 +112,8 @@ r = np.linspace(r1,r2,300)
 #%%COMPUTATIONAL PART
 
 #number of grid nodes in the computational domain
-Nz = 15
-Nr = 5
+Nz = 10
+Nr = 10
 
 #implement a constant uniform flow in the annulus duct
 density = np.random.rand(Nz, Nr)
@@ -152,7 +152,7 @@ sunObj.AddSMatrixToNodes()
 sunObj.AddHatMatricesToNodes()
 sunObj.ApplySpectralDifferentiation()
 
-sunObj.ComputeSVD(omega_domain=[7.5e3, 35e3, -8e3, 8e3], grid_omega=[200,10])
+sunObj.ComputeSVD(omega_domain=[7.5e3, 35e3, -8e3, 8e3], grid_omega=[100,75])
 sunObj.PlotInverseConditionNumber('chi_2D_map_%1.d_%1.d' %(Nz,Nr))
 
 

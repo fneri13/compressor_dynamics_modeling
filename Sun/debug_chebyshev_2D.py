@@ -261,7 +261,7 @@ from src.sun_model import SunModel
 
 
 from matplotlib import cm
-N = 20 #order of polynomial. N+1 gauss lobatto points
+N = 100 #order of polynomial. N+1 gauss lobatto points
 
 #analytical domain
 x = np.linspace(-1,1, 1000)
@@ -411,6 +411,8 @@ surf2 = ax[1].plot_surface(X_GL, Y_GL, dZdX_GL, cmap=cm.coolwarm, linewidth=0, a
 ax[1].set_xlabel(r'$x$')
 ax[1].set_ylabel(r'$y$')
 ax[1].set_title(r'gauss-lobatto $\partial z / \partial x$')
+fig.savefig('chebyshev_2D_derivatives_dx.pdf' ,bbox_inches='tight')
+
 
 fig, ax = plt.subplots(1,2,subplot_kw={"projection": "3d"}, figsize=(10,6))
 surf1 = ax[0].plot_surface(X, Y, dZdY, cmap=cm.coolwarm, linewidth=0, antialiased=False)
@@ -421,6 +423,8 @@ surf2 = ax[1].plot_surface(X_GL, Y_GL, dZdY_GL, cmap=cm.coolwarm, linewidth=0, a
 ax[1].set_xlabel(r'$x$')
 ax[1].set_ylabel(r'$y$')
 ax[1].set_title(r'gauss-lobatto $\partial z / \partial y$')
+fig.savefig('chebyshev_2D_derivatives_dy.pdf' ,bbox_inches='tight')
+
 
 
 
