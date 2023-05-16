@@ -11,6 +11,7 @@ from src.grid import DataGrid
 from src.general_functions import JacobianTransform, ChebyshevDerivativeMatrixBayliss, Refinement, GaussLobattoPoints
 from src.styles import *
 import os
+import time
 
 
 class SunModel:
@@ -129,14 +130,6 @@ class SunModel:
                 #add the inverse gradients information to every node
                 self.data.dataSet[ii,jj].AddInverseJacobianGradients(self.dzdx[ii,jj], self.dzdy[ii,jj], self.drdx[ii,jj], self.drdy[ii,jj])
     
-    
-        
-        
-        
-        
-        
-        
-        
         
     
     def ShowJacobianSpectralAxis(self, formatFig=(10,6)):
@@ -264,49 +257,56 @@ class SunModel:
         if save_filename!=None:
             plt.savefig(folder_name + save_filename+'_4.pdf',bbox_inches='tight')
     
-    # def ComputeSVD(self, omega_domain=[-1,1,-1,1], grid_omega=[10,10]):
-    #     omR_min = omega_domain[0]
-    #     omR_max = omega_domain[1]
-    #     omI_min = omega_domain[2]
-    #     omI_max = omega_domain[3]
-    #     nR = grid_omega[0]
-    #     nI = grid_omega[1]
-    #     omR = np.linspace(omR_min, omR_max, nR)
-    #     omI = np.linspace(omI_min, omI_max, nI)
-    #     self.omegaR, self.omegaI = np.meshgrid(omR, omI)
-    #     self.chi = np.zeros((nR,nI))
-    #     for ii in range(0,nR):
-    #         for jj in range(0,nI):
-    #             omega = omR[ii]+1j*omI[jj]
-                
-    #             #to be implemented correctly later
-    #             Q = 1j*omega*self.A+self.B+self.C+self.E+self.R+self.S
+    def ComputeSVD(self, omega_domain, grid_omega=[10,10]):
+        omR_min = omega_domain[0]
+        omR_max = omega_domain[1]
+        omI_min = omega_domain[2]
+        omI_max = omega_domain[3]
+        nR = grid_omega[0]
+        nI = grid_omega[1]
+        omR = np.linspace(omR_min, omR_max, nR)
+        omI = np.linspace(omI_min, omI_max, nI)
+        self.omegaI, self.omegaR = np.meshgrid(omI, omR)
+        self.chi = np.zeros((nR,nI))
+        start_time = time.time()
+        for ii in range(0,nR):
+            for jj in range(0,nI):
+                current_time = time.time() - start_time
+                if (ii==0 and jj==1): 
+                    delta_time_svd = current_time
+                    total_time = delta_time_svd*nR*nI
+                if (ii>=0 and jj>=1):
+                    remaining_minutes = (total_time-current_time)/60
+                    total_minutes = total_time/60
+                    print('SVD %.1d of %1.d (%.1d of %1.d minutes remaining)' %(ii*len(omI)+1+jj,len(omR)*len(omI),remaining_minutes, total_minutes)) #keep track of the progress
 
-    #             U,S,V = np.linalg.svd(Q)
-    #             self.chi[ii,jj] = np.min(S)/np.max(S)
-    
-    
-    # def PlotInverseConditionNumber(self, save_filename=None, formatFig=(10,6)):
-    #     x = np.linspace(np.min(self.omegaR), np.max(self.omegaR))
-    #     critical_line = np.zeros(len(x))
-    #     plt.figure(figsize=formatFig)
-    #     plt.contourf(self.omegaR, self.omegaI, self.chi)
-    #     plt.plot(x, critical_line, '--r')
-    #     plt.xlabel(r'$\omega_{R}$')
-    #     plt.ylabel(r'$\omega_{I}$')
-    #     plt.title(r'$\chi$ locus')
-    #     cb = plt.colorbar()
-    #     cb.set_label(r'$\chi$')
-    #     if save_filename!=None:
-    #         plt.savefig(folder_name + save_filename +'.pdf' ,bbox_inches='tight')
+                omega = omR[ii]+1j*omI[jj]
+                self.AddRemainingMatrices(omega) #add the non-constant parts of the matrices
+                self.ApplyBoundaryConditions()  #apply boundary condtions
+                u,s,v = np.linalg.svd(self.Qtot)
+                self.chi[ii,jj] = np.min(s)/np.max(s)
+
+    def PlotInverseConditionNumber(self, save_filename=None, formatFig=(10,6)):
+        x = np.linspace(np.min(self.omegaR), np.max(self.omegaR))
+        critical_line = np.zeros(len(x))
+        plt.figure(figsize=formatFig)
+        plt.contourf(self.omegaR, self.omegaI, self.chi/np.max(self.chi))
+        plt.plot(x, critical_line, '--r')
+        plt.xlabel(r'$\omega_{R}$')
+        plt.ylabel(r'$\omega_{I}$')
+        plt.title(r'$\chi / \chi_{max}$')
+        cb = plt.colorbar()
+        # cb.set_label()
+        if save_filename!=None:
+            plt.savefig(folder_name + save_filename +'.pdf' ,bbox_inches='tight')
                 
-    def AddAMatrixToNodes(self, omega):
+    def AddAMatrixToNodes(self):
         """
-        compute and store at the node level the A matrix, already multiplied by j*omega. Ready to be used in the final system of eqs.
+        compute and store at the node level the A matrix, not already multiplied by j*omega.
         """
         for ii in range(0,self.data.nAxialNodes):
             for jj in range(0,self.data.nRadialNodes):
-                A = np.eye(5, dtype=complex)*1j*omega
+                A = np.eye(5, dtype=complex)
                 self.data.dataSet[ii,jj].AddAMatrix(A)
                 
     def AddBMatrixToNodes(self):
@@ -525,6 +525,12 @@ class SunModel:
         add elements to the stability matrix specifying the first top-left element location
         """
         self.Q[row:row+5, column:column+5] += block
+        
+    def AddToQ_var(self, block, row, column):
+        """
+        add elements to the stability matrix specifying the first top-left element location
+        """
+        self.Q_var[row:row+5, column:column+5] += block
             
         
     def ApplyBoundaryConditions(self):
@@ -547,41 +553,42 @@ class SunModel:
                 elif (marker != ''):
                     raise Exception('Boundary condition unknown. Check the grid markers!')
                     
-    def AddRemainingMatrices(self):
+    def AddRemainingMatrices(self, omega):
         """
-        it adds the remaning block matrices to the full Q, on the diagonal blocks.
+        it adds the remaning diagonal block matrices to the full Qtot = Q + Q_var. Q is constant for every model, while Q_var depends on omega
         """
+        self.Q_var = np.zeros((self.Q.shape), dtype=complex) #variable part of the stability matrix
         for ii in range(0,self.dataSpectral.nAxialNodes):
             for jj in range(0,self.dataSpectral.nRadialNodes):
                 #add all the remaining terms on the diagonal
-                diag_block_ij = self.data.dataSet[ii,jj].A + self.data.dataSet[ii,jj].C + self.data.dataSet[ii,jj].R + self.data.dataSet[ii,jj].S
-                
+                diag_block_ij = self.data.dataSet[ii,jj].A*1j*omega + self.data.dataSet[ii,jj].C + self.data.dataSet[ii,jj].R + self.data.dataSet[ii,jj].S
                 node_counter = self.data.dataSet[ii,jj].nodeCounter
                 row = node_counter*5
                 column = node_counter*5
-                self.AddToQ(diag_block_ij, row, column)
+                self.AddToQ_var(diag_block_ij, row, column)
+        self.Qtot = self.Q + self.Q_var #the global stability
     
     def ApplyInletCondition(self, row):
         """
         for the considered grid node, it substitutes the 5 equations with a zero perturbation condition
         """
-        self.Q[row:row+5,:] = np.zeros(self.Q[row:row+5,:].shape, dtype=complex) #make it zero first
-        self.Q[row:row+5,row:row+5] = np.eye(5, dtype=complex) #zero perturbation condition for every flow variable
+        # self.Qtot[row:row+5,:] = np.zeros(self.Qtot[row:row+5,:].shape, dtype=complex) #make it zero first
+        # self.Qtot[row:row+5,row:row+5] = np.eye(5, dtype=complex) #zero perturbation condition for every flow variable
         
     
     def ApplyOutletCondition(self, row):
         """
         for the considered grid node, it substitutes the pressure equation with a zero pressure condition
         """
-        self.Q[row+4,:] = np.zeros(self.Q[row+4,:].shape, dtype=complex) #make first the pressure equation coefficients zero
-        self.Q[row+4,row+4] = 1 #apply zero pressure condition
+        # self.Qtot[row+4,:] = np.zeros(self.Qtot[row+4,:].shape, dtype=complex) #make first the pressure equation coefficients zero
+        # self.Qtot[row+4,row+4] = 1 #apply zero pressure condition
         
     def ApplyWallCondition(self, row, wall_normal = [1, 0, 0]):
         """
         for the considered grid node, it substitutes one of the velocity equation with a non-penetration condition
         """
-        self.Q[row+1,:] = np.zeros(self.Q[row+1,:].shape, dtype=complex) #first make zero the radial velocity equation
-        self.Q[row+1,row+1:row+4] = wall_normal #impose non-penetration condition (u*nr + v*nt + w*nz)
+        self.Qtot[row+1,:] = np.zeros(self.Qtot[row+1,:].shape, dtype=complex) #first make zero the radial velocity equation
+        self.Qtot[row+1,row+1:row+4] = wall_normal #impose non-penetration condition (u*nr + v*nt + w*nz)
         
 
         

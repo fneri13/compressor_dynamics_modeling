@@ -80,39 +80,52 @@ def JacobianTransform(X,Y,Z,R):
 
 
 
-def ChebyshevDerivativeMatrixBayliss(x):
+def ChebyshevDerivativeMatrix(x):
     """
-    Define the first order derivative matrix, where x is the array of Gauss-Lobatto points. Given an x-array of cordinates
-    (that should be located on the gauss lobatto points), it returns the first order derivative operator. It is based on the 
-    Bayliss formulation, which artificially fix the diagonal elements.
+    Define the first order derivative Chebyshev matrix, where x is the array of Gauss-Lobatto points. Expression from 
+    Peyret book, page 50
     """
     N = len(x) #dimension of the square matrix
     D = np.zeros((N,N))
     for i in range(0,N):
         for j in range(0,N):
-            xi = np.cos(np.pi*i/N)
-            xj = np.cos(np.pi*j/N)
-            # compute off-diagonal before
+            xi = np.cos(np.pi*i/(N-1))
+            xj = np.cos(np.pi*j/(N-1))
+            
+            #select the right ci, cj
+            if i==0 or i==N-1:
+                ci = 2
+            else:
+                ci = 1
+            if j==0 or j==N-1:
+                cj = 2
+            else:
+                cj = 1
+            
+            #matrix coefficients
             if (i!=j):
-                if (i==0 or i==N):
-                    ci = 2
-                elif (i>0 or i <N):
-                    ci =1
-                else:
-                    raise ValueError('Error in the chebyshev derivative matrix formulation')
-                
-                if (j==0 or j==N):
-                    cj = 2
-                elif (j>0 or j<N):
-                    cj =1
-                else:
-                    raise ValueError('Error in the chebyshev derivative matrix formulation')
-                    
-                D[i,j] = (ci/cj)*(-1)**(i+j)/(xi-xj)
-                
+                D[i,j] = (ci/cj) * (-1)**(i+j) / (xi-xj)
+            elif (i==j and i>0 and i<N-1):
+                D[i,j] = -xi/2/(1-xi**2)
+            elif (i==0 and j==0):
+                D[i,j] = (2*(N**2)+1)/6
+            elif(i==N-1 and j==N-1):
+                D[i,j] = -(2*(N**2)+1)/6
+            else:
+                raise ValueError('Some mistake in the computation of the matrix')
+            
+    return D
+
+def ChebyshevDerivativeMatrixBayliss(x):
+    """
+    Define the first order derivative Chebyshev matrix, where x is the array of Gauss-Lobatto points. Expression from 
+    Peyret book, page 50. Bayliss formulation for the diagonal term, as suggested by Peyret to fix the extremes
+    """
+    N = len(x) #dimension of the square matrix
+    D = ChebyshevDerivativeMatrix(x) #basic
     for i in range(0,N):
-        tot_coeff = np.sum(D[i,:])
-        D[i,i] = - tot_coeff #artifially fix the diagonal element, so that the sum of the elements in a generic row gives zero
+        row_tot = np.sum(D[i,:]) - D[i,i] #sum of the terms out of the diagonal
+        D[i,i] = -row_tot #to make the sum of the elements in a row = 0 for every row
     return D
 
 
@@ -146,8 +159,8 @@ def GaussLobattoPoints(N):
     return x
         
       
-        
-        
+for i in range(0,5):
+    print(i)
         
         
         

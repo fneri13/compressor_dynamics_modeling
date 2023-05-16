@@ -24,12 +24,12 @@ gmma = 1.4                              #cp/cv ratio of air
 rho = p/(R*T)                           #density [kg/m3]
 a = np.sqrt(gmma*p/rho)                 #ideal speed of sound [m/s]
 
-#%% ANALYTICAL PART 
+#%% ANALYTICAL PART OF THE PROBLEM
 
-# #radial cordinate array span
-# r = np.linspace(r1,r2,250)
+#radial cordinate array span
+r = np.linspace(r1,r2,300)
 
-# #import Bessel functions
+#import Bessel functions
 # x = np.linspace(0,100,1000)
 # J1 = jv(1, x) #BF of the first kind of the first order
 # N1 = yv(1, x) #BF of the second kind of the first order
@@ -57,30 +57,47 @@ a = np.sqrt(gmma*p/rho)                 #ideal speed of sound [m/s]
 # ax[1,1].set_ylim([-1,1])
 # fig.suptitle("Bessel Functions")
 
-# #%% #analytical eigenvalues
-# lambda_mn = np.linspace(0,300,250) #we will do a loop for every possible value of lambda, but now let's evalute the determinant
+# #analytical eigenvalues
+# lambda_mn_span = np.linspace(0,300,300) #we will do a loop for every possible value of lambda
 # m = 1 
 # det = np.array(())
-# for i in range(0,len(lambda_mn)):
-#     Jm = jv(m, lambda_mn[i]*r)
-#     Nm = yv(m, lambda_mn[i]*r)
-#     # dJmdr = np.gradient(Jm, r)
-#     # dNmdr = np.gradient(Nm, r)
-#     dJmdr = jvp(m, lambda_mn[i]*r)
-#     dNmdr = yvp(m, lambda_mn[i]*r)
-#     det = np.append(det,dJmdr[0]*dNmdr[-1]-dNmdr[0]*dJmdr[-1])
+# det2 = np.array(())
+# det3 = np.array(())
+
+# for s in range(0,len(lambda_mn_span)):
+#     lambda_mn = lambda_mn_span[s]
+#     J1 = jvp(m, lambda_mn*r, n=0)
+#     N1 = yvp(m, lambda_mn*r, n=0)
+#     dJ1dr = jvp(m, lambda_mn*r, n=1)
+#     dN1dr = yvp(m, lambda_mn*r, n=1)
+#     det = np.append(det, dJ1dr[0]*dN1dr[-1]-dN1dr[0]*dJ1dr[-1])
+    
+#     J2 = jvp(m+1, lambda_mn*r, n=0)
+#     N2 = yvp(m+1, lambda_mn*r, n=0)
+#     dJ2dr = jvp(m+1, lambda_mn*r, n=1)
+#     dN2dr = yvp(m+1, lambda_mn*r, n=1)
+#     det2 = np.append(det2, dJ2dr[0]*dN2dr[-1]-dN2dr[0]*dJ2dr[-1])
+    
+#     J3 = jvp(m+2, lambda_mn*r, n=0)
+#     N3 = yvp(m+2, lambda_mn*r, n=0)
+#     dJ3dr = jvp(m+2, lambda_mn*r, n=1)
+#     dN3dr = yvp(m+2, lambda_mn*r, n=1)
+#     det3 = np.append(det3, dJ3dr[0]*dN3dr[-1]-dN3dr[0]*dJ3dr[-1])
 # zeros = np.zeros(len(det))
 
+# #plot the determinant value
 # fig, ax = plt.subplots(figsize=(10,7))
-# ax.plot(lambda_mn, det)
-# ax.plot(lambda_mn, zeros,'--k', lw=0.5)
+# ax.plot(lambda_mn_span, det, label=r'$m=1$')
+# ax.plot(lambda_mn_span, det2, label=r'$m=2$')
+# ax.plot(lambda_mn_span, det3, label=r'$m=3$')
+# ax.plot(lambda_mn_span, zeros,'--k', lw=0.5)
 # ax.set_title('determinant value')
 # ax.set_xlabel(r'$\lambda_{mn}$')
 # ax.set_ylim([-0.25,0.25])
 # ax.set_ylabel(r'$\det{A}$')
 # ax.legend()
 
-# #this is valid only for the first frequency, then you need to modify omega evaluation
+#this is valid only for the first frequency, then you need to modify omega evaluation
 # omega = a*np.sqrt(((1-M**2)*m*np.pi/L)**2 + (1-M**2)*lambda_mn**2) #alpha is the number of the eigenvalue
 # fig, ax = plt.subplots(figsize=(10,7))
 # ax.plot(omega, np.abs(det))
@@ -95,8 +112,8 @@ a = np.sqrt(gmma*p/rho)                 #ideal speed of sound [m/s]
 #%%COMPUTATIONAL PART
 
 #number of grid nodes in the computational domain
-Nz = 20
-Nr = 20
+Nz = 15
+Nr = 5
 
 #implement a constant uniform flow in the annulus duct
 density = np.random.rand(Nz, Nr)
@@ -120,102 +137,28 @@ for ii in range(0,Nz):
 duct = DataGrid(0, L, r1, r2, Nz, Nr, density, axialVel, radialVel, tangentialVel, pressure)
 
 
+#general workflow
+sunObj = SunModel(duct)
+sunObj.ShowPhysicalGrid(save_filename='physical_grid_%1.d_%1.d' %(Nz,Nr))
+sunObj.ComputeSpectralGrid()
+sunObj.ShowSpectralGrid(save_filename='spectral_grid_%1.d_%1.d' %(Nz,Nr))
+sunObj.ComputeJacobianSpectral(refinement=10)
+sunObj.AddAMatrixToNodes()
+sunObj.AddBMatrixToNodes()
+sunObj.AddCMatrixToNodes()
+sunObj.AddEMatrixToNodes()
+sunObj.AddRMatrixToNodes()
+sunObj.AddSMatrixToNodes()
+sunObj.AddHatMatricesToNodes()
+sunObj.ApplySpectralDifferentiation()
 
-# omega_range = np.linspace(10000, 35000, 150) #domain of interest, omega on
-# chi = np.zeros(len(omega_range))
-# Q_container =[]
-# for kk in range(0,len(omega_range)):
-#     print('SVD %.1d of %1.d' %(kk+1,len(omega_range)))
-#     sunObj = SunModel(duct)
-#     if kk==0:
-#         sunObj.ShowPhysicalGrid(save_filename='physical_grid_%1.d_%1.d' %(Nz,Nr))
-#     sunObj.ComputeSpectralGrid()
-#     if kk==0:
-#         sunObj.ShowSpectralGrid(save_filename='spectral_grid_%1.d_%1.d' %(Nz,Nr))
-#     sunObj.ComputeJacobianSpectral()
-#     if kk==0:
-#         sunObj.ShowJacobianPhysicalAxis(save_filename='spectral_jacobian_%1.d_%1.d' %(Nz,Nr))
-#     omega = omega_range[kk]
-#     sunObj.AddAMatrixToNodes(omega)
-#     sunObj.AddBMatrixToNodes()
-#     sunObj.AddCMatrixToNodes()
-#     sunObj.AddEMatrixToNodes()
-#     sunObj.AddRMatrixToNodes()
-#     sunObj.AddHatMatricesToNodes()
-#     sunObj.ApplySpectralDifferentiation()
-#     sunObj.AddRemainingMatrices()
-#     sunObj.ApplyBoundaryConditions() 
-#     # Q_container.append(sunObj.Q)
-#     u,s,v = np.linalg.svd(sunObj.Q)
-#     chi[kk] = np.min(s)/np.max(s)
-    
-
-#debug
-# for s in range(0,len(Q_container)):
-#     fig, ax = plt.subplots(1, 2, figsize=(16, 8))
-#     image1 = ax[0].imshow(Q_container[s].real)
-#     ax[0].set_title('Q.real, omega: %.1d' % (omega_range[s]))
-#     colorbar1 = fig.colorbar(image1, ax=ax[0])
-#     image2 = ax[1].imshow(Q_container[s].imag)
-#     ax[1].set_title('Q.imag, omega: %.1d' % (omega_range[s]))
-#     colorbar2 = fig.colorbar(image2, ax=ax[1])
-    
-# plt.figure(figsize=(10,6))
-# plt.plot(omega_range,chi)
-# plt.ylabel(r'$\chi$')
-# plt.xlabel(r'$\omega \ [rad/s]$')
-# plt.savefig('pictures/chi_map_%1.d_%1.d.pdf' %(Nz,Nr),bbox_inches='tight')
-
-#%% 2D OMEGA DOMAIN
-# omega_range_r = np.linspace(10000, 35000, 50) #domain of interest, omega on
-# omega_range_i = np.linspace(-8000, 8000, 50) #domain of interest, omega on
-
-omega_range_r = np.linspace(10000, 35000, 25) #domain of interest, omega on
-omega_range_i = np.linspace(-8000, 8000, 25) #domain of interest, omega on
-
-chi = np.zeros((len(omega_range_r),(len(omega_range_i))))
-for ii in range(0,len(omega_range_r)):
-    for jj in range(0,len(omega_range_i)):
-        print('SVD %.1d of %1.d' %(ii*len(omega_range_i)+1+jj,len(omega_range_r)*len(omega_range_i)))
-        sunObj = SunModel(duct)
-        if (ii==0 and jj==0):
-            sunObj.ShowPhysicalGrid(save_filename='physical_grid_%1.d_%1.d' %(Nz,Nr))
-        sunObj.ComputeSpectralGrid()
-        if (ii==0 and jj==0):
-            sunObj.ShowSpectralGrid(save_filename='spectral_grid_%1.d_%1.d' %(Nz,Nr))
-        sunObj.ComputeJacobianSpectral(refinement=10)
-        if (ii==0 and jj==0):
-            # sunObj.ShowJacobianPhysicalAxisFine(save_filename='spectral_jacobian_fine_%1.d_%1.d' %(Nz,Nr))
-            sunObj.ShowJacobianPhysicalAxis(save_filename='spectral_jacobian_%1.d_%1.d' %(Nz,Nr))
-        omega = omega_range_r[ii]+1j*omega_range_i[jj]
-        sunObj.AddAMatrixToNodes(omega)
-        sunObj.AddBMatrixToNodes()
-        sunObj.AddCMatrixToNodes()
-        sunObj.AddEMatrixToNodes()
-        sunObj.AddRMatrixToNodes()
-        sunObj.AddSMatrixToNodes()
-        sunObj.AddHatMatricesToNodes()
-        sunObj.ApplySpectralDifferentiation()
-        sunObj.AddRemainingMatrices()
-        sunObj.ApplyBoundaryConditions() 
-        u,s,v = np.linalg.svd(sunObj.Q)
-        chi[ii,jj] = np.min(s)/np.max(s)
-
-OM_I, OM_R = np.meshgrid(omega_range_i, omega_range_r)
-plt.figure(figsize=(10,6))
-plt.contourf(OM_R,OM_I,chi, cmap='viridis')
-plt.ylabel(r'$\omega_{i}$')
-plt.xlabel(r'$\omega_{r}$')
-plt.colorbar()
-plt.title(r'$\chi$')
-plt.savefig('pictures/chi_2D_map_%1.d_%1.d.pdf' %(Nz,Nr),bbox_inches='tight')
+sunObj.ComputeSVD(omega_domain=[7.5e3, 35e3, -8e3, 8e3], grid_omega=[200,10])
+sunObj.PlotInverseConditionNumber('chi_2D_map_%1.d_%1.d' %(Nz,Nr))
 
 
 
-
-
-
-
+plt.figure()
+plt.plot(sunObj.omegaR,sunObj.chi[:,1])
 
 
 

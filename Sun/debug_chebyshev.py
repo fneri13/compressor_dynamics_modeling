@@ -4,7 +4,7 @@
 Created on Mon May  1 10:59:17 2023
 @author: F. Neri, TU Delft
 
-script to learn and compute Chebyshev polynomials
+script to learn and compute Chebyshev polynomials and chebyshev differentiation matrices. it is needed in the sun model
 """
 
 import numpy as np
@@ -151,32 +151,31 @@ def ChebyshevDerivativeMatrix(x):
     D = np.zeros((N,N))
     for i in range(0,N):
         for j in range(0,N):
-            xi = np.cos(np.pi*i/N)
-            xj = np.cos(np.pi*j/N)
-            if (i==0 and j==0):
-                D[i,j] = (2*N**2+1)/6
-            elif (i==j and i>=1 and i<=N-1):
-                D[i,j] = -(xi)/2/(1-xi**2)
-            elif (i==j and i==N):
-                D[i,j] = -(2*N**2+1)/6
-            elif (i >=0 and j<=N and i!=j):
-                if (i==0 or i==N):
-                    ci = 2
-                elif (i>0 or i <N):
-                    ci =1
-                else:
-                    raise ValueError('Some mistake in the computation of the matrix')
-                
-                if (j==0 or j==N):
-                    cj = 2
-                elif (j>0 or j<N):
-                    cj =1
-                else:
-                    raise ValueError('Some mistake in the computation of the matrix')
-                
-                D[i,j] = (ci/cj)*(-1)**(i+j)/(xi-xj)
+            xi = np.cos(np.pi*i/(N-1))
+            xj = np.cos(np.pi*j/(N-1))
+            
+            #select the right ci, cj
+            if i==0 or i==N-1:
+                ci = 2
+            else:
+                ci = 1
+            if j==0 or j==N-1:
+                cj = 2
+            else:
+                cj = 1
+            
+            #matrix coefficients
+            if (i!=j):
+                D[i,j] = (ci/cj) * (-1)**(i+j) / (xi-xj)
+            elif (i==j and i>0 and i<N-1):
+                D[i,j] = -xi/2/(1-xi**2)
+            elif (i==0 and j==0):
+                D[i,j] = (2*(N**2)+1)/6
+            elif(i==N-1 and j==N-1):
+                D[i,j] = -(2*(N**2)+1)/6
             else:
                 raise ValueError('Some mistake in the computation of the matrix')
+            
     return D
 
 def ChebyshevDerivativeMatrixBayliss(x):
@@ -184,32 +183,10 @@ def ChebyshevDerivativeMatrixBayliss(x):
     Define the first order derivative matrix, where x is the array of Gauss-Lobatto points
     """
     N = len(x) #dimension of the square matrix
-    D = np.zeros((N,N))
+    D = ChebyshevDerivativeMatrix(x)
     for i in range(0,N):
-        for j in range(0,N):
-            xi = np.cos(np.pi*i/N)
-            xj = np.cos(np.pi*j/N)
-            # compute off-diagonal before
-            if (i!=j):
-                if (i==0 or i==N):
-                    ci = 2
-                elif (i>0 or i <N):
-                    ci =1
-                else:
-                    raise ValueError('Some mistake in the computation of the matrix')
-                
-                if (j==0 or j==N):
-                    cj = 2
-                elif (j>0 or j<N):
-                    cj =1
-                else:
-                    raise ValueError('Some mistake in the computation of the matrix')
-                    
-                D[i,j] = (ci/cj)*(-1)**(i+j)/(xi-xj)
-    for i in range(0,N):
-        tot_coeff = np.sum(D[i,:])
-        D[i,i] = - tot_coeff
-            
+        row_tot = np.sum(D[i,:]) - D[i,i]
+        D[i,i] = -row_tot
     return D
 
 D = ChebyshevDerivativeMatrix(x_GL) #check the sum of the rows to be zero
